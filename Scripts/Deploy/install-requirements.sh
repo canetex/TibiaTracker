@@ -186,8 +186,8 @@ install_nodejs() {
     node --version
     npm --version
     
-    # Atualizar npm para a última versão
-    npm install -g npm@latest
+    # Atualizar npm para versão compatível com Node.js 18
+    npm install -g npm@10.8.2
     
     log "Node.js instalado com sucesso!"
 }
