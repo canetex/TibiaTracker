@@ -26,19 +26,27 @@ LOG_FILE="/var/log/tibia-tracker/clear-cache.log"
 # =============================================================================
 
 log() {
+    # Criar diretório de log se não existir
+    sudo mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 error() {
+    # Criar diretório de log se não existir
+    sudo mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo -e "${RED}[ERROR $(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
     exit 1
 }
 
 warning() {
+    # Criar diretório de log se não existir
+    sudo mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo -e "${YELLOW}[WARNING $(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 info() {
+    # Criar diretório de log se não existir
+    sudo mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo -e "${BLUE}[INFO $(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 

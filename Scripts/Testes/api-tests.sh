@@ -32,6 +32,8 @@ FAILED_TESTS=0
 # =============================================================================
 
 log() {
+    # Criar diretório de log se não existir
+    sudo mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
