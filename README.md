@@ -84,7 +84,23 @@ sudo ./Scripts/Deploy/install-requirements.sh
 sudo reboot
 ```
 
-### 2. Configuração
+### 2. Download do Repositório
+```bash
+# Opção 1: Com GitHub CLI (se disponível)
+gh repo clone canetex/TibiaTracker
+cd TibiaTracker
+
+# Opção 2: Download direto (se gh não estiver disponível)
+wget https://github.com/canetex/TibiaTracker/archive/refs/heads/main.zip
+unzip main.zip
+cd TibiaTracker-main
+
+# Opção 3: Git clone tradicional
+git clone https://github.com/canetex/TibiaTracker.git
+cd TibiaTracker
+```
+
+### 3. Configuração
 ```bash
 # Copiar template de variáveis
 cp env.template .env
@@ -99,9 +115,9 @@ nano .env
 - `REDIS_PASSWORD`: Senha do Redis
 - `JWT_SECRET_KEY`: Chave para tokens JWT
 
-### 3. Deploy da Aplicação
+### 4. Deploy da Aplicação
 ```bash
-# Deploy completo
+# Deploy completo (execute a partir do diretório do projeto)
 chmod +x Scripts/Deploy/deploy.sh
 sudo ./Scripts/Deploy/deploy.sh
 ```
@@ -246,8 +262,13 @@ sudo ./Scripts/Verificação/health-check.sh
 ## 🔄 Atualizações
 
 ```bash
-# Atualização via Git
+# Opção 1: Atualização via Git (se clonado via git)
 ./git-pull.sh
+
+# Opção 2: Download nova versão e redistribuir
+# Baixar nova versão conforme passo 2
+# Re-executar deploy a partir do novo diretório
+sudo ./Scripts/Deploy/deploy.sh
 
 # Rebuild após atualização
 sudo ./Scripts/Manutenção/rebuild-containers.sh
@@ -278,6 +299,7 @@ docker-compose logs -f
 2. **Falha na conectividade**: Executar network test
 3. **Problemas de performance**: Executar clear cache
 4. **Erros após atualização**: Executar rebuild containers
+5. **Script não encontra arquivos**: Verificar se está executando a partir do diretório correto do projeto
 
 ## 📄 Licença
 

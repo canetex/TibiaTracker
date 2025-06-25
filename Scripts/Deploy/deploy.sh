@@ -4,6 +4,7 @@
 # TIBIA TRACKER - SCRIPT DE DEPLOY
 # =============================================================================
 # Este script realiza o deploy completo da aplicação em um servidor LXC Debian
+# IMPORTANTE: Execute a partir do diretório raiz do projeto já baixado
 # Autor: Tibia Tracker Team
 # Data: $(date +'%Y-%m-%d')
 # =============================================================================
@@ -21,7 +22,6 @@ NC='\033[0m' # No Color
 PROJECT_DIR="/opt/tibia-tracker"
 BACKUP_DIR="/opt/backups/tibia-tracker"
 LOG_FILE="/var/log/tibia-tracker/deploy.log"
-GITHUB_REPO="https://github.com/canetex/tibia-tracker.git"
 
 # =============================================================================
 # FUNÇÕES AUXILIARES
@@ -50,6 +50,11 @@ info() {
 
 check_prerequisites() {
     log "Verificando pré-requisitos..."
+    
+    # Verificar se estamos no diretório correto
+    if [[ ! -f "docker-compose.yml" ]] || [[ ! -f "env.template" ]]; then
+        error "Execute este script a partir do diretório raiz do projeto Tibia Tracker"
+    fi
     
     # Verificar se é root ou tem sudo
     if [[ $EUID -ne 0 ]] && ! sudo -n true 2>/dev/null; then
@@ -109,20 +114,23 @@ create_backup() {
 deploy_application() {
     log "Iniciando deploy da aplicação..."
     
+    # Obter diretório atual (onde está o código)
+    CURRENT_DIR=$(pwd)
+    log "Usando código do diretório: $CURRENT_DIR"
+    
     # Criar diretório do projeto se não existir
     sudo mkdir -p "$PROJECT_DIR"
     
-    # Se é primeira instalação, fazer clone
-    if [[ ! -d "$PROJECT_DIR/.git" ]]; then
-        log "Primeira instalação - clonando repositório..."
-        sudo git clone "$GITHUB_REPO" "$PROJECT_DIR"
-    else
-        log "Atualizando código do repositório..."
-        cd "$PROJECT_DIR"
-        sudo git fetch origin
-        sudo git reset --hard origin/main
-        sudo git pull origin main
-    fi
+    # Copiar código do diretório atual para o destino de produção
+    log "Copiando código do projeto para $PROJECT_DIR..."
+    sudo rsync -av --delete \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='__pycache__' \
+        --exclude='*.pyc' \
+        --exclude='.vscode' \
+        --exclude='*.log' \
+        "$CURRENT_DIR/" "$PROJECT_DIR/"
     
     # Entrar no diretório do projeto
     cd "$PROJECT_DIR"
