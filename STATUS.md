@@ -71,7 +71,7 @@ git add .
 git commit -m "feat: estrutura inicial do projeto Tibia Tracker"
 
 # Criar repositório no GitHub e conectar
-git remote add origin https://github.com/SEU_USUARIO/tibia-tracker.git
+git remote add origin https://github.com/canetex/tibia-tracker.git
 git push -u origin main
 ```
 

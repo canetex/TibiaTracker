@@ -21,7 +21,7 @@ NC='\033[0m' # No Color
 PROJECT_DIR="/opt/tibia-tracker"
 BACKUP_DIR="/opt/backups/tibia-tracker"
 LOG_FILE="/var/log/tibia-tracker/deploy.log"
-GITHUB_REPO="https://github.com/YOUR_USERNAME/tibia-tracker.git"
+GITHUB_REPO="https://github.com/canetex/tibia-tracker.git"
 
 # =============================================================================
 # FUNÇÕES AUXILIARES

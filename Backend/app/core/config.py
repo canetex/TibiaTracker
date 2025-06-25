@@ -47,10 +47,16 @@ class Settings(BaseSettings):
     # OAuth - Google
     GOOGLE_CLIENT_ID: Optional[str] = Field(default=None, description="Google OAuth Client ID")
     GOOGLE_CLIENT_SECRET: Optional[str] = Field(default=None, description="Google OAuth Secret")
+    GOOGLE_REDIRECT_URI: Optional[str] = Field(default=None, description="Google OAuth Redirect URI")
     
     # OAuth - Discord
     DISCORD_CLIENT_ID: Optional[str] = Field(default=None, description="Discord OAuth Client ID")
     DISCORD_CLIENT_SECRET: Optional[str] = Field(default=None, description="Discord OAuth Secret")
+    DISCORD_REDIRECT_URI: Optional[str] = Field(default=None, description="Discord OAuth Redirect URI")
+    
+    # URLs Base
+    BASE_URL: str = Field(default="http://localhost", description="URL base da aplicação")
+    API_BASE_URL: str = Field(default="http://localhost:8000", description="URL base da API")
     
     # Web Scraping
     USER_AGENT: str = Field(
