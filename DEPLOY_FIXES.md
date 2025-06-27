@@ -77,8 +77,81 @@ curl http://localhost:3000          # Frontend
 curl http://localhost:9090          # Prometheus
 ```
 
-## 📅 Data das Correções
+## 🚨 Correções Aplicadas Durante Deploy Real
 
+### Problemas Encontrados em Tempo Real (2025-06-27)
+
+#### 1. **Arquivo .env - Quebras de Linha Windows**
+```bash
+# Problema: Caracteres de carriage return (\r) do Windows
+.env: line 5: $'\r': command not found
+
+# Solução aplicada:
+sed -i 's/\r$//' .env
+```
+
+#### 2. **Backend Error: Invalid host header**
+```bash
+# Problema: TrustedHostMiddleware bloqueando acesso via IP externo
+HTTP/1.1 400 Bad Request
+Invalid host header
+
+# Tentativas realizadas:
+# 1. Adicionar ALLOWED_HOSTS ao .env
+# 2. Adicionar variáveis ao docker-compose.yml
+# 3. Corrigir formato das variáveis (aspas simples/duplas)
+
+# Solução final:
+# - Remover variáveis problemáticas do docker-compose.yml
+# - Mudar ENVIRONMENT=development (desabilita TrustedHostMiddleware)
+```
+
+#### 3. **Erro de Parsing Pydantic Settings**
+```bash
+# Problema: Erro ao fazer parsing de ALLOWED_ORIGINS
+pydantic_settings.sources.SettingsError: error parsing value for field "ALLOWED_ORIGINS"
+
+# Solução aplicada:
+# 1. Comentar variáveis no .env
+sed -i 's/^ALLOWED_ORIGINS/#ALLOWED_ORIGINS/' .env
+sed -i 's/^ALLOWED_HOSTS/#ALLOWED_HOSTS/' .env
+
+# 2. Remover do docker-compose.yml
+sed -i '/ALLOWED_HOSTS=${ALLOWED_HOSTS}/d' docker-compose.yml
+sed -i '/ALLOWED_ORIGINS=${ALLOWED_ORIGINS}/d' docker-compose.yml
+sed -i '/CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS}/d' docker-compose.yml
+```
+
+#### 4. **npm Version Conflict**
+```bash
+# Problema durante install-requirements.sh:
+npm notice To update, run: npm install -g npm@11.4.2
+
+# Solução aplicada: Fixed no install-requirements.sh
+# Usar versão compatível com Node.js 18
+npm install -g npm@10.8.2
+```
+
+### ✅ Estado Final Funcionando
+- **Frontend**: `http://192.168.1.227:3000` ✅
+- **Backend**: `http://192.168.1.227:8000` ✅  
+- **API Docs**: `http://192.168.1.227:8000/docs` ✅
+- **Prometheus**: `http://192.168.1.227:9090` ✅
+- **Ambiente**: `development` (permite acesso externo)
+
+### 🔧 Correções Pendentes para Produção
+1. **Configurar CORS corretamente** para ambiente production
+2. **Implementar ALLOWED_HOSTS** sem conflitos de parsing
+3. **Voltar para ENVIRONMENT=production** com configuração adequada
+4. **Configurar domínio** para evitar usar IPs diretos
+
+## 📅 Histórico de Correções
+
+### v1.0.0-deploy-fixes (Correções Preventivas)
+- **Data**: 2025-06-27  
+- **Status**: ✅ Aplicadas nos arquivos locais
+
+### v1.0.1-deploy-real (Correções Durante Deploy)
 - **Data**: 2025-06-27
-- **Versão**: v1.0.0-deploy-fixes
-- **Status**: ✅ Testado e funcionando em produção LXC Debian 
+- **Status**: 🎉 Deploy realizado com sucesso no servidor LXC 192.168.1.227
+- **Ambiente**: Debian 12 Bookworm + Docker 28.3.0 
