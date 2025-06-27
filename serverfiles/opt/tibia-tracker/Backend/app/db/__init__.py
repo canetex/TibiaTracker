@@ -1,1 +1,0 @@
-"""Database module - Configuração e acesso ao banco""" 
