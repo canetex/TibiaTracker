@@ -82,7 +82,7 @@ def start_scheduler():
         scheduler.add_job(
             func=cleanup_old_data,
             trigger=CronTrigger(
-                day_of_week='sunday',
+                day_of_week='sun',
                 hour=2,
                 minute=0,
                 timezone=settings.SCHEDULER_TIMEZONE

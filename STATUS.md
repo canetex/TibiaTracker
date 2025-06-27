@@ -225,6 +225,29 @@ sudo ./Scripts/Remoção/clean-docker.sh
 - **`run-tests.sh`**: Testes automatizados completos (infraestrutura, banco, API, frontend)
 - **`api-tests.sh`**: Testes específicos dos endpoints da API com performance
 
+## 🔧 CORREÇÕES APLICADAS (2025-06-27)
+
+### ✅ Arquivos Corrigidos para Deploy
+- **env.template**: Hosts Docker corrigidos (`postgres`, `redis`) + Driver asyncpg
+- **docker-compose.yml**: Variáveis de ambiente do banco adicionadas
+- **Backend/requirements.txt**: Driver `asyncpg==0.29.0` (assíncrono)
+- **Backend/scheduler.py**: `day_of_week='sun'` corrigido
+- **Frontend/nginx.conf**: Estrutura completamente reescrita
+- **Scripts/Deploy/prometheus.yml**: Arquivo criado com configuração de monitoramento
+- **Scripts/Deploy/Caddyfile**: Arquivo criado com proxy reverso
+- **Backend/sql/init.sql**: Arquivo criado para inicialização PostgreSQL
+- **DEPLOY_FIXES.md**: Documentação das correções criada
+
+### 🚀 Problemas Resolvidos
+1. ❌ Erro de sintaxe shell no arquivo `.env`
+2. ❌ Variáveis de ambiente não encontradas no backend  
+3. ❌ Driver PostgreSQL incompatível com SQLAlchemy async
+4. ❌ Conexões recusadas por hosts incorretos
+5. ❌ Scheduler falhando por nome de dia inválido
+6. ❌ Frontend falhando por nginx.conf malformado
+7. ❌ Scripts falhando por diretórios de log inexistentes
+8. ❌ Arquivos de configuração faltantes
+
 ## 📞 SUPPORT
 
 Para dúvidas ou problemas:
@@ -235,5 +258,5 @@ Para dúvidas ou problemas:
 
 ---
 
-**Status Atual**: ✅ **INFRAESTRUTURA COMPLETA - SCRIPTS DE AUTOMAÇÃO FINALIZADOS**
-**Próximo**: Implementar endpoint de personagens e web scraping 
+**Status Atual**: ✅ **DEPLOY-READY - TODAS AS CORREÇÕES APLICADAS**
+**Próximo**: Deploy em produção - arquivos corrigidos para evitar problemas conhecidos 

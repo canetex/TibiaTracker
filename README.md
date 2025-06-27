@@ -11,6 +11,7 @@ Portal de monitoramento de personagens do Tibia desenvolvido com FastAPI (Backen
 - ✅ Scripts completos de automação e manutenção
 - ✅ Sistema de verificação e monitoramento
 - ✅ Testes automatizados
+- ✅ **Correções de deploy aplicadas** (2025-06-27)
 
 ## 🛠️ Stack Tecnológica
 
@@ -71,6 +72,38 @@ Tibia Tracker/
 ├── env.template                   # Template de variáveis
 └── LICENSE                        # Licença MIT
 ```
+
+## 🔧 Correções de Deploy Aplicadas
+
+### ✅ Arquivos Corrigidos (2025-06-27)
+Os seguintes problemas de deploy foram identificados e corrigidos:
+
+1. **env.template**: 
+   - Hosts corretos para Docker (`postgres`, `redis`)
+   - Driver PostgreSQL assíncrono (`postgresql+asyncpg://`)
+   - Aspas em variáveis com caracteres especiais
+
+2. **docker-compose.yml**: 
+   - Variáveis de ambiente do banco adicionadas ao backend
+   - Versão obsoleta removida
+
+3. **Backend/requirements.txt**: 
+   - Driver `asyncpg==0.29.0` para PostgreSQL assíncrono
+
+4. **Backend/scheduler.py**: 
+   - Correção `day_of_week='sun'` (antes era 'sunday')
+
+5. **Frontend/nginx.conf**: 
+   - Estrutura completamente reescrita e validada
+
+6. **Arquivos criados**:
+   - `Scripts/Deploy/prometheus.yml` (monitoramento)
+   - `Scripts/Deploy/Caddyfile` (proxy reverso)
+   - `Backend/sql/init.sql` (inicialização PostgreSQL)
+   - `DEPLOY_FIXES.md` (documentação das correções)
+
+### 🎯 Resultado
+Esses arquivos foram corrigidos para evitar os 8 problemas mais comuns encontrados durante deploy em produção.
 
 ## 🚀 Instalação e Deploy
 
@@ -307,5 +340,5 @@ MIT License - Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
-**🎯 Status Atual**: Infraestrutura completa com scripts de automação finalizados
-**📍 Próximo Passo**: Implementação do endpoint de personagens e web scraping 
+**🎯 Status Atual**: ✅ **DEPLOY-READY** - Todas as correções aplicadas
+**📍 Próximo Passo**: Deploy em produção com arquivos corrigidos 
