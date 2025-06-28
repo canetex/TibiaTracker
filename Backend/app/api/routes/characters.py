@@ -22,7 +22,7 @@ from app.schemas.character import (
     SnapshotListResponse
 )
 from app.services.character import CharacterService
-from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info
+from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
 
 router = APIRouter(prefix="/characters", tags=["characters"])
 
