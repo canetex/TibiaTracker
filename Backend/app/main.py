@@ -92,7 +92,7 @@ if settings.ENVIRONMENT == "production":
 
 # Incluir rotas
 app.include_router(health.router, prefix="/health", tags=["Health"])
-app.include_router(characters.router, prefix="/api/v1/characters", tags=["Characters"])
+app.include_router(characters.router, prefix="/api/v1", tags=["Characters"])
 
 
 @app.get("/", tags=["Root"])

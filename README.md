@@ -75,35 +75,31 @@ Tibia Tracker/
 
 ## 🔧 Correções de Deploy Aplicadas
 
-### ✅ Arquivos Corrigidos (2025-06-27)
-Os seguintes problemas de deploy foram identificados e corrigidos:
+### ✅ Templates Corrigidos (2025-06-28) - **ATUALIZAÇÃO FINAL**
+Todos os templates foram atualizados com as configurações que **funcionaram no deploy real**:
 
-1. **env.template**: 
-   - Hosts corretos para Docker (`postgres`, `redis`)
-   - Driver PostgreSQL assíncrono (`postgresql+asyncpg://`)
-   - Aspas em variáveis com caracteres especiais
+1. **env.template + env-production.template**: 
+   - ✅ `ENVIRONMENT=development` (permite acesso externo)
+   - ✅ `ALLOWED_HOSTS` com IPs Docker internos (172.18.0.1-6)
+   - ✅ Hosts corretos para containers (`postgres`, `redis`)
+   - ✅ Driver PostgreSQL assíncrono (`postgresql+asyncpg://`)
+   - ✅ Formato CORS compatível com Pydantic Settings
 
-2. **docker-compose.yml**: 
-   - Variáveis de ambiente do banco adicionadas ao backend
-   - Versão obsoleta removida
+2. **Problemas Resolvidos Definitivamente**:
+   - ❌ "Invalid host header" do TrustedHostMiddleware
+   - ❌ Erro de parsing Pydantic nas variáveis CORS
+   - ❌ Hosts incorretos para banco/redis
+   - ❌ Driver PostgreSQL incompatível
+   - ❌ Quebras de linha Windows no .env
 
-3. **Backend/requirements.txt**: 
-   - Driver `asyncpg==0.29.0` para PostgreSQL assíncrono
+3. **Arquivos de Infraestrutura**:
+   - ✅ `Scripts/Deploy/prometheus.yml` (monitoramento)
+   - ✅ `Scripts/Deploy/Caddyfile` (proxy reverso)
+   - ✅ `Backend/sql/init.sql` (inicialização PostgreSQL)
+   - ✅ `Frontend/nginx.conf` (estrutura correta)
 
-4. **Backend/scheduler.py**: 
-   - Correção `day_of_week='sun'` (antes era 'sunday')
-
-5. **Frontend/nginx.conf**: 
-   - Estrutura completamente reescrita e validada
-
-6. **Arquivos criados**:
-   - `Scripts/Deploy/prometheus.yml` (monitoramento)
-   - `Scripts/Deploy/Caddyfile` (proxy reverso)
-   - `Backend/sql/init.sql` (inicialização PostgreSQL)
-   - `DEPLOY_FIXES.md` (documentação das correções)
-
-### 🎯 Resultado
-Esses arquivos foram corrigidos para evitar os 8 problemas mais comuns encontrados durante deploy em produção.
+### 🎯 Resultado FINAL
+**Templates prontos para deploy sem problemas!** Basta copiar e substituir o IP do servidor.
 
 ## 🚀 Instalação e Deploy
 
@@ -135,18 +131,23 @@ cd TibiaTracker
 
 ### 3. Configuração
 ```bash
-# Copiar template de variáveis
+# Para desenvolvimento local
 cp env.template .env
 
-# Editar variáveis (OBRIGATÓRIO)
-nano .env
+# Para servidor/produção (recomendado)
+cp env-production.template .env
+# Substituir YOUR_SERVER_IP pelo IP real do servidor
+sed -i 's/YOUR_SERVER_IP/192.168.1.227/g' .env
 ```
 
-**Variáveis essenciais para configurar:**
-- `SECRET_KEY`: Chave secreta da aplicação
-- `DB_PASSWORD`: Senha do PostgreSQL  
-- `REDIS_PASSWORD`: Senha do Redis
-- `JWT_SECRET_KEY`: Chave para tokens JWT
+**✅ NOVIDADE**: Os templates foram corrigidos com as configurações que funcionaram no deploy! 
+
+**Configurações já incluídas:**
+- ✅ `ENVIRONMENT=development` (permite acesso externo)
+- ✅ `ALLOWED_HOSTS` com IPs Docker internos
+- ✅ Hosts corretos para containers (`postgres`, `redis`)
+- ✅ Driver PostgreSQL assíncrono
+- ✅ Formato CORS compatível com Pydantic
 
 ### 4. Deploy da Aplicação
 ```bash

@@ -1,8 +1,8 @@
 """
-Schemas Pydantic para validação e serialização
-==============================================
+Schemas Pydantic para validação de dados de personagens
+======================================================
 
-Schemas para request/response da API de personagens.
+Define a estrutura de dados para requests/responses da API.
 """
 
 from pydantic import BaseModel, Field, validator
@@ -12,7 +12,7 @@ from enum import Enum
 
 
 class ServerType(str, Enum):
-    """Servidores suportados"""
+    """Tipos de servidores suportados"""
     TALEON = "taleon"
     RUBINI = "rubini"
     DEUS_OT = "deus_ot"
@@ -21,108 +21,264 @@ class ServerType(str, Enum):
 
 
 class WorldType(str, Enum):
-    """Mundos suportados"""
+    """Mundos suportados por servidor"""
+    # Taleon
     SAN = "san"
     AURA = "aura"
     GAIA = "gaia"
 
 
-# === SCHEMAS BASE ===
+class VocationType(str, Enum):
+    """Vocações do Tibia"""
+    NONE = "None"
+    SORCERER = "Sorcerer"
+    DRUID = "Druid"
+    PALADIN = "Paladin"
+    KNIGHT = "Knight"
+    MASTER_SORCERER = "Master Sorcerer"
+    ELDER_DRUID = "Elder Druid"
+    ROYAL_PALADIN = "Royal Paladin"
+    ELITE_KNIGHT = "Elite Knight"
+
 
 class CharacterBase(BaseModel):
-    """Schema base para personagem"""
-    name: str = Field(..., min_length=1, max_length=255, description="Nome do personagem")
-    server: ServerType = Field(..., description="Servidor do personagem")
-    world: WorldType = Field(..., description="Mundo do personagem")
+    """Schema base para personagens"""
+    name: str = Field(..., min_length=2, max_length=255, description="Nome do personagem")
+    server: ServerType = Field(..., description="Servidor onde o personagem está")
+    world: WorldType = Field(..., description="World atual do personagem")
+    level: Optional[int] = Field(0, ge=0, le=1000, description="Level atual do personagem")
+    vocation: Optional[str] = Field("None", max_length=50, description="Vocação do personagem")
+    residence: Optional[str] = Field(None, max_length=255, description="Residência do personagem")
+
+    @validator('name')
+    def validate_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Nome não pode ser vazio')
+        return v.strip()
 
 
 class CharacterCreate(CharacterBase):
-    """Schema para criação de personagem"""
-    pass
+    """Schema para criação de personagens"""
+    is_active: bool = Field(True, description="Se o personagem está ativo para scraping")
+    is_public: bool = Field(True, description="Se o personagem é público")
+    is_favorited: bool = Field(False, description="Se o personagem é favorito")
+    
+    # URLs opcionais
+    profile_url: Optional[str] = Field(None, max_length=500, description="URL do perfil do personagem")
+    character_url: Optional[str] = Field(None, max_length=500, description="URL da página do personagem")
+    outfit_image_url: Optional[str] = Field(None, max_length=500, description="URL da imagem do outfit")
 
 
 class CharacterUpdate(BaseModel):
-    """Schema para atualização de personagem"""
-    is_favorited: Optional[bool] = None
+    """Schema para atualização de personagens"""
+    name: Optional[str] = Field(None, min_length=2, max_length=255)
+    server: Optional[ServerType] = None
+    world: Optional[WorldType] = None
+    level: Optional[int] = Field(None, ge=0, le=1000)
+    vocation: Optional[str] = Field(None, max_length=50)
+    residence: Optional[str] = Field(None, max_length=255)
+    is_active: Optional[bool] = None
     is_public: Optional[bool] = None
+    is_favorited: Optional[bool] = None
+    profile_url: Optional[str] = Field(None, max_length=500)
+    character_url: Optional[str] = Field(None, max_length=500)
+    outfit_image_url: Optional[str] = Field(None, max_length=500)
 
 
-# === SCHEMAS DE RESPONSE ===
+class CharacterSnapshotBase(BaseModel):
+    """Schema base para snapshots de personagens"""
+    # Dados básicos obrigatórios
+    level: int = Field(..., ge=0, le=1000, description="Level do personagem")
+    experience: int = Field(..., ge=0, description="Experiência total do personagem")
+    deaths: int = Field(0, ge=0, description="Número de mortes do personagem")
+    
+    # Pontos especiais (opcionais)
+    charm_points: Optional[int] = Field(None, ge=0, description="Pontos de Charm")
+    bosstiary_points: Optional[int] = Field(None, ge=0, description="Pontos de Bosstiary")
+    achievement_points: Optional[int] = Field(None, ge=0, description="Pontos de Achievement")
+    
+    # Informações do personagem
+    vocation: str = Field(..., max_length=50, description="Vocação do personagem")
+    world: WorldType = Field(..., description="World do personagem neste snapshot")
+    residence: Optional[str] = Field(None, max_length=255, description="Residência")
+    house: Optional[str] = Field(None, max_length=255, description="Casa do personagem")
+    guild: Optional[str] = Field(None, max_length=255, description="Guild do personagem")
+    guild_rank: Optional[str] = Field(None, max_length=100, description="Rank na guild")
+    
+    # Status
+    is_online: bool = Field(False, description="Se o personagem está online")
+    last_login: Optional[datetime] = Field(None, description="Último login do personagem")
+    
+    # Outfit
+    outfit_image_url: Optional[str] = Field(None, max_length=500, description="URL da imagem do outfit")
+    outfit_data: Optional[str] = Field(None, description="Dados do outfit em JSON")
 
-class CharacterSnapshotResponse(BaseModel):
-    """Schema de resposta para snapshot de personagem"""
+    @validator('experience')
+    def validate_experience(cls, v):
+        if v < 0:
+            raise ValueError('Experiência não pode ser negativa')
+        return v
+
+    @validator('outfit_data')
+    def validate_outfit_data(cls, v):
+        if v is not None and len(v) > 10000:  # Limite razoável para JSON
+            raise ValueError('Dados do outfit muito grandes')
+        return v
+
+
+class CharacterSnapshotCreate(CharacterSnapshotBase):
+    """Schema para criação de snapshots"""
+    character_id: int = Field(..., description="ID do personagem")
+    scrape_source: str = Field("manual", max_length=100, description="Fonte do scraping")
+    scrape_duration: Optional[int] = Field(None, ge=0, description="Duração do scraping em ms")
+
+
+class CharacterSnapshot(CharacterSnapshotBase):
+    """Schema completo para snapshots (response)"""
     id: int
-    level: int
-    experience: int
-    deaths: int
-    charm_points: Optional[int]
-    bosstiary_points: Optional[int]
-    achievement_points: Optional[int]
-    vocation: Optional[str]
-    residence: Optional[str]
-    house: Optional[str]
-    guild: Optional[str]
-    guild_rank: Optional[str]
-    is_online: bool
-    last_login: Optional[datetime]
+    character_id: int
     scraped_at: datetime
     scrape_source: str
+    scrape_duration: Optional[int]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-class CharacterResponse(BaseModel):
-    """Schema de resposta completa para personagem"""
+class Character(CharacterBase):
+    """Schema completo para personagens (response)"""
     id: int
-    name: str
-    server: str
-    world: str
-    level: int
-    vocation: Optional[str]
-    residence: Optional[str]
     is_active: bool
     is_public: bool
     is_favorited: bool
     profile_url: Optional[str]
+    character_url: Optional[str]
+    outfit_image_url: Optional[str]
     last_scraped_at: Optional[datetime]
     scrape_error_count: int
     last_scrape_error: Optional[str]
     next_scrape_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    
-    # Último snapshot (dados mais recentes)
-    latest_snapshot: Optional[CharacterSnapshotResponse] = None
-    
-    # Estatísticas resumidas
-    total_snapshots: int = 0
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-class CharacterListResponse(BaseModel):
-    """Schema para lista de personagens"""
-    characters: List[CharacterResponse]
-    total: int
-    page: int
-    size: int
-    has_next: bool
+class CharacterWithSnapshots(Character):
+    """Schema para personagem com seus snapshots"""
+    snapshots: List[CharacterSnapshot] = []
+
+    class Config:
+        orm_mode = True
 
 
-class CharacterStatsResponse(BaseModel):
+class CharacterSummary(BaseModel):
+    """Schema resumido para listagens"""
+    id: int
+    name: str
+    server: str
+    world: str
+    level: int
+    vocation: str
+    is_active: bool
+    is_favorited: bool
+    last_scraped_at: Optional[datetime]
+    snapshots_count: Optional[int] = 0
+
+    class Config:
+        orm_mode = True
+
+
+class CharacterEvolution(BaseModel):
+    """Schema para dados de evolução temporal"""
+    character_id: int
+    character_name: str
+    period_start: datetime
+    period_end: datetime
+    
+    # Evolução dos dados
+    level_start: int
+    level_end: int
+    level_gained: int
+    
+    experience_start: int
+    experience_end: int
+    experience_gained: int
+    
+    deaths_start: int
+    deaths_end: int
+    deaths_total: int
+    
+    # Pontos especiais (se disponíveis)
+    charm_points_start: Optional[int]
+    charm_points_end: Optional[int]
+    charm_points_gained: Optional[int]
+    
+    bosstiary_points_start: Optional[int]
+    bosstiary_points_end: Optional[int]
+    bosstiary_points_gained: Optional[int]
+    
+    achievement_points_start: Optional[int]
+    achievement_points_end: Optional[int]
+    achievement_points_gained: Optional[int]
+    
+    # Mudanças de world (se houver)
+    world_changes: List[str] = []
+
+    class Config:
+        orm_mode = True
+
+
+class CharacterStats(BaseModel):
     """Schema para estatísticas de personagem"""
     character_id: int
+    character_name: str
+    
+    # Estatísticas gerais
     total_snapshots: int
-    level_progression: List[dict]  # [{date, level}, ...]
-    experience_progression: List[dict]  # [{date, experience}, ...]
-    deaths_progression: List[dict]  # [{date, deaths}, ...]
-    charm_points_progression: List[dict]  # [{date, charm_points}, ...]
-    bosstiary_points_progression: List[dict]  # [{date, bosstiary_points}, ...]
-    achievement_points_progression: List[dict]  # [{date, achievement_points}, ...]
-    first_seen: Optional[datetime]
-    last_updated: Optional[datetime]
+    first_snapshot: Optional[datetime]
+    last_snapshot: Optional[datetime]
+    
+    # Picos e records
+    highest_level: int
+    highest_level_date: Optional[datetime]
+    highest_experience: int
+    highest_experience_date: Optional[datetime]
+    
+    # Médias
+    average_daily_exp_gain: Optional[float]
+    average_level_per_month: Optional[float]
+    
+    # Worlds visitados
+    worlds_visited: List[str] = []
+    
+    class Config:
+        orm_mode = True
+
+
+# Schemas para responses de API
+class CharacterListResponse(BaseModel):
+    """Response para listagem de personagens"""
+    characters: List[CharacterSummary]
+    total: int
+    page: int
+    per_page: int
+
+
+class CharacterEvolutionResponse(BaseModel):
+    """Response para dados de evolução"""
+    character: CharacterSummary
+    evolution: CharacterEvolution
+    snapshots: List[CharacterSnapshot]
+
+
+class SnapshotListResponse(BaseModel):
+    """Response para listagem de snapshots"""
+    snapshots: List[CharacterSnapshot]
+    total: int
+    page: int
+    per_page: int
 
 
 # === SCHEMAS DE REQUEST ===

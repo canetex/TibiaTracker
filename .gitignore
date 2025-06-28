@@ -5,6 +5,7 @@
 env-servidor-corrigido.txt
 env-servidor.txt
 env*/
+env.server
 
 # Python
 __pycache__/

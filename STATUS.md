@@ -23,19 +23,19 @@ Tibia Tracker/
 │       ├── run-tests.sh                # Execução de todos os testes automatizados ✅
 │       └── api-tests.sh                # Testes específicos da API ✅
 ├── Frontend/                            # Aplicação React (próximo passo)
-├── Backend/                             # API FastAPI ✅ CRIADO
+├── Backend/                             # API FastAPI ✅ MELHORADO
 │   ├── app/
-│   │   ├── api/                         # Rotas da API ✅
+│   │   ├── api/                         # Rotas da API ✅ EXPANDIDO
 │   │   ├── core/
 │   │   │   └── config.py               # Configurações ✅
-│   │   ├── models/                      # Modelos do banco ✅
-│   │   ├── schemas/                     # Schemas Pydantic ✅
+│   │   ├── models/                      # Modelos do banco ✅ MELHORADO
+│   │   ├── schemas/                     # Schemas Pydantic ✅ EXPANDIDO
 │   │   ├── services/                    # Lógica de negócios ✅
 │   │   ├── db/                          # Configuração do banco ✅
 │   │   └── main.py                     # API Principal ✅
 │   ├── requirements.txt                # Dependências ✅
 │   ├── Dockerfile                      # Container ✅
-│   ├── sql/                            # Scripts SQL ✅
+│   ├── sql/                            # Scripts SQL ✅ MELHORADO
 │   └── tests/                          # Testes ✅
 ├── docker-compose.yml                  # Orquestração ✅
 ├── env.template                        # Template de variáveis ✅
@@ -61,6 +61,51 @@ Tibia Tracker/
 - **PostgreSQL**: Port 5432 ✅ SAUDÁVEL
 - **Redis**: Port 6379 ✅ SAUDÁVEL
 
+## 🗄️ BANCO DE DADOS IMPLEMENTADO E MELHORADO (2025-06-28)
+
+### ✅ Tabelas Criadas
+- **`characters`**: Personagens principais com estado atual ✅
+- **`character_snapshots`**: Histórico diário completo ✅
+
+### ✅ Dados Persistidos Conforme Solicitado
+1. **✅ Char Name**: `characters.name`
+2. **✅ Servidor Name**: `characters.server`  
+3. **✅ World Name**: `characters.world` (atual) + `character_snapshots.world` (histórico)
+4. **✅ Outfit**: `outfit_image_url` + `outfit_data` (JSON detalhado)
+5. **✅ Vocação**: `character_snapshots.vocation` (histórico completo)
+6. **✅ Level dia-a-dia**: `character_snapshots.level` com `scraped_at`
+7. **✅ Experiência dia-a-dia**: `character_snapshots.experience` (BigInt) com `scraped_at`
+8. **✅ Mortes dia-a-dia**: `character_snapshots.deaths` com `scraped_at`
+9. **✅ Charm Points dia-a-dia**: `character_snapshots.charm_points` (opcional) com `scraped_at`
+10. **✅ Bosstiary Points dia-a-dia**: `character_snapshots.bosstiary_points` (opcional) com `scraped_at`
+11. **✅ Achievements Points dia-a-dia**: `character_snapshots.achievement_points` (opcional) com `scraped_at`
+
+### 🔧 Melhorias Implementadas
+- **BigInteger** para experiência (suporta valores altos)
+- **Histórico de World**: Rastreia mudanças de world ao longo do tempo
+- **Índices Otimizados**: Performance para consultas históricas
+- **Triggers**: Auto-update de timestamps
+- **Validações**: Constraints e tipos adequados
+
+## 🚀 API ENDPOINTS IMPLEMENTADOS (2025-06-28)
+
+### ✅ CRUD de Personagens
+- `GET /characters/` - Listar com filtros e paginação
+- `POST /characters/` - Criar novo personagem
+- `GET /characters/{id}` - Obter personagem com snapshots
+- `PUT /characters/{id}` - Atualizar personagem
+- `DELETE /characters/{id}` - Deletar personagem
+
+### ✅ Gerenciamento de Snapshots
+- `POST /characters/{id}/snapshots` - Criar snapshot diário
+- `GET /characters/{id}/snapshots` - Listar snapshots com filtros
+- `GET /characters/{id}/evolution` - Análise de evolução temporal
+- `GET /characters/{id}/stats` - Estatísticas completas
+
+### ✅ Funcionalidades Utilitárias
+- `GET /characters/{id}/toggle-favorite` - Favoritar/desfavoritar
+- `GET /characters/{id}/toggle-active` - Ativar/desativar scraping
+
 ### 🔧 Correções Aplicadas Durante Deploy
 1. **Arquivo .env**: Quebras de linha Windows corrigidas com `sed`
 2. **docker-compose.yml**: Variáveis CORS problemáticas removidas
@@ -75,20 +120,33 @@ Tibia Tracker/
 - [x] Fazer deploy da aplicação
 - [x] Verificar funcionamento de todos os serviços
 
-### 2. 🔄 Configuração de Produção
+### 2. ✅ CONCLUÍDO - Estrutura de Banco de Dados
+- [x] Definir modelos de personagens e snapshots
+- [x] Implementar persistência de todos os dados solicitados
+- [x] Criar índices para performance
+- [x] Implementar endpoints CRUD completos
+- [x] Adicionar funcionalidades de evolução e estatísticas
+
+### 3. 🔄 Web Scraping e Automação
+- [ ] Implementar web scraping do Taleon (San, Aura, Gaia)
+- [ ] Integrar scraping com endpoints POST /characters/{id}/snapshots
+- [ ] Configurar scheduler automático (00:01 diário)
+- [ ] Implementar retry e error handling
+
+### 4. 🚀 Desenvolvimento de Funcionalidades
+- [ ] Completar integração Frontend com API
+- [ ] Implementar busca de personagens no Frontend
+- [ ] Adicionar gráficos de evolução temporal
+- [ ] Sistema de favoritos no Frontend
+- [ ] Dashboard com estatísticas
+
+### 5. 🔄 Configuração de Produção
 - [ ] Configurar domínio DNS para o IP 192.168.1.227
 - [ ] Voltar ambiente para `production` com hosts corretos
 - [ ] Configurar SSL/HTTPS via Caddy
 - [ ] Implementar backup automático
 
-### 3. 🚀 Desenvolvimento de Funcionalidades
-- [ ] Completar Backend (Personagens Endpoint)
-- [ ] Implementar web scraping do Taleon
-- [ ] Criar endpoint POST /characters
-- [ ] Configurar scheduler automático
-- [ ] Implementar sistema de cache
-
-### 4. 🎨 Melhorias no Frontend
+### 6. 🎨 Melhorias no Frontend
 - [ ] Integrar com endpoints da API
 - [ ] Implementar busca de personagens
 - [ ] Adicionar gráficos de evolução
@@ -96,13 +154,39 @@ Tibia Tracker/
 
 ## 🛠️ STACK IMPLEMENTADA
 
-### ✅ Backend (FastAPI)
+### ✅ Backend (FastAPI) - ARQUITETURA DESACOPLADA
 - **Framework**: FastAPI com documentação automática
-- **Banco**: PostgreSQL configurado
+- **Banco**: PostgreSQL com AsyncSQLAlchemy configurado
 - **Cache**: Redis configurado
 - **Container**: Docker + Docker Compose
 - **Logging**: Sistema de logs estruturado
 - **Configuração**: Pydantic Settings com validação
+- **Modelos**: SQLAlchemy com relacionamentos e índices
+- **Schemas**: Pydantic com validação completa
+- **Endpoints**: CRUD completo + funcionalidades avançadas
+- **🆕 Scraping Modular**: Arquitetura desacoplada por servidor
+- **🆕 Interface Unificada**: ScrapingManager para gerenciar múltiplos servidores
+
+#### 🔧 Arquitetura de Scraping Desacoplada
+```
+Backend/app/services/scraping/
+├── __init__.py              # Interface principal (ScrapingManager)
+├── base.py                  # Classe base abstrata (BaseCharacterScraper)
+├── taleon.py               # Scraper específico do Taleon ✅
+├── rubini_template.py      # Template para novos scrapers 📋
+├── [futuros]...            # Novos servidores facilmente adicionáveis
+```
+
+**Benefícios da Nova Arquitetura:**
+- ✅ **Desacoplamento Total**: Cada servidor em arquivo separado
+- ✅ **Manutenção Simplificada**: Mudanças isoladas por servidor
+- ✅ **Escalabilidade**: Adicionar novos servidores sem afetar existentes
+- ✅ **Interface Unificada**: API consistente independente do servidor
+- ✅ **Template System**: Guias claros para implementar novos scrapers
+- ✅ **Especialização**: Cada scraper otimizado para seu servidor específico
+- 🆕 **Configuração por Mundo**: Configurações granulares por mundo dentro de cada servidor
+- 🆕 **Logs Específicos**: Identificação clara de `[TALEON-SAN]`, `[TALEON-AURA]`, etc.
+- 🆕 **APIs Detalhadas**: Endpoints específicos para configurações por mundo
 
 ### ✅ Infraestrutura
 - **Containerização**: Docker multi-stage
@@ -119,7 +203,7 @@ Tibia Tracker/
 - **Remoção**: Desinstalação segura e limpeza Docker
 - **Testes**: Testes automatizados de API e sistema
 
-## 📋 FUNCIONALIDADES PLANEJADAS
+## 📋 FUNCIONALIDADES IMPLEMENTADAS E PLANEJADAS
 
 ### 🎯 Core Features
 - [x] Estrutura base do projeto
@@ -129,9 +213,11 @@ Tibia Tracker/
 - [x] Scripts de verificação e monitoramento
 - [x] Scripts de remoção e limpeza
 - [x] Testes automatizados
+- [x] **Modelos de banco completos para persistência**
+- [x] **Endpoints CRUD para personagens**
+- [x] **Sistema de snapshots históricos**
+- [x] **Funcionalidades de análise e estatísticas**
 - [ ] Web scraping Taleon (San, Aura, Gaia)
-- [ ] Endpoint POST /characters
-- [ ] Histórico de snapshots
 - [ ] Agendamento automático (00:01 diário)
 - [ ] Interface React responsiva
 - [ ] Gráficos de evolução
@@ -243,6 +329,26 @@ sudo ./Scripts/Remoção/clean-docker.sh
 7. ❌ Scripts falhando por diretórios de log inexistentes
 8. ❌ Arquivos de configuração faltantes
 
+## 📊 MELHORIAS APLICADAS (2025-06-28)
+
+### ✅ Modelos de Banco de Dados
+- **Character**: Modelo principal com estado atual do personagem
+- **CharacterSnapshot**: Snapshots históricos diários completos
+- **Índices Otimizados**: Performance para consultas temporais
+- **BigInteger**: Suporte a experiências altas
+- **World Tracking**: Histórico de mudanças de world
+
+### ✅ Schemas Pydantic
+- **Validação Completa**: Todos os campos com validações adequadas
+- **Schemas Evolutivos**: CharacterEvolution, CharacterStats
+- **Responses Estruturadas**: Listagem, paginação, filtros
+
+### ✅ Endpoints da API
+- **CRUD Completo**: Create, Read, Update, Delete
+- **Snapshots**: Gerenciamento de histórico diário
+- **Análises**: Evolução temporal e estatísticas
+- **Utilitários**: Toggle favorite/active
+
 ## 📞 SUPPORT
 
 Para dúvidas ou problemas:
@@ -253,6 +359,6 @@ Para dúvidas ou problemas:
 
 ---
 
-**Status Atual**: 🎉 **DEPLOY COMPLETO - APLICAÇÃO FUNCIONANDO**  
+**Status Atual**: 🎉 **BANCO E API IMPLEMENTADOS** - Estrutura completa para persistência  
 **Servidor**: LXC Debian 192.168.1.227 - Todos os serviços operacionais  
-**Próximo**: Configuração de produção (domínio, SSL, backup) e desenvolvimento de funcionalidades 
+**Próximo**: Web scraping e automação, integração Frontend 

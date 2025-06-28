@@ -155,3 +155,48 @@ npm install -g npm@10.8.2
 - **Data**: 2025-06-27
 - **Status**: 🎉 Deploy realizado com sucesso no servidor LXC 192.168.1.227
 - **Ambiente**: Debian 12 Bookworm + Docker 28.3.0 
+
+### v1.0.2-templates-corrected (Correções Finais nos Templates)
+- **Data**: 2025-06-28
+- **Status**: ✅ Templates corrigidos para evitar problemas futuros
+- **Ações**:
+  - ✅ **env.template** atualizado com configurações que funcionaram
+  - ✅ **env-production.template** corrigido com ALLOWED_HOSTS adequados
+  - ✅ Documentação atualizada com instruções para próximos deploys
+  - ✅ Formato CORS/ALLOWED_HOSTS compatível com Pydantic Settings
+
+## 🎯 Para Próximos Deploys
+
+### 1. **Uso dos Templates Corrigidos**
+```bash
+# Para desenvolvimento local
+cp env.template .env
+
+# Para servidor/produção  
+cp env-production.template .env
+# Substituir YOUR_SERVER_IP pelo IP real (ex: 192.168.1.227)
+sed -i 's/YOUR_SERVER_IP/192.168.1.227/g' .env
+```
+
+### 2. **Validações Automáticas**
+Os templates agora incluem:
+- ✅ ENVIRONMENT=development (funciona out-of-the-box)
+- ✅ ALLOWED_HOSTS com IPs Docker internos pré-configurados
+- ✅ Configurações de banco e cache corretas
+- ✅ Headers CORS no formato correto para Pydantic
+
+### 3. **Não Será Mais Necessário**
+- ❌ Editar manualmente ALLOWED_HOSTS
+- ❌ Comentar variáveis problemáticas
+- ❌ Corrigir hosts de banco/redis
+- ❌ Ajustar driver PostgreSQL
+- ❌ Resolver problemas de parsing Pydantic
+
+## 📚 Documentação Atualizada
+- **README.md**: Instruções de deploy atualizadas
+- **STATUS.md**: Status do projeto e funcionalidades
+- **DEPLOY_FIXES.md**: Este documento com todas as correções
+
+---
+
+**🎉 RESULTADO FINAL**: Templates prontos para deploy sem problemas! 🚀 
