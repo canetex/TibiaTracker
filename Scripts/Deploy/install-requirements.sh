@@ -141,7 +141,23 @@ install_docker() {
     # Verificar instalação
     docker --version
     
-    log "Docker instalado com sucesso!"
+    # Verificar se Docker daemon está rodando
+    if ! systemctl is-active --quiet docker; then
+        error "Docker daemon não está rodando"
+    fi
+    
+    # Testar Docker com comando simples
+    if ! docker run --rm hello-world &> /dev/null; then
+        warning "Docker instalado mas não está funcionando corretamente"
+        log "Tentando reiniciar Docker daemon..."
+        systemctl restart docker
+        sleep 5
+        if ! docker run --rm hello-world &> /dev/null; then
+            error "Docker não está funcionando após reinstalação"
+        fi
+    fi
+    
+    log "Docker instalado e funcionando corretamente!"
 }
 
 # =============================================================================
