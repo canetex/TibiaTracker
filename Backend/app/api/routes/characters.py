@@ -13,7 +13,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from app.db.database import get_db
-from app.models.character import Character, CharacterSnapshot
+from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
     CharacterCreate, CharacterUpdate, Character as CharacterSchema,
     CharacterWithSnapshots, CharacterSummary, CharacterListResponse,
@@ -177,11 +177,11 @@ async def scrape_and_create_character(
     
     try:
         # Verificar se já existe
-        existing_query = select(Character).where(
+        existing_query = select(CharacterModel).where(
             and_(
-                Character.name.ilike(character_name),
-                Character.server == server.lower(),
-                Character.world == world.lower()
+                CharacterModel.name.ilike(character_name),
+                CharacterModel.server == server.lower(),
+                CharacterModel.world == world.lower()
             )
         )
         result = await db.execute(existing_query)
@@ -210,7 +210,7 @@ async def scrape_and_create_character(
         scraped_data = scrape_result.data
         
         # Criar personagem
-        character = Character(
+        character = CharacterModel(
             name=scraped_data['name'],
             server=server.lower(),
             world=world.lower(),
@@ -229,7 +229,7 @@ async def scrape_and_create_character(
         await db.flush()  # Para obter o ID
         
         # Criar primeiro snapshot
-        snapshot = CharacterSnapshot(
+        snapshot = CharacterSnapshotModel(
             character_id=character.id,
             level=scraped_data['level'],
             experience=scraped_data.get('experience', 0),
@@ -293,31 +293,31 @@ async def list_characters(
 ):
     """Listar personagens com filtros e paginação"""
     
-    query = select(Character)
+    query = select(CharacterModel)
     
     # Aplicar filtros
     filters = []
     if server:
-        filters.append(Character.server == server)
+        filters.append(CharacterModel.server == server)
     if world:
-        filters.append(Character.world == world)
+        filters.append(CharacterModel.world == world)
     if is_active is not None:
-        filters.append(Character.is_active == is_active)
+        filters.append(CharacterModel.is_active == is_active)
     if is_favorited is not None:
-        filters.append(Character.is_favorited == is_favorited)
+        filters.append(CharacterModel.is_favorited == is_favorited)
     if search:
-        filters.append(Character.name.ilike(f"%{search}%"))
+        filters.append(CharacterModel.name.ilike(f"%{search}%"))
     
     if filters:
         query = query.where(and_(*filters))
     
     # Contar total
-    count_query = select(func.count(Character.id)).where(and_(*filters)) if filters else select(func.count(Character.id))
+    count_query = select(func.count(CharacterModel.id)).where(and_(*filters)) if filters else select(func.count(CharacterModel.id))
     result = await db.execute(count_query)
     total = result.scalar()
     
     # Aplicar paginação e ordenação
-    query = query.order_by(Character.name).offset(skip).limit(limit)
+    query = query.order_by(CharacterModel.name).offset(skip).limit(limit)
     
     result = await db.execute(query)
     characters = result.scalars().all()
@@ -326,7 +326,7 @@ async def list_characters(
     character_summaries = []
     for char in characters:
         # Contar snapshots para cada personagem
-        snapshot_count_query = select(func.count(CharacterSnapshot.id)).where(CharacterSnapshot.character_id == char.id)
+        snapshot_count_query = select(func.count(CharacterSnapshotModel.id)).where(CharacterSnapshotModel.character_id == char.id)
         snapshot_result = await db.execute(snapshot_count_query)
         snapshots_count = snapshot_result.scalar()
         
@@ -360,11 +360,11 @@ async def create_character(
     """Criar novo personagem"""
     
     # Verificar se já existe personagem com o mesmo nome/servidor/world
-    existing_query = select(Character).where(
+    existing_query = select(CharacterModel).where(
         and_(
-            Character.name == character_data.name,
-            Character.server == character_data.server,
-            Character.world == character_data.world
+            CharacterModel.name == character_data.name,
+            CharacterModel.server == character_data.server,
+            CharacterModel.world == character_data.world
         )
     )
     result = await db.execute(existing_query)
@@ -377,7 +377,7 @@ async def create_character(
         )
     
     # Criar novo personagem
-    character = Character(**character_data.dict())
+    character = CharacterModel(**character_data.dict())
     db.add(character)
     await db.commit()
     await db.refresh(character)
@@ -394,10 +394,10 @@ async def get_character(
 ):
     """Obter personagem por ID com snapshots opcionais"""
     
-    query = select(Character).where(Character.id == character_id)
+    query = select(CharacterModel).where(CharacterModel.id == character_id)
     
     if include_snapshots:
-        query = query.options(selectinload(Character.snapshots))
+        query = query.options(selectinload(CharacterModel.snapshots))
     
     result = await db.execute(query)
     character = result.scalar_one_or_none()
@@ -420,7 +420,7 @@ async def update_character(
 ):
     """Atualizar personagem"""
     
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -444,7 +444,7 @@ async def delete_character(
 ):
     """Deletar personagem e todos os seus snapshots"""
     
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -467,7 +467,7 @@ async def create_snapshot(
     """Criar novo snapshot para o personagem"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -475,7 +475,7 @@ async def create_snapshot(
     
     # Criar snapshot
     snapshot_data.character_id = character_id
-    snapshot = CharacterSnapshot(**snapshot_data.dict())
+    snapshot = CharacterSnapshotModel(**snapshot_data.dict())
     db.add(snapshot)
     
     # Atualizar dados atuais do personagem
@@ -504,26 +504,26 @@ async def list_character_snapshots(
     """Listar snapshots de um personagem com filtros"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
         raise HTTPException(status_code=404, detail="Personagem não encontrado")
     
-    query = select(CharacterSnapshot).where(CharacterSnapshot.character_id == character_id)
+    query = select(CharacterSnapshotModel).where(CharacterSnapshotModel.character_id == character_id)
     
     # Aplicar filtros de data
     filters = []
     if start_date:
-        filters.append(CharacterSnapshot.scraped_at >= start_date)
+        filters.append(CharacterSnapshotModel.scraped_at >= start_date)
     if end_date:
-        filters.append(CharacterSnapshot.scraped_at <= end_date)
+        filters.append(CharacterSnapshotModel.scraped_at <= end_date)
     
     if filters:
         query = query.where(and_(*filters))
     
     # Contar total
-    count_query = select(func.count(CharacterSnapshot.id)).where(CharacterSnapshot.character_id == character_id)
+    count_query = select(func.count(CharacterSnapshotModel.id)).where(CharacterSnapshotModel.character_id == character_id)
     if filters:
         count_query = count_query.where(and_(*filters))
     
@@ -531,7 +531,7 @@ async def list_character_snapshots(
     total = result.scalar()
     
     # Aplicar paginação e ordenação (mais recentes primeiro)
-    query = query.order_by(desc(CharacterSnapshot.scraped_at)).offset(skip).limit(limit)
+    query = query.order_by(desc(CharacterSnapshotModel.scraped_at)).offset(skip).limit(limit)
     
     result = await db.execute(query)
     snapshots = result.scalars().all()
@@ -553,7 +553,7 @@ async def get_character_evolution(
     """Obter dados de evolução do personagem em um período"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -564,13 +564,13 @@ async def get_character_evolution(
     start_date = end_date - timedelta(days=days)
     
     # Obter snapshots do período
-    snapshots_query = select(CharacterSnapshot).where(
+    snapshots_query = select(CharacterSnapshotModel).where(
         and_(
-            CharacterSnapshot.character_id == character_id,
-            CharacterSnapshot.scraped_at >= start_date,
-            CharacterSnapshot.scraped_at <= end_date
+            CharacterSnapshotModel.character_id == character_id,
+            CharacterSnapshotModel.scraped_at >= start_date,
+            CharacterSnapshotModel.scraped_at <= end_date
         )
-    ).order_by(CharacterSnapshot.scraped_at)
+    ).order_by(CharacterSnapshotModel.scraped_at)
     
     result = await db.execute(snapshots_query)
     snapshots = result.scalars().all()
@@ -645,16 +645,16 @@ async def get_character_stats(
     """Obter estatísticas completas do personagem"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
         raise HTTPException(status_code=404, detail="Personagem não encontrado")
     
     # Obter todos os snapshots
-    snapshots_query = select(CharacterSnapshot).where(
-        CharacterSnapshot.character_id == character_id
-    ).order_by(CharacterSnapshot.scraped_at)
+    snapshots_query = select(CharacterSnapshotModel).where(
+        CharacterSnapshotModel.character_id == character_id
+    ).order_by(CharacterSnapshotModel.scraped_at)
     
     result = await db.execute(snapshots_query)
     snapshots = result.scalars().all()
@@ -704,7 +704,7 @@ async def toggle_favorite(
 ):
     """Alternar status de favorito do personagem"""
     
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -724,7 +724,7 @@ async def toggle_active(
 ):
     """Alternar status ativo do personagem"""
     
-    result = await db.execute(select(Character).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:

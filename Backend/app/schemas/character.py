@@ -142,7 +142,7 @@ class CharacterSnapshot(CharacterSnapshotBase):
     scrape_duration: Optional[int]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Character(CharacterBase):
@@ -162,7 +162,7 @@ class Character(CharacterBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CharacterWithSnapshots(Character):
@@ -170,7 +170,7 @@ class CharacterWithSnapshots(Character):
     snapshots: List[CharacterSnapshot] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CharacterSummary(BaseModel):
@@ -187,7 +187,7 @@ class CharacterSummary(BaseModel):
     snapshots_count: Optional[int] = 0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CharacterEvolution(BaseModel):
@@ -227,7 +227,7 @@ class CharacterEvolution(BaseModel):
     world_changes: List[str] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CharacterStats(BaseModel):
@@ -254,7 +254,7 @@ class CharacterStats(BaseModel):
     worlds_visited: List[str] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Schemas para responses de API

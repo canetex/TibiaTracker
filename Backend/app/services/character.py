@@ -12,11 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_, or_
 from sqlalchemy.orm import selectinload
 
-from app.models.character import Character, CharacterSnapshot
+from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
-    CharacterCreate, CharacterUpdate, CharacterResponse, 
-    CharacterListResponse, CharacterStatsResponse,
-    CharacterSnapshotResponse
+    CharacterCreate, CharacterUpdate, Character as CharacterSchema, 
+    CharacterListResponse, CharacterStats,
+    CharacterSnapshot as CharacterSnapshotSchema
 )
 
 logger = logging.getLogger(__name__)
@@ -28,11 +28,11 @@ class CharacterService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_character(self, character_id: int) -> Optional[Character]:
+    async def get_character(self, character_id: int) -> Optional[CharacterModel]:
         """Buscar personagem por ID"""
         try:
             result = await self.db.execute(
-                select(Character).where(Character.id == character_id)
+                select(CharacterModel).where(CharacterModel.id == character_id)
             )
             return result.scalar_one_or_none()
         except Exception as e:
@@ -41,15 +41,15 @@ class CharacterService:
 
     async def get_character_by_name_server_world(
         self, name: str, server: str, world: str
-    ) -> Optional[Character]:
+    ) -> Optional[CharacterModel]:
         """Buscar personagem por nome, servidor e mundo"""
         try:
             result = await self.db.execute(
-                select(Character).where(
+                select(CharacterModel).where(
                     and_(
-                        Character.name.ilike(name),
-                        Character.server == server,
-                        Character.world == world
+                        CharacterModel.name.ilike(name),
+                        CharacterModel.server == server,
+                        CharacterModel.world == world
                     )
                 )
             )
@@ -60,11 +60,11 @@ class CharacterService:
 
     async def create_character_with_snapshot(
         self, character_data: CharacterCreate, snapshot_data: Dict[str, Any]
-    ) -> Character:
+    ) -> CharacterModel:
         """Criar personagem com snapshot inicial"""
         try:
             # Criar personagem
-            character = Character(
+            character = CharacterModel(
                 name=character_data.name,
                 server=character_data.server,
                 world=character_data.world,
@@ -81,7 +81,7 @@ class CharacterService:
             await self.db.flush()  # Para obter o ID
 
             # Criar snapshot inicial
-            snapshot = CharacterSnapshot(
+            snapshot = CharacterSnapshotModel(
                 character_id=character.id,
                 level=snapshot_data.get('level', 0),
                 experience=snapshot_data.get('experience', 0),
@@ -113,10 +113,10 @@ class CharacterService:
 
     async def create_snapshot(
         self, character_id: int, snapshot_data: Dict[str, Any], source: str = "scheduled"
-    ) -> CharacterSnapshot:
+    ) -> CharacterSnapshotModel:
         """Criar novo snapshot para um personagem"""
         try:
-            snapshot = CharacterSnapshot(
+            snapshot = CharacterSnapshotModel(
                 character_id=character_id,
                 level=snapshot_data.get('level', 0),
                 experience=snapshot_data.get('experience', 0),
@@ -159,7 +159,7 @@ class CharacterService:
 
     async def update_character(
         self, character_id: int, character_data: CharacterUpdate
-    ) -> Optional[Character]:
+    ) -> Optional[CharacterModel]:
         """Atualizar configurações do personagem"""
         try:
             character = await self.get_character(character_id)
@@ -219,62 +219,22 @@ class CharacterService:
             logger.error(f"Erro ao deletar personagem {character_id}: {e}")
             return False
 
-    async def get_character_with_stats(self, character_id: int) -> Optional[CharacterResponse]:
+    async def get_character_with_stats(self, character_id: int) -> Optional[CharacterSchema]:
         """Obter personagem com último snapshot e estatísticas"""
         try:
             # Buscar personagem com snapshots
             result = await self.db.execute(
-                select(Character)
-                .options(selectinload(Character.snapshots))
-                .where(Character.id == character_id)
+                select(CharacterModel)
+                .options(selectinload(CharacterModel.snapshots))
+                .where(CharacterModel.id == character_id)
             )
             character = result.scalar_one_or_none()
 
             if not character:
                 return None
 
-            # Buscar último snapshot
-            latest_snapshot_result = await self.db.execute(
-                select(CharacterSnapshot)
-                .where(CharacterSnapshot.character_id == character_id)
-                .order_by(desc(CharacterSnapshot.scraped_at))
-                .limit(1)
-            )
-            latest_snapshot = latest_snapshot_result.scalar_one_or_none()
-
-            # Contar snapshots
-            total_snapshots_result = await self.db.execute(
-                select(func.count(CharacterSnapshot.id))
-                .where(CharacterSnapshot.character_id == character_id)
-            )
-            total_snapshots = total_snapshots_result.scalar() or 0
-
             # Converter para response
-            latest_snapshot_response = None
-            if latest_snapshot:
-                latest_snapshot_response = CharacterSnapshotResponse.from_orm(latest_snapshot)
-
-            return CharacterResponse(
-                id=character.id,
-                name=character.name,
-                server=character.server,
-                world=character.world,
-                level=character.level,
-                vocation=character.vocation,
-                residence=character.residence,
-                is_active=character.is_active,
-                is_public=character.is_public,
-                is_favorited=character.is_favorited,
-                profile_url=character.profile_url,
-                last_scraped_at=character.last_scraped_at,
-                scrape_error_count=character.scrape_error_count,
-                last_scrape_error=character.last_scrape_error,
-                next_scrape_at=character.next_scrape_at,
-                created_at=character.created_at,
-                updated_at=character.updated_at,
-                latest_snapshot=latest_snapshot_response,
-                total_snapshots=total_snapshots
-            )
+            return CharacterSchema.from_orm(character)
 
         except Exception as e:
             logger.error(f"Erro ao obter personagem com stats {character_id}: {e}")
@@ -291,61 +251,57 @@ class CharacterService:
         """Listar personagens com filtros e paginação"""
         try:
             # Construir query base
-            query = select(Character).where(Character.is_active == True)
+            query = select(CharacterModel).where(CharacterModel.is_active == True)
 
             # Aplicar filtros
             if favorited_only:
-                query = query.where(Character.is_favorited == True)
+                query = query.where(CharacterModel.is_favorited == True)
 
             if server:
-                query = query.where(Character.server == server)
+                query = query.where(CharacterModel.server == server)
 
             if world:
-                query = query.where(Character.world == world)
+                query = query.where(CharacterModel.world == world)
 
             # Contar total
-            count_query = select(func.count(Character.id)).select_from(query.subquery())
+            count_query = select(func.count(CharacterModel.id)).select_from(query.subquery())
             total_result = await self.db.execute(count_query)
             total = total_result.scalar() or 0
 
             # Aplicar paginação
             offset = (page - 1) * size
-            query = query.order_by(desc(Character.created_at)).offset(offset).limit(size)
+            query = query.order_by(desc(CharacterModel.created_at)).offset(offset).limit(size)
 
             # Executar query
             result = await self.db.execute(query)
             characters = result.scalars().all()
 
             # Converter para response
-            character_responses = []
+            from app.schemas.character import CharacterSummary
+            character_summaries = []
             for character in characters:
-                char_response = await self.get_character_with_stats(character.id)
-                if char_response:
-                    character_responses.append(char_response)
-
-            has_next = (page * size) < total
+                character_summaries.append(CharacterSummary.from_orm(character))
 
             return CharacterListResponse(
-                characters=character_responses,
+                characters=character_summaries,
                 total=total,
                 page=page,
-                size=size,
-                has_next=has_next
+                per_page=size
             )
 
         except Exception as e:
             logger.error(f"Erro ao listar personagens: {e}")
             return CharacterListResponse(
-                characters=[], total=0, page=page, size=size, has_next=False
+                characters=[], total=0, page=page, per_page=size
             )
 
-    async def get_recent_characters(self, limit: int = 10) -> List[CharacterResponse]:
+    async def get_recent_characters(self, limit: int = 10) -> List[CharacterSchema]:
         """Obter personagens adicionados recentemente"""
         try:
             result = await self.db.execute(
-                select(Character)
-                .where(Character.is_active == True)
-                .order_by(desc(Character.created_at))
+                select(CharacterModel)
+                .where(CharacterModel.is_active == True)
+                .order_by(desc(CharacterModel.created_at))
                 .limit(limit)
             )
             characters = result.scalars().all()
@@ -364,7 +320,7 @@ class CharacterService:
 
     async def get_character_statistics(
         self, character_id: int, days: int = 30
-    ) -> Optional[CharacterStatsResponse]:
+    ) -> Optional[CharacterStats]:
         """Obter estatísticas detalhadas de um personagem"""
         try:
             # Verificar se personagem existe
@@ -377,63 +333,64 @@ class CharacterService:
 
             # Buscar snapshots no período
             result = await self.db.execute(
-                select(CharacterSnapshot)
+                select(CharacterSnapshotModel)
                 .where(
                     and_(
-                        CharacterSnapshot.character_id == character_id,
-                        CharacterSnapshot.scraped_at >= date_limit
+                        CharacterSnapshotModel.character_id == character_id,
+                        CharacterSnapshotModel.scraped_at >= date_limit
                     )
                 )
-                .order_by(CharacterSnapshot.scraped_at)
+                .order_by(CharacterSnapshotModel.scraped_at)
             )
             snapshots = result.scalars().all()
 
-            # Construir progressões
-            level_progression = [
-                {"date": snap.scraped_at.isoformat(), "level": snap.level}
-                for snap in snapshots
-            ]
+            # Calcular estatísticas básicas
+            total_snapshots = len(snapshots)
+            first_snapshot = snapshots[0].scraped_at if snapshots else None
+            last_snapshot = snapshots[-1].scraped_at if snapshots else None
+            
+            # Encontrar picos
+            highest_level = max((snap.level for snap in snapshots), default=0)
+            highest_experience = max((snap.experience for snap in snapshots), default=0)
+            
+            # Encontrar datas dos picos
+            highest_level_date = None
+            highest_experience_date = None
+            for snap in snapshots:
+                if snap.level == highest_level and highest_level_date is None:
+                    highest_level_date = snap.scraped_at
+                if snap.experience == highest_experience and highest_experience_date is None:
+                    highest_experience_date = snap.scraped_at
 
-            experience_progression = [
-                {"date": snap.scraped_at.isoformat(), "experience": snap.experience}
-                for snap in snapshots
-            ]
+            # Calcular médias
+            average_daily_exp_gain = None
+            average_level_per_month = None
+            if len(snapshots) > 1:
+                exp_gain = snapshots[-1].experience - snapshots[0].experience
+                days_diff = (snapshots[-1].scraped_at - snapshots[0].scraped_at).days
+                if days_diff > 0:
+                    average_daily_exp_gain = exp_gain / days_diff
+                    
+                level_gain = snapshots[-1].level - snapshots[0].level
+                if days_diff > 0:
+                    average_level_per_month = (level_gain * 30) / days_diff
 
-            deaths_progression = [
-                {"date": snap.scraped_at.isoformat(), "deaths": snap.deaths}
-                for snap in snapshots
-            ]
+            # Worlds visitados
+            worlds_visited = list(set(snap.world for snap in snapshots))
 
-            charm_points_progression = [
-                {"date": snap.scraped_at.isoformat(), "charm_points": snap.charm_points}
-                for snap in snapshots if snap.charm_points is not None
-            ]
-
-            bosstiary_points_progression = [
-                {"date": snap.scraped_at.isoformat(), "bosstiary_points": snap.bosstiary_points}
-                for snap in snapshots if snap.bosstiary_points is not None
-            ]
-
-            achievement_points_progression = [
-                {"date": snap.scraped_at.isoformat(), "achievement_points": snap.achievement_points}
-                for snap in snapshots if snap.achievement_points is not None
-            ]
-
-            # Primeira e última data
-            first_seen = snapshots[0].scraped_at if snapshots else None
-            last_updated = snapshots[-1].scraped_at if snapshots else None
-
-            return CharacterStatsResponse(
+            return CharacterStats(
                 character_id=character_id,
-                total_snapshots=len(snapshots),
-                level_progression=level_progression,
-                experience_progression=experience_progression,
-                deaths_progression=deaths_progression,
-                charm_points_progression=charm_points_progression,
-                bosstiary_points_progression=bosstiary_points_progression,
-                achievement_points_progression=achievement_points_progression,
-                first_seen=first_seen,
-                last_updated=last_updated
+                character_name=character.name,
+                total_snapshots=total_snapshots,
+                first_snapshot=first_snapshot,
+                last_snapshot=last_snapshot,
+                highest_level=highest_level,
+                highest_level_date=highest_level_date,
+                highest_experience=highest_experience,
+                highest_experience_date=highest_experience_date,
+                average_daily_exp_gain=average_daily_exp_gain,
+                average_level_per_month=average_level_per_month,
+                worlds_visited=worlds_visited
             )
 
         except Exception as e:
@@ -445,28 +402,28 @@ class CharacterService:
         try:
             # Total de personagens
             total_chars_result = await self.db.execute(
-                select(func.count(Character.id)).where(Character.is_active == True)
+                select(func.count(CharacterModel.id)).where(CharacterModel.is_active == True)
             )
             total_characters = total_chars_result.scalar() or 0
 
             # Total de snapshots
             total_snapshots_result = await self.db.execute(
-                select(func.count(CharacterSnapshot.id))
+                select(func.count(CharacterSnapshotModel.id))
             )
             total_snapshots = total_snapshots_result.scalar() or 0
 
             # Personagens por servidor
             server_stats_result = await self.db.execute(
-                select(Character.server, func.count(Character.id))
-                .where(Character.is_active == True)
-                .group_by(Character.server)
+                select(CharacterModel.server, func.count(CharacterModel.id))
+                .where(CharacterModel.is_active == True)
+                .group_by(CharacterModel.server)
             )
             server_stats = {server: count for server, count in server_stats_result.fetchall()}
 
             # Personagens favoritados
             favorited_result = await self.db.execute(
-                select(func.count(Character.id))
-                .where(and_(Character.is_active == True, Character.is_favorited == True))
+                select(func.count(CharacterModel.id))
+                .where(and_(CharacterModel.is_active == True, CharacterModel.is_favorited == True))
             )
             favorited_characters = favorited_result.scalar() or 0
 
