@@ -9,6 +9,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
+from sqlalchemy import text
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -156,8 +157,4 @@ async def close_database():
     """
     logger.info("🔌 Fechando conexões do banco de dados...")
     await engine.dispose()
-    logger.info("✅ Conexões fechadas")
-
-
-# Importações necessárias para funcionar
-from sqlalchemy import text 
+    logger.info("✅ Conexões fechadas") 

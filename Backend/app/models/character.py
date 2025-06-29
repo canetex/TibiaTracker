@@ -7,12 +7,12 @@ e seus históricos de snapshots diários.
 """
 
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Boolean, Text, ForeignKey, Index
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from enum import Enum
 
-Base = declarative_base()
+# Importar Base centralizada do database.py
+from app.db.database import Base
 
 
 class ServerType(str, Enum):
