@@ -467,7 +467,7 @@ async def create_snapshot(
     """Criar novo snapshot para o personagem"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -504,7 +504,7 @@ async def list_character_snapshots(
     """Listar snapshots de um personagem com filtros"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -553,7 +553,7 @@ async def get_character_evolution(
     """Obter dados de evolução do personagem em um período"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -645,7 +645,7 @@ async def get_character_stats(
     """Obter estatísticas completas do personagem"""
     
     # Verificar se personagem existe
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -704,7 +704,7 @@ async def toggle_favorite(
 ):
     """Alternar status de favorito do personagem"""
     
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
@@ -724,7 +724,7 @@ async def toggle_active(
 ):
     """Alternar status ativo do personagem"""
     
-    result = await db.execute(select(CharacterModel).where(Character.id == character_id))
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
     character = result.scalar_one_or_none()
     
     if not character:
