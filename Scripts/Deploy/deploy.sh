@@ -154,7 +154,7 @@ deploy_application() {
         --exclude='.vscode' \
         --exclude='*.log' \
         "$CURRENT_DIR/" "$PROJECT_DIR/"
-    sudo cp -r "$CURRENT_DIR/.env" "$PROJECT_DIR/.env"
+    sudo cp -rf "/opt/.env" "$PROJECT_DIR/.env"
 
     # Entrar no diretório do projeto
     cd "$PROJECT_DIR"
@@ -163,7 +163,7 @@ deploy_application() {
     if [[ ! -f ".env" ]]; then
         if [[ -f "env.template" ]]; then
             log "Copiando env.template para .env..."
-            sudo cp env.template .env
+            #sudo cp env.template .env
             warning "IMPORTANTE: Configure as variáveis em $PROJECT_DIR/.env antes de continuar!"
             warning "Pressione Enter após configurar o .env ou Ctrl+C para sair..."
             read -r
