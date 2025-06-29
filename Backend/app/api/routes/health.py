@@ -21,10 +21,23 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("")
 async def health_check():
     """
     Health check básico da API
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0",
+        "environment": settings.ENVIRONMENT
+    }
+
+
+@router.get("/")
+async def health_check_alias():
+    """
+    Health check básico da API (alias com barra para compatibilidade)
     """
     return {
         "status": "healthy",

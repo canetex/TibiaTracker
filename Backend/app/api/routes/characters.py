@@ -280,7 +280,7 @@ async def scrape_and_create_character(
 
 # ===== ENDPOINTS DE PERSONAGENS =====
 
-@router.get("/", response_model=CharacterListResponse)
+@router.get("", response_model=CharacterListResponse)
 async def list_characters(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
     limit: int = Query(50, ge=1, le=100, description="Número máximo de registros"),
@@ -350,6 +350,23 @@ async def list_characters(
         page=skip // limit + 1,
         per_page=limit
     )
+
+
+@router.get("/", response_model=CharacterListResponse)
+async def list_characters_alias(
+    skip: int = Query(0, ge=0, description="Número de registros a pular"),
+    limit: int = Query(50, ge=1, le=100, description="Número máximo de registros"),
+    server: Optional[str] = Query(None, description="Filtrar por servidor"),
+    world: Optional[str] = Query(None, description="Filtrar por world"),
+    is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
+    is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
+    search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Listar personagens com filtros e paginação (alias com barra para compatibilidade)"""
+    
+    # Chamamos a função principal
+    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, db)
 
 
 @router.post("/", response_model=CharacterSchema)
