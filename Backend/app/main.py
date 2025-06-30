@@ -19,6 +19,10 @@ from app.db.database import engine, create_all_tables
 from app.api.routes import characters, health
 from app.services.scheduler import start_scheduler, stop_scheduler
 
+# Adicionar imports para métricas
+from datetime import datetime
+import psutil
+
 
 # Configurar logging
 setup_logging()
@@ -136,6 +140,43 @@ async def info():
             "docs": "/docs"
         }
     }
+
+
+@app.get("/metrics", tags=["Metrics"])
+async def metrics():
+    """Endpoint de métricas para Prometheus"""
+    try:
+        # Métricas básicas da aplicação
+        metrics_data = []
+        
+        # Informações do sistema
+        cpu_percent = psutil.cpu_percent()
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        # Métricas no formato Prometheus
+        metrics_data.append(f"# HELP tibia_tracker_cpu_usage_percent CPU usage percentage")
+        metrics_data.append(f"# TYPE tibia_tracker_cpu_usage_percent gauge")
+        metrics_data.append(f"tibia_tracker_cpu_usage_percent {cpu_percent}")
+        
+        metrics_data.append(f"# HELP tibia_tracker_memory_usage_percent Memory usage percentage")
+        metrics_data.append(f"# TYPE tibia_tracker_memory_usage_percent gauge")
+        metrics_data.append(f"tibia_tracker_memory_usage_percent {memory.percent}")
+        
+        metrics_data.append(f"# HELP tibia_tracker_disk_usage_percent Disk usage percentage")
+        metrics_data.append(f"# TYPE tibia_tracker_disk_usage_percent gauge")
+        metrics_data.append(f"tibia_tracker_disk_usage_percent {disk.percent}")
+        
+        metrics_data.append(f"# HELP tibia_tracker_uptime_seconds Application uptime in seconds")
+        metrics_data.append(f"# TYPE tibia_tracker_uptime_seconds counter")
+        metrics_data.append(f"tibia_tracker_uptime_seconds {int(datetime.now().timestamp())}")
+        
+        # Retornar métricas em formato texto plano
+        return "\n".join(metrics_data)
+        
+    except Exception as e:
+        # Em caso de erro, retornar métricas básicas
+        return f"# Error generating metrics: {str(e)}\ntibia_tracker_error 1"
 
 
 # Executar aplicação diretamente (desenvolvimento)
