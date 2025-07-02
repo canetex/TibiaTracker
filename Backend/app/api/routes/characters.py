@@ -430,6 +430,124 @@ async def scrape_and_create_character(
 
 # ===== ENDPOINTS DE PERSONAGENS =====
 
+@router.get("/recent")
+async def get_recent_characters(
+    limit: int = Query(10, ge=1, le=50, description="Número máximo de personagens"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Obter personagens adicionados recentemente"""
+    try:
+        result = await db.execute(
+            select(CharacterModel)
+            .where(CharacterModel.is_active == True)
+            .order_by(desc(CharacterModel.created_at))
+            .limit(limit)
+        )
+        characters = result.scalars().all()
+        
+        # Converter para formato do frontend
+        response_data = []
+        for char in characters:
+            # Obter último snapshot
+            snapshot_result = await db.execute(
+                select(CharacterSnapshotModel)
+                .where(CharacterSnapshotModel.character_id == char.id)
+                .order_by(desc(CharacterSnapshotModel.scraped_at))
+                .limit(1)
+            )
+            latest_snapshot = snapshot_result.scalar_one_or_none()
+            
+            # Contar total de snapshots
+            count_result = await db.execute(
+                select(func.count(CharacterSnapshotModel.id))
+                .where(CharacterSnapshotModel.character_id == char.id)
+            )
+            total_snapshots = count_result.scalar()
+            
+            char_data = {
+                "id": char.id,
+                "name": char.name,
+                "server": char.server,
+                "world": char.world,
+                "level": char.level,
+                "vocation": char.vocation,
+                "outfit_image_url": char.outfit_image_url,
+                "last_scraped_at": char.last_scraped_at,
+                "is_favorited": char.is_favorited,
+                "total_snapshots": total_snapshots,
+                "latest_snapshot": None
+            }
+            
+            if latest_snapshot:
+                char_data["latest_snapshot"] = {
+                    "level": latest_snapshot.level,
+                    "experience": latest_snapshot.experience,
+                    "deaths": latest_snapshot.deaths,
+                    "charm_points": latest_snapshot.charm_points,
+                    "bosstiary_points": latest_snapshot.bosstiary_points,
+                    "achievement_points": latest_snapshot.achievement_points,
+                    "scraped_at": latest_snapshot.scraped_at
+                }
+            
+            response_data.append(char_data)
+        
+        return response_data
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter personagens recentes: {e}")
+        return []
+
+
+@router.get("/stats/global")
+async def get_global_stats(db: AsyncSession = Depends(get_db)):
+    """Obter estatísticas globais da plataforma"""
+    try:
+        # Total de personagens
+        total_chars_result = await db.execute(
+            select(func.count(CharacterModel.id)).where(CharacterModel.is_active == True)
+        )
+        total_characters = total_chars_result.scalar() or 0
+
+        # Total de snapshots
+        total_snapshots_result = await db.execute(
+            select(func.count(CharacterSnapshotModel.id))
+        )
+        total_snapshots = total_snapshots_result.scalar() or 0
+
+        # Personagens favoritados
+        favorited_result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(and_(CharacterModel.is_active == True, CharacterModel.is_favorited == True))
+        )
+        favorited_characters = favorited_result.scalar() or 0
+
+        # Personagens por servidor
+        server_stats_result = await db.execute(
+            select(CharacterModel.server, func.count(CharacterModel.id))
+            .where(CharacterModel.is_active == True)
+            .group_by(CharacterModel.server)
+        )
+        server_stats = {server: count for server, count in server_stats_result.fetchall()}
+
+        return {
+            "total_characters": total_characters,
+            "total_snapshots": total_snapshots,
+            "favorited_characters": favorited_characters,
+            "characters_by_server": server_stats,
+            "last_updated": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao obter estatísticas globais: {e}")
+        return {
+            "total_characters": 0,
+            "total_snapshots": 0,
+            "favorited_characters": 0,
+            "characters_by_server": {},
+            "last_updated": datetime.utcnow().isoformat()
+        }
+
+
 @router.get("", response_model=CharacterListResponse)
 async def list_characters(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
