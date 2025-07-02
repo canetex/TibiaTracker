@@ -154,7 +154,12 @@ deploy_application() {
         --exclude='.vscode' \
         --exclude='*.log' \
         "$CURRENT_DIR/" "$PROJECT_DIR/"
-    sudo cp -rf "/opt/.env" "$PROJECT_DIR/.env"
+    
+    # Copiar .env do diretório atual se existir
+    if [[ -f "$CURRENT_DIR/.env" ]]; then
+        log "Copiando arquivo .env do diretório atual..."
+        sudo cp "$CURRENT_DIR/.env" "$PROJECT_DIR/.env"
+    fi
 
     # Entrar no diretório do projeto
     cd "$PROJECT_DIR"
