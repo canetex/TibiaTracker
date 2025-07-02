@@ -11,6 +11,7 @@ from sqlalchemy import select, func, desc, and_, or_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime, timedelta
+import logging
 
 from app.db.database import get_db
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
@@ -23,6 +24,8 @@ from app.schemas.character import (
 )
 from app.services.character import CharacterService
 from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/characters", tags=["characters"])
 
@@ -496,8 +499,9 @@ async def scrape_character_with_history(
             character.last_scraped_at = datetime.utcnow()
         
         snapshots_created = 0
+        snapshots_updated = 0
         
-        # Criar snapshots para cada entrada do histórico
+        # Criar/atualizar snapshots para cada entrada do histórico
         if history_data:
             for entry in history_data:
                 # Verificar se já existe snapshot para esta data
@@ -510,9 +514,37 @@ async def scrape_character_with_history(
                 snapshot_result = await db.execute(existing_snapshot_query)
                 existing_snapshot = snapshot_result.scalar_one_or_none()
                 
-                if not existing_snapshot:
+                snapshot_date = datetime.combine(entry['date'], datetime.min.time())
+                
+                if existing_snapshot:
+                    # SOBRESCREVER dados existentes com informações mais recentes
+                    logger.info(f"Atualizando snapshot existente para {entry['date']}: "
+                              f"experiência {existing_snapshot.experience:,} → {entry['experience_gained']:,}")
+                    
+                    existing_snapshot.level = scraped_data['level']
+                    existing_snapshot.experience = entry['experience_gained']  # SOBRESCREVER
+                    existing_snapshot.deaths = scraped_data.get('deaths', 0)
+                    existing_snapshot.charm_points = scraped_data.get('charm_points')
+                    existing_snapshot.bosstiary_points = scraped_data.get('bosstiary_points')
+                    existing_snapshot.achievement_points = scraped_data.get('achievement_points')
+                    existing_snapshot.vocation = scraped_data['vocation']
+                    existing_snapshot.world = world.lower()
+                    existing_snapshot.residence = scraped_data.get('residence')
+                    existing_snapshot.house = scraped_data.get('house')
+                    existing_snapshot.guild = scraped_data.get('guild')
+                    existing_snapshot.guild_rank = scraped_data.get('guild_rank')
+                    existing_snapshot.is_online = scraped_data.get('is_online', False)
+                    existing_snapshot.last_login = scraped_data.get('last_login')
+                    existing_snapshot.outfit_image_url = scraped_data.get('outfit_image_url')
+                    existing_snapshot.scrape_source = "history_update"  # Marcar como atualização
+                    existing_snapshot.scrape_duration = scrape_result.duration_ms
+                    # scraped_at mantém a data original do snapshot
+                    
+                    snapshots_updated += 1  # Contar como atualizado
+                else:
                     # Criar novo snapshot para esta data
-                    snapshot_date = datetime.combine(entry['date'], datetime.min.time())
+                    logger.info(f"Criando novo snapshot para {entry['date']}: "
+                              f"experiência {entry['experience_gained']:,}")
                     
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
@@ -564,6 +596,7 @@ async def scrape_character_with_history(
             
             db.add(snapshot)
             snapshots_created = 1
+            snapshots_updated = 0
         
         await db.commit()
         await db.refresh(character)
@@ -581,6 +614,8 @@ async def scrape_character_with_history(
                 "outfit_image_url": character.outfit_image_url
             },
             "snapshots_created": snapshots_created,
+            "snapshots_updated": snapshots_updated,
+            "total_snapshots_processed": snapshots_created + snapshots_updated,
             "history_entries": len(history_data),
             "scraping_duration_ms": scrape_result.duration_ms,
             "scraped_data": scraped_data
