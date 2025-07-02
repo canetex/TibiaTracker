@@ -231,6 +231,48 @@ export const apiService = {
     }
   },
 
+  /**
+   * Fazer scraping com histórico completo de experiência
+   */
+  async scrapeWithHistory(server, world, characterName) {
+    try {
+      const response = await api.post('/api/v1/characters/scrape-with-history', null, {
+        params: { server, world, character_name: characterName }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Obter dados de experiência para gráfico
+   */
+  async getCharacterExperienceChart(characterId, days = 30) {
+    try {
+      const response = await api.get(`/api/v1/characters/${characterId}/charts/experience`, {
+        params: { days }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Obter dados de level para gráfico
+   */
+  async getCharacterLevelChart(characterId, days = 30) {
+    try {
+      const response = await api.get(`/api/v1/characters/${characterId}/charts/level`, {
+        params: { days }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // ============================================================================
   // UTILS
   // ============================================================================

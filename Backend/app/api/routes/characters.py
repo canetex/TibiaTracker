@@ -428,6 +428,171 @@ async def scrape_and_create_character(
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
+@router.post("/scrape-with-history")
+async def scrape_character_with_history(
+    server: str = Query(..., description="Servidor (taleon, rubini, etc)"),
+    world: str = Query(..., description="World (san, aura, gaia)"),
+    character_name: str = Query(..., description="Nome do personagem"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Fazer scraping e salvar histórico completo de experiência"""
+    
+    try:
+        # Verificar se já existe
+        existing_query = select(CharacterModel).where(
+            and_(
+                CharacterModel.name.ilike(character_name),
+                CharacterModel.server == server.lower(),
+                CharacterModel.world == world.lower()
+            )
+        )
+        result = await db.execute(existing_query)
+        existing_character = result.scalar_one_or_none()
+        
+        # Fazer scraping
+        scrape_result = await scrape_character_data(server, world, character_name)
+        
+        if not scrape_result.success:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Falha no scraping",
+                    "error": scrape_result.error_message,
+                    "retry_after": scrape_result.retry_after.isoformat() if scrape_result.retry_after else None
+                }
+            )
+        
+        scraped_data = scrape_result.data
+        
+        # Obter histórico de experiência se disponível
+        history_data = scraped_data.get('experience_history', [])
+        
+        character = existing_character
+        if not character:
+            # Criar personagem se não existe
+            character = CharacterModel(
+                name=scraped_data['name'],
+                server=server.lower(),
+                world=world.lower(),
+                level=scraped_data['level'],
+                vocation=scraped_data['vocation'],
+                residence=scraped_data.get('residence'),
+                profile_url=scraped_data.get('profile_url'),
+                outfit_image_url=scraped_data.get('outfit_image_url'),
+                is_active=True,
+                is_public=True,
+                is_favorited=False,
+                last_scraped_at=datetime.utcnow()
+            )
+            
+            db.add(character)
+            await db.flush()  # Para obter o ID
+        else:
+            # Atualizar personagem existente
+            character.level = scraped_data['level']
+            character.vocation = scraped_data['vocation']
+            character.residence = scraped_data.get('residence')
+            character.outfit_image_url = scraped_data.get('outfit_image_url')
+            character.last_scraped_at = datetime.utcnow()
+        
+        snapshots_created = 0
+        
+        # Criar snapshots para cada entrada do histórico
+        if history_data:
+            for entry in history_data:
+                # Verificar se já existe snapshot para esta data
+                existing_snapshot_query = select(CharacterSnapshotModel).where(
+                    and_(
+                        CharacterSnapshotModel.character_id == character.id,
+                        func.date(CharacterSnapshotModel.scraped_at) == entry['date']
+                    )
+                )
+                snapshot_result = await db.execute(existing_snapshot_query)
+                existing_snapshot = snapshot_result.scalar_one_or_none()
+                
+                if not existing_snapshot:
+                    # Criar novo snapshot para esta data
+                    snapshot_date = datetime.combine(entry['date'], datetime.min.time())
+                    
+                    snapshot = CharacterSnapshotModel(
+                        character_id=character.id,
+                        level=scraped_data['level'],  # Usar level atual para todos
+                        experience=entry['experience_gained'],  # Experiência específica do dia
+                        deaths=scraped_data.get('deaths', 0),
+                        charm_points=scraped_data.get('charm_points'),
+                        bosstiary_points=scraped_data.get('bosstiary_points'),
+                        achievement_points=scraped_data.get('achievement_points'),
+                        vocation=scraped_data['vocation'],
+                        world=world.lower(),
+                        residence=scraped_data.get('residence'),
+                        house=scraped_data.get('house'),
+                        guild=scraped_data.get('guild'),
+                        guild_rank=scraped_data.get('guild_rank'),
+                        is_online=scraped_data.get('is_online', False),
+                        last_login=scraped_data.get('last_login'),
+                        outfit_image_url=scraped_data.get('outfit_image_url'),
+                        scraped_at=snapshot_date,
+                        scrape_source="history",
+                        scrape_duration=scrape_result.duration_ms
+                    )
+                    
+                    db.add(snapshot)
+                    snapshots_created += 1
+        else:
+            # Se não há histórico, criar snapshot apenas atual
+            snapshot = CharacterSnapshotModel(
+                character_id=character.id,
+                level=scraped_data['level'],
+                experience=scraped_data.get('experience', 0),
+                deaths=scraped_data.get('deaths', 0),
+                charm_points=scraped_data.get('charm_points'),
+                bosstiary_points=scraped_data.get('bosstiary_points'),
+                achievement_points=scraped_data.get('achievement_points'),
+                vocation=scraped_data['vocation'],
+                world=world.lower(),
+                residence=scraped_data.get('residence'),
+                house=scraped_data.get('house'),
+                guild=scraped_data.get('guild'),
+                guild_rank=scraped_data.get('guild_rank'),
+                is_online=scraped_data.get('is_online', False),
+                last_login=scraped_data.get('last_login'),
+                outfit_image_url=scraped_data.get('outfit_image_url'),
+                scraped_at=datetime.utcnow(),
+                scrape_source="manual",
+                scrape_duration=scrape_result.duration_ms
+            )
+            
+            db.add(snapshot)
+            snapshots_created = 1
+        
+        await db.commit()
+        await db.refresh(character)
+        
+        return {
+            "success": True,
+            "message": f"Personagem '{character.name}' processado com sucesso!",
+            "character": {
+                "id": character.id,
+                "name": character.name,
+                "server": character.server,
+                "world": character.world,
+                "level": character.level,
+                "vocation": character.vocation,
+                "outfit_image_url": character.outfit_image_url
+            },
+            "snapshots_created": snapshots_created,
+            "history_entries": len(history_data),
+            "scraping_duration_ms": scrape_result.duration_ms,
+            "scraped_data": scraped_data
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+
 # ===== ENDPOINTS DE PERSONAGENS =====
 
 @router.get("/recent")
@@ -1019,4 +1184,139 @@ async def toggle_active(
     await db.commit()
     
     status = "ativado" if character.is_active else "desativado"
-    return {"message": f"Personagem '{character.name}' {status} para scraping"} 
+    return {"message": f"Personagem '{character.name}' {status} para scraping"}
+
+
+@router.get("/{character_id}/charts/experience")
+async def get_character_experience_chart(
+    character_id: int,
+    days: int = Query(30, ge=1, le=365, description="Número de dias para análise"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Obter dados de experiência para gráfico"""
+    
+    # Verificar se personagem existe
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
+    character = result.scalar_one_or_none()
+    
+    if not character:
+        raise HTTPException(status_code=404, detail="Personagem não encontrado")
+    
+    # Data de início da análise
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    
+    # Obter snapshots do período ordenados por data
+    snapshots_query = select(CharacterSnapshotModel).where(
+        and_(
+            CharacterSnapshotModel.character_id == character_id,
+            CharacterSnapshotModel.scraped_at >= start_date,
+            CharacterSnapshotModel.scraped_at <= end_date
+        )
+    ).order_by(CharacterSnapshotModel.scraped_at)
+    
+    result = await db.execute(snapshots_query)
+    snapshots = result.scalars().all()
+    
+    if not snapshots:
+        return {
+            "character_id": character_id,
+            "character_name": character.name,
+            "period_days": days,
+            "data": [],
+            "total_experience_gained": 0
+        }
+    
+    # Preparar dados para o gráfico
+    chart_data = []
+    total_gained = 0
+    
+    for i, snapshot in enumerate(snapshots):
+        date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
+        
+        # Experiência ganha no dia (valor do snapshot)
+        exp_gained = snapshot.experience
+        total_gained += exp_gained
+        
+        chart_data.append({
+            "date": date_str,
+            "experience_gained": exp_gained,
+            "cumulative_experience": total_gained,
+            "level": snapshot.level,
+            "day_of_week": snapshot.scraped_at.strftime("%A")
+        })
+    
+    return {
+        "character_id": character_id,
+        "character_name": character.name,
+        "period_days": days,
+        "data": chart_data,
+        "total_experience_gained": total_gained,
+        "average_daily_experience": total_gained / len(snapshots) if snapshots else 0
+    }
+
+
+@router.get("/{character_id}/charts/level")
+async def get_character_level_chart(
+    character_id: int,
+    days: int = Query(30, ge=1, le=365, description="Número de dias para análise"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Obter dados de level para gráfico"""
+    
+    # Verificar se personagem existe
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
+    character = result.scalar_one_or_none()
+    
+    if not character:
+        raise HTTPException(status_code=404, detail="Personagem não encontrado")
+    
+    # Data de início da análise
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    
+    # Obter snapshots do período
+    snapshots_query = select(CharacterSnapshotModel).where(
+        and_(
+            CharacterSnapshotModel.character_id == character_id,
+            CharacterSnapshotModel.scraped_at >= start_date,
+            CharacterSnapshotModel.scraped_at <= end_date
+        )
+    ).order_by(CharacterSnapshotModel.scraped_at)
+    
+    result = await db.execute(snapshots_query)
+    snapshots = result.scalars().all()
+    
+    if not snapshots:
+        return {
+            "character_id": character_id,
+            "character_name": character.name,
+            "period_days": days,
+            "data": []
+        }
+    
+    # Preparar dados para o gráfico
+    chart_data = []
+    
+    for snapshot in snapshots:
+        date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
+        
+        chart_data.append({
+            "date": date_str,
+            "level": snapshot.level,
+            "vocation": snapshot.vocation
+        })
+    
+    level_start = snapshots[0].level if snapshots else 0
+    level_end = snapshots[-1].level if snapshots else 0
+    level_gained = level_end - level_start
+    
+    return {
+        "character_id": character_id,
+        "character_name": character.name,
+        "period_days": days,
+        "data": chart_data,
+        "level_start": level_start,
+        "level_end": level_end,
+        "level_gained": level_gained
+    } 

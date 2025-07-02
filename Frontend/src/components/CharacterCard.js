@@ -25,7 +25,7 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const CharacterCard = ({ character, onRefresh, onToggleFavorite }) => {
+const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
 
@@ -48,6 +48,12 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite }) => {
       } finally {
         setFavoriting(false);
       }
+    }
+  };
+
+  const handleViewCharts = () => {
+    if (onViewCharts) {
+      onViewCharts(character);
     }
   };
 
@@ -231,7 +237,8 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite }) => {
         <Button
           size="small"
           startIcon={<Analytics />}
-          disabled
+          disabled={!onViewCharts}
+          onClick={handleViewCharts}
           sx={{ color: 'text.secondary' }}
         >
           Ver Gráficos

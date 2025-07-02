@@ -175,39 +175,78 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             logger.warning(f"[TALEON-{world_name}] Erro ao extrair URL do outfit: {e}")
             return None
     
-    def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:
-        """Extrair experiência ganha hoje do histórico de experiência"""
+    def _extract_experience_history_data(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
+        """Extrair dados históricos de experiência de vários dias"""
         world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        history_data = []
         
         try:
-            # Buscar seção "experience history" para encontrar experiência de hoje
+            # Buscar seção "experience history" para extrair histórico completo
             exp_section = soup.find(text=re.compile(r'experience history', re.IGNORECASE))
             if exp_section:
                 exp_table = exp_section.find_next('table')
                 if exp_table:
                     exp_rows = exp_table.find_all('tr')
-                    for row in exp_rows:
+                    for row in exp_rows[1:]:  # Pular header
                         cells = row.find_all(['td', 'th'])
                         if len(cells) >= 2:
-                            date_text = cells[0].get_text().strip().lower()
+                            date_text = cells[0].get_text().strip()
                             exp_text = cells[1].get_text().strip()
                             
-                            # Procurar por "Today" ou "today"
-                            if 'today' in date_text:
-                                if 'no experience gained' in exp_text.lower():
-                                    exp_value = 0
-                                else:
-                                    exp_value = self._extract_number(exp_text)
-                                
-                                logger.debug(f"[TALEON-{world_name}] Experiência ganha hoje: {exp_value:,}")
-                                return exp_value
+                            # Processar diferentes tipos de data
+                            experience_gained = 0
+                            snapshot_date = None
+                            
+                            if 'no experience gained' in exp_text.lower():
+                                experience_gained = 0
+                            else:
+                                experience_gained = self._extract_number(exp_text)
+                            
+                            # Converter data
+                            if date_text.lower() == 'today':
+                                from datetime import datetime
+                                snapshot_date = datetime.now().date()
+                            elif date_text.lower() == 'yesterday':
+                                from datetime import datetime, timedelta
+                                snapshot_date = (datetime.now() - timedelta(days=1)).date()
+                            else:
+                                # Tentar parsear data no formato DD/MM/YYYY
+                                try:
+                                    from datetime import datetime
+                                    snapshot_date = datetime.strptime(date_text, '%d/%m/%Y').date()
+                                except ValueError:
+                                    logger.warning(f"[TALEON-{world_name}] Não foi possível parsear data: {date_text}")
+                                    continue
+                            
+                            if snapshot_date and experience_gained >= 0:
+                                history_data.append({
+                                    'date': snapshot_date,
+                                    'experience_gained': experience_gained,
+                                    'date_text': date_text
+                                })
+                                logger.debug(f"[TALEON-{world_name}] Histórico: {date_text} = {experience_gained:,}")
             
-            logger.warning(f"[TALEON-{world_name}] Não foi possível encontrar experiência de hoje no histórico")
-            return 0
+            logger.info(f"[TALEON-{world_name}] Extraídos {len(history_data)} registros de histórico de experiência")
+            return history_data
             
         except Exception as e:
-            logger.warning(f"[TALEON-{world_name}] Erro ao extrair experiência do histórico: {e}")
-            return 0
+            logger.warning(f"[TALEON-{world_name}] Erro ao extrair histórico de experiência: {e}")
+            return []
+
+    def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:
+        """Extrair experiência ganha hoje do histórico (mantém compatibilidade)"""
+        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        
+        history_data = self._extract_experience_history_data(soup)
+        
+        # Retornar experiência de hoje para compatibilidade
+        for entry in history_data:
+            if entry['date_text'].lower() == 'today':
+                logger.debug(f"[TALEON-{world_name}] Experiência ganha hoje: {entry['experience_gained']:,}")
+                return entry['experience_gained']
+        
+        logger.warning(f"[TALEON-{world_name}] Não foi possível encontrar experiência de hoje no histórico")
+        return 0
     
     def _count_deaths_from_list(self, soup: BeautifulSoup) -> int:
         """Contar mortes da death list"""
@@ -337,6 +376,9 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             
             # Extrair experiência ganha hoje do histórico
             data['experience'] = self._extract_experience_from_history(soup)
+            
+            # Extrair histórico completo de experiência
+            data['experience_history'] = self._extract_experience_history_data(soup)
             
             # Contar mortes da death list
             data['deaths'] = self._count_deaths_from_list(soup)
