@@ -7,6 +7,14 @@
 # Stage 1: Build da aplicação React
 FROM node:18-alpine AS builder
 
+# Declarar argumentos de build
+ARG REACT_APP_API_URL
+ARG REACT_APP_ENVIRONMENT
+
+# Converter argumentos em variáveis de ambiente
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
+
 # Definir diretório de trabalho
 WORKDIR /app
 
