@@ -137,6 +137,156 @@ async def get_specific_world_details(server: str, world: str):
 
 # ===== ENDPOINTS DE TESTE =====
 
+@router.get("/search")
+async def search_character(
+    name: str = Query(..., description="Nome do personagem"),
+    server: str = Query(..., description="Servidor (taleon, rubini, etc)"), 
+    world: str = Query(..., description="World (san, aura, gaia)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Buscar personagem - se não existir, faz scraping e cria"""
+    
+    try:
+        # Primeiro verificar se já existe no banco
+        existing_query = select(CharacterModel).where(
+            and_(
+                CharacterModel.name.ilike(name),
+                CharacterModel.server == server.lower(),
+                CharacterModel.world == world.lower()
+            )
+        ).options(selectinload(CharacterModel.snapshots))
+        
+        result = await db.execute(existing_query)
+        existing_character = result.scalar_one_or_none()
+        
+        if existing_character:
+            # Personagem já existe, retornar dados existentes
+            # Obter snapshot mais recente
+            latest_snapshot = None
+            if existing_character.snapshots:
+                latest_snapshot = sorted(existing_character.snapshots, key=lambda x: x.scraped_at, reverse=True)[0]
+            
+            return {
+                "success": True,
+                "message": f"Personagem '{existing_character.name}' encontrado no banco de dados",
+                "character": {
+                    "id": existing_character.id,
+                    "name": existing_character.name,
+                    "server": existing_character.server,
+                    "world": existing_character.world,
+                    "level": existing_character.level,
+                    "vocation": existing_character.vocation,
+                    "outfit_image_url": existing_character.outfit_image_url,
+                    "last_scraped_at": existing_character.last_scraped_at,
+                    "is_favorited": existing_character.is_favorited,
+                    "latest_snapshot": {
+                        "level": latest_snapshot.level if latest_snapshot else existing_character.level,
+                        "experience": latest_snapshot.experience if latest_snapshot else 0,
+                        "deaths": latest_snapshot.deaths if latest_snapshot else 0,
+                        "charm_points": latest_snapshot.charm_points if latest_snapshot else None,
+                        "bosstiary_points": latest_snapshot.bosstiary_points if latest_snapshot else None,
+                        "achievement_points": latest_snapshot.achievement_points if latest_snapshot else None,
+                        "scraped_at": latest_snapshot.scraped_at if latest_snapshot else None
+                    } if latest_snapshot else None
+                },
+                "from_database": True
+            }
+        
+        # Personagem não existe, fazer scraping
+        scrape_result = await scrape_character_data(server, world, name)
+        
+        if not scrape_result.success:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Personagem não encontrado ou erro no scraping",
+                    "error": scrape_result.error_message,
+                    "retry_after": scrape_result.retry_after.isoformat() if scrape_result.retry_after else None
+                }
+            )
+        
+        scraped_data = scrape_result.data
+        
+        # Criar personagem no banco
+        character = CharacterModel(
+            name=scraped_data['name'],
+            server=server.lower(),
+            world=world.lower(),
+            level=scraped_data['level'],
+            vocation=scraped_data['vocation'],
+            residence=scraped_data.get('residence'),
+            profile_url=scraped_data.get('profile_url'),
+            outfit_image_url=scraped_data.get('outfit_image_url'),
+            is_active=True,
+            is_public=True,
+            is_favorited=False,
+            last_scraped_at=datetime.utcnow()
+        )
+        
+        db.add(character)
+        await db.flush()  # Para obter o ID
+        
+        # Criar primeiro snapshot
+        snapshot = CharacterSnapshotModel(
+            character_id=character.id,
+            level=scraped_data['level'],
+            experience=scraped_data.get('experience', 0),
+            deaths=scraped_data.get('deaths', 0),
+            charm_points=scraped_data.get('charm_points'),
+            bosstiary_points=scraped_data.get('bosstiary_points'),
+            achievement_points=scraped_data.get('achievement_points'),
+            vocation=scraped_data['vocation'],
+            world=world.lower(),
+            residence=scraped_data.get('residence'),
+            house=scraped_data.get('house'),
+            guild=scraped_data.get('guild'),
+            guild_rank=scraped_data.get('guild_rank'),
+            is_online=scraped_data.get('is_online', False),
+            last_login=scraped_data.get('last_login'),
+            outfit_image_url=scraped_data.get('outfit_image_url'),
+            scraped_at=datetime.utcnow(),
+            scrape_source="search",
+            scrape_duration=scrape_result.duration_ms
+        )
+        
+        db.add(snapshot)
+        await db.commit()
+        await db.refresh(character)
+        
+        return {
+            "success": True,
+            "message": f"Personagem '{character.name}' encontrado e adicionado com sucesso!",
+            "character": {
+                "id": character.id,
+                "name": character.name,
+                "server": character.server,
+                "world": character.world,
+                "level": character.level,
+                "vocation": character.vocation,
+                "outfit_image_url": character.outfit_image_url,
+                "last_scraped_at": character.last_scraped_at,
+                "is_favorited": character.is_favorited,
+                "latest_snapshot": {
+                    "level": snapshot.level,
+                    "experience": snapshot.experience,
+                    "deaths": snapshot.deaths,
+                    "charm_points": snapshot.charm_points,
+                    "bosstiary_points": snapshot.bosstiary_points,
+                    "achievement_points": snapshot.achievement_points,
+                    "scraped_at": snapshot.scraped_at
+                }
+            },
+            "scraping_duration_ms": scrape_result.duration_ms,
+            "from_database": False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+
 @router.get("/test-scraping/{server}/{world}/{character_name}")
 async def test_scraping(
     server: str,

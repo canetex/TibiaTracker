@@ -145,8 +145,36 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v) -> List[str]:
         """Parse das origens CORS"""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+            origins = [origin.strip() for origin in v.split(",")]
+        else:
+            origins = v or []
+        
+        # Em ambiente de desenvolvimento, adicionar origens comuns automaticamente
+        # Isto permite que funcione sem configuração manual do .env
+        development_origins = [
+            "http://localhost:3000",
+            "http://localhost:8000", 
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8000",
+            # Adicionar IPs comuns de rede local
+            "http://192.168.1.227:3000",  # IP do servidor atual
+            "http://192.168.1.227:8000",
+            # Outros IPs de rede local comuns
+            "http://192.168.1.1:3000", "http://192.168.1.1:8000",
+            "http://192.168.0.1:3000", "http://192.168.0.1:8000", 
+            "http://10.0.0.1:3000", "http://10.0.0.1:8000",
+            # Range mais amplo da rede 192.168.1.x
+            "http://192.168.1.100:3000", "http://192.168.1.100:8000",
+            "http://192.168.1.200:3000", "http://192.168.1.200:8000",
+            "http://192.168.1.250:3000", "http://192.168.1.250:8000",
+        ]
+        
+        # Adicionar automaticamente as origens de desenvolvimento
+        for origin in development_origins:
+            if origin not in origins:
+                origins.append(origin)
+        
+        return origins
     
     @validator("ALLOWED_HOSTS", pre=True)
     def parse_allowed_hosts(cls, v) -> List[str]:
