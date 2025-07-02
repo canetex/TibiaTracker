@@ -73,11 +73,36 @@ const Home = () => {
       setSearchLoading(true);
       setError(null);
       
-      const character = await apiService.searchCharacter(
+      // Primeiro fazer busca normal
+      const searchResult = await apiService.searchCharacter(
         searchData.name,
         searchData.server,
         searchData.world
       );
+      
+      // Extrair o character corretamente da resposta
+      let character = null;
+      if (searchResult.success && searchResult.character) {
+        character = searchResult.character;
+      } else {
+        throw new Error('Resposta inválida do servidor');
+      }
+      
+      // Se encontrou o character, fazer scraping com histórico para obter dados completos
+      if (character.id) {
+        try {
+          console.log('Fazendo scraping com histórico para dados completos...');
+          await apiService.scrapeWithHistory(
+            searchData.name,
+            searchData.server,
+            searchData.world
+          );
+          console.log('Scraping com histórico concluído');
+        } catch (historyError) {
+          console.warn('Erro no scraping com histórico, usando dados básicos:', historyError);
+          // Continua com os dados básicos se houver erro no histórico
+        }
+      }
       
       setSearchResult(character);
       
@@ -94,13 +119,30 @@ const Home = () => {
   };
 
   const handleViewCharts = (character) => {
+    console.log('HandleViewCharts chamado com:', character);
+    // Verificar se o character tem ID válido
+    if (!character || !character.id) {
+      console.error('Character sem ID válido:', character);
+      setError('Erro: Personagem sem ID válido');
+      return;
+    }
+    
     setSelectedCharacterForCharts(character);
     setChartsModalOpen(true);
   };
 
   const handleCloseChartsModal = () => {
-    setChartsModalOpen(false);
-    setSelectedCharacterForCharts(null);
+    try {
+      setChartsModalOpen(false);
+      setSelectedCharacterForCharts(null);
+    } catch (error) {
+      console.error('Erro ao fechar modal:', error);
+      // Force reset se houver erro
+      setTimeout(() => {
+        setChartsModalOpen(false);
+        setSelectedCharacterForCharts(null);
+      }, 100);
+    }
   };
 
   return (

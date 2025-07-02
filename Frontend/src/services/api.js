@@ -232,17 +232,21 @@ export const apiService = {
   },
 
   /**
-   * Fazer scraping com histórico completo de experiência
+   * Fazer scraping com histórico completo
    */
-  async scrapeWithHistory(server, world, characterName) {
-    try {
-      const response = await api.post('/api/v1/characters/scrape-with-history', null, {
-        params: { server, world, character_name: characterName }
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+  async scrapeWithHistory(name, server, world) {
+    console.log(`API: Fazendo scraping com histórico para ${name} em ${server}/${world}`);
+    
+    const response = await api.post('/api/v1/characters/scrape-with-history', null, {
+      params: {
+        character_name: name,
+        server: server,
+        world: world
+      }
+    });
+
+    console.log('API: Scraping com histórico concluído:', response);
+    return response;
   },
 
   /**

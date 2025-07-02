@@ -71,14 +71,29 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   const [timeRange, setTimeRange] = useState(30); // días
 
   useEffect(() => {
-    if (open && character) {
+    if (open && character?.id) {
       loadChartData();
+    } else if (!open) {
+      // Cleanup quando modal é fechado
+      setChartData(null);
+      setError(null);
+      setLoading(false);
     }
   }, [open, character, timeRange]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setChartData(null);
+      setError(null);
+      setLoading(false);
+    };
+  }, []);
+
   const loadChartData = async () => {
-    if (!character) {
-      console.log('CharacterChartsModal: Nenhum personagem fornecido');
+    if (!character?.id) {
+      console.log('CharacterChartsModal: Nenhum personagem ou ID fornecido');
+      setError('Erro: ID do personagem não encontrado');
       return;
     }
     
@@ -134,7 +149,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets.push({
         label: 'Experiência',
         data: chartData.experience.data.map(item => ({
-          x: new Date(item.date),
+          x: item.date, // Usar a data diretamente como string
           y: item.experience_gained || item.experience || 0
         })),
         borderColor: colors[colorIndex++],
@@ -148,7 +163,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets.push({
         label: 'Level',
         data: chartData.level.data.map(item => ({
-          x: new Date(item.date),
+          x: item.date, // Usar a data diretamente como string
           y: item.level
         })),
         borderColor: colors[colorIndex++],
@@ -162,6 +177,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets,
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         interaction: {
           mode: 'index',
           intersect: false,
@@ -169,7 +185,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
         plugins: {
           title: {
             display: true,
-            text: `Evolução de ${character.name} (${timeRange} dias)`,
+            text: `Evolução de ${character?.name || 'Personagem'} (${timeRange} dias)`,
             font: {
               size: 16,
               weight: 'bold'
@@ -181,7 +197,17 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           tooltip: {
             callbacks: {
               title: function(context) {
-                return new Date(context[0].parsed.x).toLocaleDateString('pt-BR');
+                // Converter string para data e formatar
+                const dateStr = context[0].label;
+                try {
+                  return new Date(dateStr).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  });
+                } catch {
+                  return dateStr;
+                }
               },
               label: function(context) {
                 let label = context.dataset.label || '';
@@ -202,9 +228,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           x: {
             type: 'time',
             time: {
+              parser: 'YYYY-MM-DD',
               unit: 'day',
               displayFormats: {
-                day: 'dd/MM'
+                day: 'DD/MM'
               }
             },
             title: {
