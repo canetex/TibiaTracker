@@ -26,6 +26,7 @@ import {
 
 import CharacterCard from '../components/CharacterCard';
 import CharacterSearch from '../components/CharacterSearch';
+import CharacterChartsModal from '../components/CharacterChartsModal';
 import { apiService } from '../services/api';
 
 const Home = () => {
@@ -35,6 +36,10 @@ const Home = () => {
   const [globalStats, setGlobalStats] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Estados para o modal de gráficos
+  const [chartsModalOpen, setChartsModalOpen] = useState(false);
+  const [selectedCharacterForCharts, setSelectedCharacterForCharts] = useState(null);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -86,6 +91,16 @@ const Home = () => {
     } finally {
       setSearchLoading(false);
     }
+  };
+
+  const handleViewCharts = (character) => {
+    setSelectedCharacterForCharts(character);
+    setChartsModalOpen(true);
+  };
+
+  const handleCloseChartsModal = () => {
+    setChartsModalOpen(false);
+    setSelectedCharacterForCharts(null);
   };
 
   return (
@@ -175,7 +190,10 @@ const Home = () => {
             <Analytics sx={{ mr: 1 }} />
             Resultado da Busca
           </Typography>
-          <CharacterCard character={searchResult} />
+          <CharacterCard 
+            character={searchResult} 
+            onViewCharts={handleViewCharts}
+          />
         </Box>
       )}
 
@@ -206,7 +224,10 @@ const Home = () => {
           <Grid container spacing={3}>
             {recentCharacters.map((character) => (
               <Grid item xs={12} md={6} lg={4} key={character.id}>
-                <CharacterCard character={character} />
+                <CharacterCard 
+                  character={character} 
+                  onViewCharts={handleViewCharts}
+                />
               </Grid>
             ))}
           </Grid>
@@ -231,6 +252,13 @@ const Home = () => {
           </Paper>
         )}
       </Box>
+
+      {/* Modal de Gráficos */}
+      <CharacterChartsModal
+        open={chartsModalOpen}
+        onClose={handleCloseChartsModal}
+        character={selectedCharacterForCharts}
+      />
     </Box>
   );
 };
