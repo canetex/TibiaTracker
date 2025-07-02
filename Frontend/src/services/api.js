@@ -250,11 +250,14 @@ export const apiService = {
    */
   async getCharacterExperienceChart(characterId, days = 30) {
     try {
+      console.log(`API: Buscando dados de experiência para personagem ${characterId}, ${days} dias`);
       const response = await api.get(`/api/v1/characters/${characterId}/charts/experience`, {
         params: { days }
       });
+      console.log('API: Dados de experiência recebidos:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API: Erro ao buscar dados de experiência:', error);
       throw error;
     }
   },
@@ -264,11 +267,14 @@ export const apiService = {
    */
   async getCharacterLevelChart(characterId, days = 30) {
     try {
+      console.log(`API: Buscando dados de level para personagem ${characterId}, ${days} dias`);
       const response = await api.get(`/api/v1/characters/${characterId}/charts/level`, {
         params: { days }
       });
+      console.log('API: Dados de level recebidos:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API: Erro ao buscar dados de level:', error);
       throw error;
     }
   },

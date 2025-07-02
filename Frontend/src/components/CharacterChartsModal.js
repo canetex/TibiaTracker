@@ -41,7 +41,7 @@ import { ptBR } from 'date-fns/locale';
 
 import { apiService } from '../services/api';
 
-// Registrar componentes do Chart.js
+// Registrar componentes do Chart.js (fora do componente)
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -77,25 +77,33 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   }, [open, character, timeRange]);
 
   const loadChartData = async () => {
-    if (!character) return;
+    if (!character) {
+      console.log('CharacterChartsModal: Nenhum personagem fornecido');
+      return;
+    }
+    
+    console.log('CharacterChartsModal: Carregando dados para personagem:', character);
     
     try {
       setLoading(true);
       setError(null);
 
+      console.log('CharacterChartsModal: Fazendo requisições para API...');
       const [experienceData, levelData] = await Promise.all([
         apiService.getCharacterExperienceChart(character.id, timeRange),
         apiService.getCharacterLevelChart(character.id, timeRange)
       ]);
 
+      console.log('CharacterChartsModal: Dados recebidos:', { experienceData, levelData });
+      
       setChartData({
         experience: experienceData,
         level: levelData,
       });
 
     } catch (err) {
-      console.error('Erro ao carregar dados dos gráficos:', err);
-      setError('Erro ao carregar dados dos gráficos. Tente novamente.');
+      console.error('CharacterChartsModal: Erro ao carregar dados dos gráficos:', err);
+      setError(`Erro ao carregar dados dos gráficos: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -127,7 +135,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
         label: 'Experiência',
         data: chartData.experience.data.map(item => ({
           x: new Date(item.date),
-          y: item.experience
+          y: item.experience_gained || item.experience || 0
         })),
         borderColor: colors[colorIndex++],
         backgroundColor: colors[colorIndex - 1] + '20',
