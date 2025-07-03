@@ -124,6 +124,32 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
     }
   };
 
+  const refreshCharacterData = async () => {
+    if (!character?.id) {
+      setError('Erro: ID do personagem não encontrado');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('CharacterChartsModal: Fazendo novo scraping...');
+      
+      // Fazer novo scraping
+      await apiService.refreshCharacter(character.id);
+      
+      // Recarregar dados dos gráficos após scraping
+      await loadChartData();
+
+    } catch (err) {
+      console.error('CharacterChartsModal: Erro ao atualizar dados:', err);
+      setError(`Erro ao atualizar dados: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOptionChange = (option) => {
     setChartOptions(prev => ({
       ...prev,
@@ -149,7 +175,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets.push({
         label: 'Experiência',
         data: chartData.experience.data.map(item => ({
-          x: item.date, // Data no formato YYYY-MM-DD
+          x: new Date(item.date + 'T00:00:00'), // Converter para objeto Date
           y: item.experience_gained || item.experience || 0
         })),
         borderColor: colors[colorIndex++],
@@ -163,7 +189,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets.push({
         label: 'Level',
         data: chartData.level.data.map(item => ({
-          x: item.date, // Usar a data diretamente como string
+          x: new Date(item.date + 'T00:00:00'), // Converter para objeto Date
           y: item.level
         })),
         borderColor: colors[colorIndex++],
@@ -197,18 +223,16 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           tooltip: {
             callbacks: {
               title: function(context) {
-                // Converter string para data e formatar
-                const dateStr = context[0].label;
-                try {
-                  const date = new Date(dateStr + 'T00:00:00');
+                // O Chart.js já fornece a data formatada quando usa time scale
+                if (context[0]?.parsed?.x) {
+                  const date = new Date(context[0].parsed.x);
                   return date.toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
                   });
-                } catch {
-                  return dateStr;
                 }
+                return context[0]?.label || 'Data inválida';
               },
               label: function(context) {
                 let label = context.dataset.label || '';
@@ -225,26 +249,26 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
             }
           }
         },
-        scales: {
-                  x: {
-          type: 'time',
-          time: {
-            parser: 'yyyy-MM-dd',
-            unit: 'day',
-            displayFormats: {
-              day: 'dd/MM'
+                scales: {
+          x: {
+            type: 'time',
+            time: {
+              parser: false, // Let Chart.js auto-detect the format
+              unit: 'day',
+              displayFormats: {
+                day: 'dd/MM'
+              }
+            },
+            title: {
+              display: true,
+              text: 'Data'
+            },
+            adapters: {
+              date: {
+                locale: ptBR
+              }
             }
           },
-          title: {
-            display: true,
-            text: 'Data'
-          },
-          adapters: {
-            date: {
-              locale: ptBR
-            }
-          }
-        },
           y: {
             type: 'linear',
             display: chartOptions.experience,
@@ -469,7 +493,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       </DialogContent>
 
       <DialogActions sx={{ p: 3 }}>
-        <Button onClick={loadChartData} disabled={loading}>
+        <Button onClick={refreshCharacterData} disabled={loading}>
           Atualizar Dados
         </Button>
         <Button onClick={onClose} variant="contained">

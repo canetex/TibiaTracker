@@ -1222,6 +1222,166 @@ async def toggle_active(
     return {"message": f"Personagem '{character.name}' {status} para scraping"}
 
 
+@router.post("/{character_id}/refresh")
+async def refresh_character_data(
+    character_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Fazer novo scraping dos dados do personagem"""
+    
+    # Buscar personagem
+    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
+    character = result.scalar_one_or_none()
+    
+    if not character:
+        raise HTTPException(status_code=404, detail="Personagem não encontrado")
+    
+    try:
+        # Fazer novo scraping com histórico
+        scrape_result = await scrape_character_data(character.server, character.world, character.name)
+        
+        if not scrape_result.success:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Falha no scraping",
+                    "error": scrape_result.error_message,
+                    "retry_after": scrape_result.retry_after.isoformat() if scrape_result.retry_after else None
+                }
+            )
+        
+        scraped_data = scrape_result.data
+        history_data = scraped_data.get('experience_history', [])
+        
+        # Atualizar dados do personagem
+        character.level = scraped_data['level']
+        character.vocation = scraped_data['vocation']
+        character.residence = scraped_data.get('residence')
+        character.outfit_image_url = scraped_data.get('outfit_image_url')
+        character.last_scraped_at = datetime.utcnow()
+        
+        snapshots_created = 0
+        snapshots_updated = 0
+        
+        # Processar histórico se disponível
+        if history_data:
+            for entry in history_data:
+                # Verificar se já existe snapshot para esta data
+                existing_snapshot_query = select(CharacterSnapshotModel).where(
+                    and_(
+                        CharacterSnapshotModel.character_id == character.id,
+                        func.date(CharacterSnapshotModel.scraped_at) == entry['date']
+                    )
+                )
+                snapshot_result = await db.execute(existing_snapshot_query)
+                existing_snapshot = snapshot_result.scalar_one_or_none()
+                
+                snapshot_date = datetime.combine(entry['date'], datetime.min.time())
+                
+                if existing_snapshot:
+                    # Atualizar snapshot existente
+                    existing_snapshot.experience = entry['experience_gained']
+                    existing_snapshot.level = scraped_data['level']
+                    existing_snapshot.vocation = scraped_data['vocation']
+                    existing_snapshot.deaths = scraped_data.get('deaths', 0)
+                    existing_snapshot.charm_points = scraped_data.get('charm_points')
+                    existing_snapshot.bosstiary_points = scraped_data.get('bosstiary_points')
+                    existing_snapshot.achievement_points = scraped_data.get('achievement_points')
+                    existing_snapshot.world = character.world
+                    existing_snapshot.residence = scraped_data.get('residence')
+                    existing_snapshot.outfit_image_url = scraped_data.get('outfit_image_url')
+                    existing_snapshot.scrape_source = "refresh"
+                    snapshots_updated += 1
+                else:
+                    # Criar novo snapshot
+                    snapshot = CharacterSnapshotModel(
+                        character_id=character.id,
+                        level=scraped_data['level'],
+                        experience=entry['experience_gained'],
+                        deaths=scraped_data.get('deaths', 0),
+                        charm_points=scraped_data.get('charm_points'),
+                        bosstiary_points=scraped_data.get('bosstiary_points'),
+                        achievement_points=scraped_data.get('achievement_points'),
+                        vocation=scraped_data['vocation'],
+                        world=character.world,
+                        residence=scraped_data.get('residence'),
+                        house=scraped_data.get('house'),
+                        guild=scraped_data.get('guild'),
+                        guild_rank=scraped_data.get('guild_rank'),
+                        is_online=scraped_data.get('is_online', False),
+                        last_login=scraped_data.get('last_login'),
+                        outfit_image_url=scraped_data.get('outfit_image_url'),
+                        scraped_at=snapshot_date,
+                        scrape_source="refresh",
+                        scrape_duration=scrape_result.duration_ms
+                    )
+                    db.add(snapshot)
+                    snapshots_created += 1
+        else:
+            # Se não há histórico, criar/atualizar snapshot de hoje
+            today = datetime.now().date()
+            existing_snapshot_query = select(CharacterSnapshotModel).where(
+                and_(
+                    CharacterSnapshotModel.character_id == character.id,
+                    func.date(CharacterSnapshotModel.scraped_at) == today
+                )
+            )
+            snapshot_result = await db.execute(existing_snapshot_query)
+            existing_snapshot = snapshot_result.scalar_one_or_none()
+            
+            if existing_snapshot:
+                # Atualizar snapshot de hoje
+                existing_snapshot.experience = scraped_data.get('experience', 0)
+                existing_snapshot.level = scraped_data['level']
+                existing_snapshot.vocation = scraped_data['vocation']
+                existing_snapshot.deaths = scraped_data.get('deaths', 0)
+                existing_snapshot.scrape_source = "refresh"
+                snapshots_updated = 1
+            else:
+                # Criar novo snapshot para hoje
+                snapshot = CharacterSnapshotModel(
+                    character_id=character.id,
+                    level=scraped_data['level'],
+                    experience=scraped_data.get('experience', 0),
+                    deaths=scraped_data.get('deaths', 0),
+                    charm_points=scraped_data.get('charm_points'),
+                    bosstiary_points=scraped_data.get('bosstiary_points'),
+                    achievement_points=scraped_data.get('achievement_points'),
+                    vocation=scraped_data['vocation'],
+                    world=character.world,
+                    residence=scraped_data.get('residence'),
+                    house=scraped_data.get('house'),
+                    guild=scraped_data.get('guild'),
+                    guild_rank=scraped_data.get('guild_rank'),
+                    is_online=scraped_data.get('is_online', False),
+                    last_login=scraped_data.get('last_login'),
+                    outfit_image_url=scraped_data.get('outfit_image_url'),
+                    scraped_at=datetime.utcnow(),
+                    scrape_source="refresh",
+                    scrape_duration=scrape_result.duration_ms
+                )
+                db.add(snapshot)
+                snapshots_created = 1
+        
+        await db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Dados de '{character.name}' atualizados com sucesso!",
+            "snapshots_created": snapshots_created,
+            "snapshots_updated": snapshots_updated,
+            "history_entries": len(history_data),
+            "scraping_duration_ms": scrape_result.duration_ms
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Erro ao atualizar personagem {character_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+
 @router.get("/{character_id}/charts/experience")
 async def get_character_experience_chart(
     character_id: int,

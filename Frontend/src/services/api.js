@@ -182,13 +182,16 @@ export const apiService = {
   },
 
   /**
-   * Atualizar dados do personagem manualmente
+   * Fazer novo scraping dos dados do personagem
    */
   async refreshCharacter(characterId) {
     try {
+      console.log(`API: Fazendo novo scraping para personagem ${characterId}`);
       const response = await api.post(`/api/v1/characters/${characterId}/refresh`);
+      console.log('API: Scraping de refresh concluído:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API: Erro ao fazer refresh do personagem:', error);
       throw error;
     }
   },
