@@ -200,7 +200,8 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                 // Converter string para data e formatar
                 const dateStr = context[0].label;
                 try {
-                  return new Date(dateStr).toLocaleDateString('pt-BR', {
+                  const date = new Date(dateStr + 'T00:00:00');
+                  return date.toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
@@ -225,25 +226,25 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           }
         },
         scales: {
-          x: {
-            type: 'time',
-            time: {
-              parser: 'YYYY-MM-DD',
-              unit: 'day',
-              displayFormats: {
-                day: 'DD/MM'
-              }
-            },
-            title: {
-              display: true,
-              text: 'Data'
-            },
-            adapters: {
-              date: {
-                locale: ptBR
-              }
+                  x: {
+          type: 'time',
+          time: {
+            parser: 'yyyy-MM-dd',
+            unit: 'day',
+            displayFormats: {
+              day: 'dd/MM'
             }
           },
+          title: {
+            display: true,
+            text: 'Data'
+          },
+          adapters: {
+            date: {
+              locale: ptBR
+            }
+          }
+        },
           y: {
             type: 'linear',
             display: chartOptions.experience,
