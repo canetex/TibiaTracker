@@ -1266,7 +1266,7 @@ async def refresh_character_data(
         # Processar histórico se disponível
         if history_data:
             for entry in history_data:
-                # Verificar se já existe snapshot para esta data
+                # Verificar se já existe snapshot para esta data (pegar só o primeiro, nunca lançar erro)
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
                         CharacterSnapshotModel.character_id == character.id,
@@ -1274,7 +1274,8 @@ async def refresh_character_data(
                     )
                 )
                 snapshot_result = await db.execute(existing_snapshot_query)
-                existing_snapshot = snapshot_result.scalar_one_or_none()
+                existing_snapshot = snapshot_result.first()
+                existing_snapshot = existing_snapshot[0] if existing_snapshot else None
                 
                 snapshot_date = datetime.combine(entry['date'], datetime.min.time())
                 
