@@ -181,56 +181,88 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         history_data = []
         
         try:
+            logger.debug(f"[TALEON-{world_name}] Iniciando extração de histórico de experiência...")
+            
             # Buscar seção "experience history" para extrair histórico completo
             exp_section = soup.find(text=re.compile(r'experience history', re.IGNORECASE))
-            if exp_section:
-                exp_table = exp_section.find_next('table')
-                if exp_table:
-                    exp_rows = exp_table.find_all('tr')
-                    for row in exp_rows[1:]:  # Pular header
-                        cells = row.find_all(['td', 'th'])
-                        if len(cells) >= 2:
-                            date_text = cells[0].get_text().strip()
-                            exp_text = cells[1].get_text().strip()
-                            
-                            # Processar diferentes tipos de data
-                            experience_gained = 0
-                            snapshot_date = None
-                            
-                            if 'no experience gained' in exp_text.lower():
-                                experience_gained = 0
-                            else:
-                                experience_gained = self._extract_number(exp_text)
-                            
-                            # Converter data
-                            if date_text.lower() == 'today':
-                                from datetime import datetime
-                                snapshot_date = datetime.now().date()
-                            elif date_text.lower() == 'yesterday':
-                                from datetime import datetime, timedelta
-                                snapshot_date = (datetime.now() - timedelta(days=1)).date()
-                            else:
-                                # Tentar parsear data no formato DD/MM/YYYY
-                                try:
-                                    from datetime import datetime
-                                    snapshot_date = datetime.strptime(date_text, '%d/%m/%Y').date()
-                                except ValueError:
-                                    logger.warning(f"[TALEON-{world_name}] Não foi possível parsear data: {date_text}")
-                                    continue
-                            
-                            if snapshot_date and experience_gained >= 0:
-                                history_data.append({
-                                    'date': snapshot_date,
-                                    'experience_gained': experience_gained,
-                                    'date_text': date_text
-                                })
-                                logger.debug(f"[TALEON-{world_name}] Histórico: {date_text} = {experience_gained:,}")
+            if not exp_section:
+                logger.warning(f"[TALEON-{world_name}] Seção 'experience history' não encontrada")
+                return []
             
-            logger.info(f"[TALEON-{world_name}] Extraídos {len(history_data)} registros de histórico de experiência")
+            logger.debug(f"[TALEON-{world_name}] Seção 'experience history' encontrada")
+            
+            exp_table = exp_section.find_next('table')
+            if not exp_table:
+                logger.warning(f"[TALEON-{world_name}] Tabela de experiência não encontrada após a seção")
+                return []
+            
+            logger.debug(f"[TALEON-{world_name}] Tabela de experiência encontrada")
+            
+            exp_rows = exp_table.find_all('tr')
+            logger.debug(f"[TALEON-{world_name}] Encontradas {len(exp_rows)} linhas na tabela de experiência")
+            
+            for i, row in enumerate(exp_rows[1:], 1):  # Pular header, começar contagem em 1
+                cells = row.find_all(['td', 'th'])
+                logger.debug(f"[TALEON-{world_name}] Linha {i}: {len(cells)} células encontradas")
+                
+                if len(cells) >= 2:
+                    date_text = cells[0].get_text().strip()
+                    exp_text = cells[1].get_text().strip()
+                    
+                    logger.debug(f"[TALEON-{world_name}] Linha {i}: Data='{date_text}', Exp='{exp_text}'")
+                    
+                    # Processar diferentes tipos de data
+                    experience_gained = 0
+                    snapshot_date = None
+                    
+                    if 'no experience gained' in exp_text.lower():
+                        experience_gained = 0
+                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Sem experiência ganha")
+                    else:
+                        experience_gained = self._extract_number(exp_text)
+                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Experiência extraída: {experience_gained:,}")
+                    
+                    # Converter data
+                    if date_text.lower() == 'today':
+                        from datetime import datetime
+                        snapshot_date = datetime.now().date()
+                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Data 'today' convertida para {snapshot_date}")
+                    elif date_text.lower() == 'yesterday':
+                        from datetime import datetime, timedelta
+                        snapshot_date = (datetime.now() - timedelta(days=1)).date()
+                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Data 'yesterday' convertida para {snapshot_date}")
+                    else:
+                        # Tentar parsear data no formato DD/MM/YYYY
+                        try:
+                            from datetime import datetime
+                            snapshot_date = datetime.strptime(date_text, '%d/%m/%Y').date()
+                            logger.debug(f"[TALEON-{world_name}] Linha {i}: Data '{date_text}' convertida para {snapshot_date}")
+                        except ValueError:
+                            logger.warning(f"[TALEON-{world_name}] Linha {i}: Não foi possível parsear data: {date_text}")
+                            continue
+                    
+                    if snapshot_date and experience_gained >= 0:
+                        history_data.append({
+                            'date': snapshot_date,
+                            'experience_gained': experience_gained,
+                            'date_text': date_text
+                        })
+                        logger.info(f"[TALEON-{world_name}] ✅ Linha {i}: Adicionado histórico - {date_text} = {experience_gained:,}")
+                    else:
+                        logger.warning(f"[TALEON-{world_name}] Linha {i}: Dados inválidos - data={snapshot_date}, exp={experience_gained}")
+                else:
+                    logger.warning(f"[TALEON-{world_name}] Linha {i}: Células insuficientes ({len(cells)})")
+            
+            logger.info(f"[TALEON-{world_name}] ✅ Extração concluída: {len(history_data)} registros de histórico de experiência")
+            
+            # Log detalhado de todos os registros extraídos
+            for i, entry in enumerate(history_data, 1):
+                logger.debug(f"[TALEON-{world_name}] Registro {i}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
+            
             return history_data
             
         except Exception as e:
-            logger.warning(f"[TALEON-{world_name}] Erro ao extrair histórico de experiência: {e}")
+            logger.error(f"[TALEON-{world_name}] ❌ Erro ao extrair histórico de experiência: {e}", exc_info=True)
             return []
 
     def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:

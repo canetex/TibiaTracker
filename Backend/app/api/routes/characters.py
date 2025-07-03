@@ -1253,6 +1253,8 @@ async def refresh_character_data(
         scraped_data = scrape_result.data
         history_data = scraped_data.get('experience_history', [])
         
+        logger.info(f"[REFRESH] Personagem {character.name}: {len(history_data)} entradas de histórico encontradas")
+        
         # Atualizar dados do personagem
         character.level = scraped_data['level']
         character.vocation = scraped_data['vocation']
@@ -1265,7 +1267,10 @@ async def refresh_character_data(
         
         # Processar histórico se disponível
         if history_data:
-            for entry in history_data:
+            logger.info(f"[REFRESH] Processando {len(history_data)} entradas de histórico...")
+            for i, entry in enumerate(history_data, 1):
+                logger.debug(f"[REFRESH] Processando entrada {i}/{len(history_data)}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
+                
                 # Verificar se já existe snapshot para esta data (pegar só o primeiro, nunca lançar erro)
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
@@ -1280,6 +1285,7 @@ async def refresh_character_data(
                 
                 if existing_snapshot:
                     # Atualizar snapshot existente
+                    logger.debug(f"[REFRESH] Atualizando snapshot existente para {entry['date_text']}")
                     existing_snapshot.experience = entry['experience_gained']
                     existing_snapshot.level = scraped_data['level']
                     existing_snapshot.vocation = scraped_data['vocation']
@@ -1294,6 +1300,7 @@ async def refresh_character_data(
                     snapshots_updated += 1
                 else:
                     # Criar novo snapshot
+                    logger.debug(f"[REFRESH] Criando novo snapshot para {entry['date_text']}")
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
                         level=scraped_data['level'],
