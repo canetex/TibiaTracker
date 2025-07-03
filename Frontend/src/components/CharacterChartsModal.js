@@ -149,7 +149,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       datasets.push({
         label: 'Experiência',
         data: chartData.experience.data.map(item => ({
-          x: item.date, // Usar a data diretamente como string
+          x: item.date, // Data no formato YYYY-MM-DD
           y: item.experience_gained || item.experience || 0
         })),
         borderColor: colors[colorIndex++],
@@ -457,7 +457,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                       Dados Coletados
                     </Typography>
                     <Typography variant="h6">
-                      {chartData.experience?.data?.length || 0} snapshots
+                      {chartData.experience?.summary?.snapshots_count || chartData.experience?.data?.length || 0} snapshots
                     </Typography>
                   </Box>
                 </Grid>

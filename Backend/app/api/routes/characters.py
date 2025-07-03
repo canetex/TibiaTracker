@@ -1259,35 +1259,73 @@ async def get_character_experience_chart(
             "character_name": character.name,
             "period_days": days,
             "data": [],
-            "total_experience_gained": 0
+            "summary": {
+                "total_gained": 0,
+                "average_daily": 0,
+                "snapshots_count": 0
+            }
         }
     
     # Preparar dados para o gráfico
     chart_data = []
     total_gained = 0
     
-    for i, snapshot in enumerate(snapshots):
+    # Se há apenas um snapshot, mostrá-lo mesmo assim
+    if len(snapshots) == 1:
+        snapshot = snapshots[0]
         date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
-        
-        # Experiência ganha no dia (valor do snapshot)
-        exp_gained = snapshot.experience
-        total_gained += exp_gained
         
         chart_data.append({
             "date": date_str,
-            "experience_gained": exp_gained,
-            "cumulative_experience": total_gained,
-            "level": snapshot.level,
-            "day_of_week": snapshot.scraped_at.strftime("%A")
+            "experience": snapshot.experience,
+            "level": snapshot.level
         })
+        
+        return {
+            "character_id": character_id,
+            "character_name": character.name,
+            "period_days": days,
+            "data": chart_data,
+            "summary": {
+                "total_gained": 0,
+                "average_daily": 0,
+                "snapshots_count": 1
+            }
+        }
+    
+    # Para múltiplos snapshots, calcular ganhos entre eles
+    for i, snapshot in enumerate(snapshots):
+        date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
+        
+        if i == 0:
+            # Primeiro snapshot - experiência base
+            exp_gained = 0
+        else:
+            # Calcular experiência ganha desde o snapshot anterior
+            exp_gained = snapshot.experience - snapshots[i-1].experience
+            total_gained += exp_gained
+        
+        chart_data.append({
+            "date": date_str,
+            "experience": snapshot.experience,
+            "experience_gained": exp_gained,
+            "level": snapshot.level
+        })
+    
+    # Calcular média diária considerando apenas dias com ganho
+    days_with_gain = len([d for d in chart_data if d.get("experience_gained", 0) > 0])
+    avg_daily = total_gained / days_with_gain if days_with_gain > 0 else 0
     
     return {
         "character_id": character_id,
         "character_name": character.name,
         "period_days": days,
         "data": chart_data,
-        "total_experience_gained": total_gained,
-        "average_daily_experience": total_gained / len(snapshots) if snapshots else 0
+        "summary": {
+            "total_gained": total_gained,
+            "average_daily": avg_daily,
+            "snapshots_count": len(snapshots)
+        }
     }
 
 
@@ -1327,7 +1365,13 @@ async def get_character_level_chart(
             "character_id": character_id,
             "character_name": character.name,
             "period_days": days,
-            "data": []
+            "data": [],
+            "summary": {
+                "levels_gained": 0,
+                "level_start": 0,
+                "level_end": 0,
+                "snapshots_count": 0
+            }
         }
     
     # Preparar dados para o gráfico
@@ -1351,7 +1395,10 @@ async def get_character_level_chart(
         "character_name": character.name,
         "period_days": days,
         "data": chart_data,
-        "level_start": level_start,
-        "level_end": level_end,
-        "level_gained": level_gained
+        "summary": {
+            "levels_gained": level_gained,
+            "level_start": level_start,
+            "level_end": level_end,
+            "snapshots_count": len(snapshots)
+        }
     } 
