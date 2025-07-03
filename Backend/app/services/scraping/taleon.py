@@ -181,7 +181,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         history_data = []
         
         try:
-            logger.debug(f"[TALEON-{world_name}] Iniciando extração de histórico de experiência...")
+            logger.info(f"[TALEON-{world_name}] Iniciando extração de histórico de experiência...")
             
             # Buscar seção "experience history" para extrair histórico completo
             exp_section = soup.find(text=re.compile(r'experience history', re.IGNORECASE))
@@ -189,17 +189,17 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                 logger.warning(f"[TALEON-{world_name}] Seção 'experience history' não encontrada")
                 return []
             
-            logger.debug(f"[TALEON-{world_name}] Seção 'experience history' encontrada")
+            logger.info(f"[TALEON-{world_name}] Seção 'experience history' encontrada")
             
             exp_table = exp_section.find_next('table')
             if not exp_table:
                 logger.warning(f"[TALEON-{world_name}] Tabela de experiência não encontrada após a seção")
                 return []
             
-            logger.debug(f"[TALEON-{world_name}] Tabela de experiência encontrada")
+            logger.info(f"[TALEON-{world_name}] Tabela de experiência encontrada")
             
             exp_rows = exp_table.find_all('tr')
-            logger.debug(f"[TALEON-{world_name}] Encontradas {len(exp_rows)} linhas na tabela de experiência")
+            logger.info(f"[TALEON-{world_name}] Encontradas {len(exp_rows)} linhas na tabela de experiência")
             
             for i, row in enumerate(exp_rows[1:], 1):  # Pular header, começar contagem em 1
                 cells = row.find_all(['td', 'th'])
