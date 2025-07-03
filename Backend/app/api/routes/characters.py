@@ -1272,10 +1272,9 @@ async def refresh_character_data(
                         CharacterSnapshotModel.character_id == character.id,
                         func.date(CharacterSnapshotModel.scraped_at) == entry['date']
                     )
-                )
+                ).limit(1)
                 snapshot_result = await db.execute(existing_snapshot_query)
-                existing_snapshot = snapshot_result.first()
-                existing_snapshot = existing_snapshot[0] if existing_snapshot else None
+                existing_snapshot = snapshot_result.scalar_one_or_none()
                 
                 snapshot_date = datetime.combine(entry['date'], datetime.min.time())
                 
@@ -1326,7 +1325,7 @@ async def refresh_character_data(
                     CharacterSnapshotModel.character_id == character.id,
                     func.date(CharacterSnapshotModel.scraped_at) == today
                 )
-            )
+            ).limit(1)
             snapshot_result = await db.execute(existing_snapshot_query)
             existing_snapshot = snapshot_result.scalar_one_or_none()
             
