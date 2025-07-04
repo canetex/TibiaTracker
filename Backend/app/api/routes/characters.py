@@ -1254,6 +1254,8 @@ async def refresh_character_data(
         history_data = scraped_data.get('experience_history', [])
         
         logger.info(f"[REFRESH] Personagem {character.name}: {len(history_data)} entradas de histórico encontradas")
+        logger.info(f"[REFRESH] Dados completos do scraping: {scraped_data.keys()}")
+        logger.info(f"[REFRESH] experience_history: {history_data}")
         
         # Atualizar dados do personagem
         character.level = scraped_data['level']
