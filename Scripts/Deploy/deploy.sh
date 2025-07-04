@@ -153,6 +153,7 @@ deploy_application() {
         --exclude='*.pyc' \
         --exclude='.vscode' \
         --exclude='*.log' \
+        --exclude='.env' \
         "$CURRENT_DIR/" "$PROJECT_DIR/"
     
     # Copiar .env do diretório atual se existir, senão tentar do /opt
@@ -162,6 +163,8 @@ deploy_application() {
     elif [[ -f "/opt/.env" ]]; then
         log "Copiando arquivo .env de /opt/..."
         sudo cp "/opt/.env" "$PROJECT_DIR/.env"
+    else
+        log "Nenhum arquivo .env encontrado para copiar"
     fi
 
     # Entrar no diretório do projeto
