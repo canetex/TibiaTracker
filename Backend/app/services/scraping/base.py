@@ -170,7 +170,8 @@ class BaseCharacterScraper(ABC):
             'is_online': bool(raw_data.get('is_online', False)),
             'last_login': raw_data.get('last_login'),
             'profile_url': raw_data.get('profile_url', ''),
-            'outfit_image_url': raw_data.get('outfit_image_url')
+            'outfit_image_url': raw_data.get('outfit_image_url'),
+            'experience_history': raw_data.get('experience_history', [])
         }
     
     # === MÉTODO PRINCIPAL (implementação padrão) ===
