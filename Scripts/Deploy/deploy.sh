@@ -155,10 +155,13 @@ deploy_application() {
         --exclude='*.log' \
         "$CURRENT_DIR/" "$PROJECT_DIR/"
     
-    # Copiar .env do diretório atual se existir
+    # Copiar .env do diretório atual se existir, senão tentar do /opt
     if [[ -f "$CURRENT_DIR/.env" ]]; then
         log "Copiando arquivo .env do diretório atual..."
         sudo cp "$CURRENT_DIR/.env" "$PROJECT_DIR/.env"
+    elif [[ -f "/opt/.env" ]]; then
+        log "Copiando arquivo .env de /opt/..."
+        sudo cp "/opt/.env" "$PROJECT_DIR/.env"
     fi
 
     # Entrar no diretório do projeto
