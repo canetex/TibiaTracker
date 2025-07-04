@@ -169,6 +169,24 @@ async def search_character(
             if existing_character.snapshots:
                 latest_snapshot = sorted(existing_character.snapshots, key=lambda x: x.scraped_at, reverse=True)[0]
             
+            # Calcular estatísticas de experiência dos últimos 30 dias
+            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            recent_snapshots = [
+                snap for snap in existing_character.snapshots 
+                if snap.scraped_at >= thirty_days_ago
+            ]
+            
+            # Calcular estatísticas
+            total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
+            average_daily_exp = 0
+            
+            if len(recent_snapshots) > 1:
+                days_diff = (recent_snapshots[-1].scraped_at - recent_snapshots[0].scraped_at).days
+                if days_diff > 0:
+                    average_daily_exp = total_exp_gained / days_diff
+            elif len(recent_snapshots) == 1:
+                average_daily_exp = total_exp_gained
+            
             return {
                 "success": True,
                 "message": f"Personagem '{existing_character.name}' encontrado no banco de dados",
@@ -182,6 +200,9 @@ async def search_character(
                     "outfit_image_url": existing_character.outfit_image_url,
                     "last_scraped_at": existing_character.last_scraped_at,
                     "is_favorited": existing_character.is_favorited,
+                    "total_snapshots": len(existing_character.snapshots),
+                    "total_exp_gained": total_exp_gained,
+                    "average_daily_exp": average_daily_exp,
                     "latest_snapshot": {
                         "level": latest_snapshot.level if latest_snapshot else existing_character.level,
                         "experience": latest_snapshot.experience if latest_snapshot else 0,
@@ -538,7 +559,7 @@ async def scrape_character_with_history(
                               f"experiência {existing_snapshot.experience:,} → {entry['experience_gained']:,}")
                     
                     existing_snapshot.level = scraped_data['level']
-                    existing_snapshot.experience = entry['experience_gained']  # SOBRESCREVER
+                    existing_snapshot.experience = max(0, entry['experience_gained'])  # Garantir que não seja negativo
                     existing_snapshot.deaths = scraped_data.get('deaths', 0)
                     existing_snapshot.charm_points = scraped_data.get('charm_points')
                     existing_snapshot.bosstiary_points = scraped_data.get('bosstiary_points')
@@ -565,7 +586,7 @@ async def scrape_character_with_history(
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
                         level=scraped_data['level'],  # Usar level atual para todos
-                        experience=entry['experience_gained'],  # Experiência específica do dia
+                        experience=max(0, entry['experience_gained']),  # Experiência específica do dia, garantindo que não seja negativa
                         deaths=scraped_data.get('deaths', 0),
                         charm_points=scraped_data.get('charm_points'),
                         bosstiary_points=scraped_data.get('bosstiary_points'),
@@ -592,7 +613,7 @@ async def scrape_character_with_history(
             snapshot = CharacterSnapshotModel(
                 character_id=character.id,
                 level=scraped_data['level'],
-                experience=scraped_data.get('experience', 0),
+                experience=max(0, scraped_data.get('experience', 0)),  # Garantir que não seja negativo
                 deaths=scraped_data.get('deaths', 0),
                 charm_points=scraped_data.get('charm_points'),
                 bosstiary_points=scraped_data.get('bosstiary_points'),
@@ -685,6 +706,31 @@ async def get_recent_characters(
             )
             total_snapshots = count_result.scalar()
             
+            # Calcular estatísticas de experiência dos últimos 30 dias
+            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            exp_stats_result = await db.execute(
+                select(CharacterSnapshotModel)
+                .where(
+                    and_(
+                        CharacterSnapshotModel.character_id == char.id,
+                        CharacterSnapshotModel.scraped_at >= thirty_days_ago
+                    )
+                )
+                .order_by(CharacterSnapshotModel.scraped_at)
+            )
+            recent_snapshots = exp_stats_result.scalars().all()
+            
+            # Calcular estatísticas
+            total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
+            average_daily_exp = 0
+            
+            if len(recent_snapshots) > 1:
+                days_diff = (recent_snapshots[-1].scraped_at - recent_snapshots[0].scraped_at).days
+                if days_diff > 0:
+                    average_daily_exp = total_exp_gained / days_diff
+            elif len(recent_snapshots) == 1:
+                average_daily_exp = total_exp_gained
+            
             char_data = {
                 "id": char.id,
                 "name": char.name,
@@ -696,6 +742,8 @@ async def get_recent_characters(
                 "last_scraped_at": char.last_scraped_at,
                 "is_favorited": char.is_favorited,
                 "total_snapshots": total_snapshots,
+                "total_exp_gained": total_exp_gained,
+                "average_daily_exp": average_daily_exp,
                 "latest_snapshot": None
             }
             
@@ -1088,6 +1136,9 @@ async def get_character_evolution(
     first_snapshot = snapshots[0]
     last_snapshot = snapshots[-1]
     
+    # Calcular experiência total ganha no período (soma dos dias)
+    total_experience_gained = sum(max(0, snapshot.experience) for snapshot in snapshots)
+    
     # Detectar mudanças de world
     world_changes = []
     current_world = first_snapshot.world
@@ -1104,9 +1155,9 @@ async def get_character_evolution(
         level_start=first_snapshot.level,
         level_end=last_snapshot.level,
         level_gained=last_snapshot.level - first_snapshot.level,
-        experience_start=first_snapshot.experience,
-        experience_end=last_snapshot.experience,
-        experience_gained=last_snapshot.experience - first_snapshot.experience,
+        experience_start=0,  # Não há experiência inicial acumulada
+        experience_end=total_experience_gained,  # Total de experiência ganha no período
+        experience_gained=total_experience_gained,  # Total de experiência ganha no período
         deaths_start=first_snapshot.deaths,
         deaths_end=last_snapshot.deaths,
         deaths_total=last_snapshot.deaths - first_snapshot.deaths,
@@ -1170,15 +1221,19 @@ async def get_character_stats(
     
     # Calcular estatísticas
     highest_level_snapshot = max(snapshots, key=lambda x: x.level)
-    highest_exp_snapshot = max(snapshots, key=lambda x: x.experience)
+    
+    # Calcular experiência total ganha no período (soma dos dias)
+    total_experience_gained = sum(max(0, snapshot.experience) for snapshot in snapshots)
+    
+    # Encontrar snapshot com maior experiência ganha em um único dia
+    highest_daily_exp_snapshot = max(snapshots, key=lambda x: max(0, x.experience))
     
     # Calcular média de exp por dia
     if len(snapshots) > 1:
         total_days = (snapshots[-1].scraped_at - snapshots[0].scraped_at).days
-        exp_gain = snapshots[-1].experience - snapshots[0].experience
-        avg_daily_exp = exp_gain / total_days if total_days > 0 else 0
+        avg_daily_exp = total_experience_gained / total_days if total_days > 0 else 0
     else:
-        avg_daily_exp = 0
+        avg_daily_exp = total_experience_gained
     
     # Worlds visitados
     worlds_visited = list(set(snapshot.world for snapshot in snapshots))
@@ -1191,8 +1246,8 @@ async def get_character_stats(
         last_snapshot=snapshots[-1].scraped_at,
         highest_level=highest_level_snapshot.level,
         highest_level_date=highest_level_snapshot.scraped_at,
-        highest_experience=highest_exp_snapshot.experience,
-        highest_experience_date=highest_exp_snapshot.scraped_at,
+        highest_experience=total_experience_gained,  # Total de experiência ganha no período
+        highest_experience_date=snapshots[-1].scraped_at,  # Data do último snapshot
         average_daily_exp_gain=avg_daily_exp,
         average_level_per_month=None,  # Implementar se necessário
         worlds_visited=worlds_visited
@@ -1309,7 +1364,7 @@ async def refresh_character_data(
                 if existing_snapshot:
                     # Atualizar snapshot existente
                     logger.debug(f"[REFRESH] Atualizando snapshot existente para {entry['date_text']}")
-                    existing_snapshot.experience = entry['experience_gained']
+                    existing_snapshot.experience = max(0, entry['experience_gained'])  # Garantir que não seja negativo
                     existing_snapshot.level = scraped_data['level']
                     existing_snapshot.vocation = scraped_data['vocation']
                     existing_snapshot.deaths = scraped_data.get('deaths', 0)
@@ -1327,7 +1382,7 @@ async def refresh_character_data(
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
                         level=scraped_data['level'],
-                        experience=entry['experience_gained'],
+                        experience=max(0, entry['experience_gained']),  # Garantir que não seja negativo
                         deaths=scraped_data.get('deaths', 0),
                         charm_points=scraped_data.get('charm_points'),
                         bosstiary_points=scraped_data.get('bosstiary_points'),
@@ -1361,7 +1416,7 @@ async def refresh_character_data(
             
             if existing_snapshot:
                 # Atualizar snapshot de hoje
-                existing_snapshot.experience = scraped_data.get('experience', 0)
+                existing_snapshot.experience = max(0, scraped_data.get('experience', 0))  # Garantir que não seja negativo
                 existing_snapshot.level = scraped_data['level']
                 existing_snapshot.vocation = scraped_data['vocation']
                 existing_snapshot.deaths = scraped_data.get('deaths', 0)
@@ -1372,7 +1427,7 @@ async def refresh_character_data(
                 snapshot = CharacterSnapshotModel(
                     character_id=character.id,
                     level=scraped_data['level'],
-                    experience=scraped_data.get('experience', 0),
+                    experience=max(0, scraped_data.get('experience', 0)),  # Garantir que não seja negativo
                     deaths=scraped_data.get('deaths', 0),
                     charm_points=scraped_data.get('charm_points'),
                     bosstiary_points=scraped_data.get('bosstiary_points'),
@@ -1465,9 +1520,13 @@ async def get_character_experience_chart(
         snapshot = snapshots[0]
         date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
         
+        # Para um único snapshot, usar a experiência como ganho do dia
+        exp_gained = max(0, snapshot.experience)  # Garantir que não seja negativo
+        
         chart_data.append({
             "date": date_str,
-            "experience": snapshot.experience,
+            "experience": exp_gained,  # Experiência ganha no dia
+            "experience_gained": exp_gained,  # Experiência ganha no dia
             "level": snapshot.level
         })
         
@@ -1477,28 +1536,24 @@ async def get_character_experience_chart(
             "period_days": days,
             "data": chart_data,
             "summary": {
-                "total_gained": 0,
-                "average_daily": 0,
+                "total_gained": exp_gained,
+                "average_daily": exp_gained,
                 "snapshots_count": 1
             }
         }
     
-    # Para múltiplos snapshots, calcular ganhos entre eles
+    # Para múltiplos snapshots, mostrar experiência ganha por dia
     for i, snapshot in enumerate(snapshots):
         date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
         
-        if i == 0:
-            # Primeiro snapshot - experiência base
-            exp_gained = 0
-        else:
-            # Calcular experiência ganha desde o snapshot anterior
-            exp_gained = snapshot.experience - snapshots[i-1].experience
-            total_gained += exp_gained
+        # Experiência ganha no dia (já está no snapshot)
+        exp_gained = max(0, snapshot.experience)  # Garantir que não seja negativo
+        total_gained += exp_gained
         
         chart_data.append({
             "date": date_str,
-            "experience": snapshot.experience,
-            "experience_gained": exp_gained,
+            "experience": exp_gained,  # Experiência ganha neste dia específico
+            "experience_gained": exp_gained,  # Experiência ganha neste dia específico
             "level": snapshot.level
         })
     

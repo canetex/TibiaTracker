@@ -182,6 +182,43 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
           </Grid>
         </Grid>
 
+        {/* Quick Stats - Média Diária */}
+        {character.total_snapshots > 1 && (
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              📊 Estatísticas Rápidas (30 dias)
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Média Diária
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    {character.average_daily_exp ? 
+                      `${character.average_daily_exp.toLocaleString('pt-BR')} exp/dia` : 
+                      'Clique em "Ver Gráficos" para ver'
+                    }
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Período
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {character.total_exp_gained ? 
+                      `${character.total_exp_gained.toLocaleString('pt-BR')} exp` : 
+                      'Clique em "Ver Gráficos" para ver'
+                    }
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
         {/* Additional Stats (if available) */}
         {(latest?.charm_points || latest?.bosstiary_points || latest?.achievement_points) && (
           <Box sx={{ mb: 2 }}>
