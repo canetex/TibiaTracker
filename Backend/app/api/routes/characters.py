@@ -475,8 +475,7 @@ async def scrape_character_with_history(
         logger.info(f"[SCRAPE-WITH-HISTORY] Scraping concluído com sucesso")
         
         # Extrair histórico completo de experiência
-        data['experience_history'] = self._extract_experience_history_data(soup)
-        
+        history_data = scraped_data.get('experience_history', [])
         logger.info(f"[SCRAPE-WITH-HISTORY] Personagem {character_name}: {len(history_data)} entradas de histórico encontradas")
         logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {list(scraped_data.keys())}")
         logger.info(f"[SCRAPE-WITH-HISTORY] experience_history: {history_data}")
