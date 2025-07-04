@@ -16,13 +16,13 @@ echo "📁 Diretório: $SERVER_PATH"
 # 1. Ir para o diretório
 cd $SERVER_PATH
 
-# 2. Parar os containers
-echo "🛑 Parando containers..."
-docker-compose down
-
-# 3. Fazer backup do banco de dados
+# 2. Fazer backup do banco de dados (ANTES de parar containers)
 echo "🗄️ Fazendo backup do banco de dados..."
 docker exec tibia-tracker-postgres pg_dump -U $DB_USER $DB_NAME > backup-db-$(date +%Y%m%d-%H%M%S).sql
+
+# 3. Parar os containers
+echo "🛑 Parando containers..."
+docker-compose down
 
 # 4. Baixar arquivos específicos atualizados
 echo "⬇️ Baixando arquivos atualizados..."
