@@ -131,7 +131,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         if not date_text or date_text.lower() in ['never', 'nunca', '-', '']:
             return None
         
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Formato do Taleon: "27 Jun 2025, 19:33 → 27 Jun 2025, 20:17"
@@ -163,7 +162,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
     
     def _extract_outfit_image_url(self, soup: BeautifulSoup) -> str:
         """Extrair URL da imagem do outfit do Taleon"""
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Procurar por imagem do outfit no padrão outfits.taleon.online
@@ -178,7 +176,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
     
     def _extract_experience_history_data(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
         """Extrair dados históricos de experiência de vários dias"""
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         history_data = []
         
         try:
@@ -293,7 +290,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
 
     def _extract_total_experience(self, soup: BeautifulSoup) -> int:
         """Extrair experiência total atual do personagem"""
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Procurar por experiência total na página
@@ -343,7 +339,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
     
     def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:
         """Extrair experiência ganha hoje do histórico (mantém compatibilidade)"""
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         history_data = self._extract_experience_history_data(soup)
         
@@ -358,7 +353,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
     
     def _count_deaths_from_list(self, soup: BeautifulSoup) -> int:
         """Contar mortes da death list"""
-        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Buscar seção "death list" para contar mortes
@@ -523,7 +517,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             data['deaths'] = self._count_deaths_from_list(soup)
             
             # Validação final dos dados extraídos
-            self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
             
             if not data['name']:
                 raise ValueError(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Nome do personagem não encontrado")
@@ -535,7 +528,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Dados completos: {data}")
             
         except Exception as e:
-            self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
             logger.error(f"❌ [TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao extrair dados do HTML: {e}")
             raise
         
