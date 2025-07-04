@@ -470,6 +470,10 @@ async def scrape_character_with_history(
         # Obter histórico de experiência se disponível
         history_data = scraped_data.get('experience_history', [])
         
+        logger.info(f"[SCRAPE-WITH-HISTORY] Personagem {character_name}: {len(history_data)} entradas de histórico encontradas")
+        logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {scraped_data.keys()}")
+        logger.info(f"[SCRAPE-WITH-HISTORY] experience_history: {history_data}")
+        
         character = existing_character
         if not character:
             # Criar personagem se não existe
