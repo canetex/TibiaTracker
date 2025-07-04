@@ -16,7 +16,8 @@ echo "📁 Diretório: $SERVER_PATH"
 # 1. Fazer backup do diretório atual
 echo "💾 Fazendo backup do diretório atual..."
 cd $SERVER_PATH
-tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz . --exclude=backup-*.tar.gz
+BACKUP_FILE="backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+tar --exclude='backup-*.tar.gz' --exclude='*.log' -czf $BACKUP_FILE . || echo "⚠️ Aviso: Backup pode estar incompleto, mas continuando..."
 
 # 2. Parar os containers
 echo "🛑 Parando containers..."
