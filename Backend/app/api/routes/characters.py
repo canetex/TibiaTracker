@@ -440,6 +440,8 @@ async def scrape_character_with_history(
 ):
     """Fazer scraping e salvar histórico completo de experiência"""
     
+    logger.info(f"[SCRAPE-WITH-HISTORY] Iniciando scraping com histórico para {character_name} em {server}/{world}")
+    
     try:
         # Verificar se já existe
         existing_query = select(CharacterModel).where(
@@ -452,10 +454,14 @@ async def scrape_character_with_history(
         result = await db.execute(existing_query)
         existing_character = result.scalar_one_or_none()
         
+        logger.info(f"[SCRAPE-WITH-HISTORY] Personagem existente: {existing_character.id if existing_character else 'NÃO'}")
+        
         # Fazer scraping
+        logger.info(f"[SCRAPE-WITH-HISTORY] Iniciando scraping...")
         scrape_result = await scrape_character_data(server, world, character_name)
         
         if not scrape_result.success:
+            logger.error(f"[SCRAPE-WITH-HISTORY] Falha no scraping: {scrape_result.error_message}")
             raise HTTPException(
                 status_code=422,
                 detail={
@@ -466,17 +472,19 @@ async def scrape_character_with_history(
             )
         
         scraped_data = scrape_result.data
+        logger.info(f"[SCRAPE-WITH-HISTORY] Scraping concluído com sucesso")
         
         # Obter histórico de experiência se disponível
         history_data = scraped_data.get('experience_history', [])
         
         logger.info(f"[SCRAPE-WITH-HISTORY] Personagem {character_name}: {len(history_data)} entradas de histórico encontradas")
-        logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {scraped_data.keys()}")
+        logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {list(scraped_data.keys())}")
         logger.info(f"[SCRAPE-WITH-HISTORY] experience_history: {history_data}")
         
         character = existing_character
         if not character:
             # Criar personagem se não existe
+            logger.info(f"[SCRAPE-WITH-HISTORY] Criando novo personagem...")
             character = CharacterModel(
                 name=scraped_data['name'],
                 server=server.lower(),
@@ -494,8 +502,10 @@ async def scrape_character_with_history(
             
             db.add(character)
             await db.flush()  # Para obter o ID
+            logger.info(f"[SCRAPE-WITH-HISTORY] Novo personagem criado com ID: {character.id}")
         else:
             # Atualizar personagem existente
+            logger.info(f"[SCRAPE-WITH-HISTORY] Atualizando personagem existente ID: {character.id}")
             character.level = scraped_data['level']
             character.vocation = scraped_data['vocation']
             character.residence = scraped_data.get('residence')
@@ -507,7 +517,10 @@ async def scrape_character_with_history(
         
         # Criar/atualizar snapshots para cada entrada do histórico
         if history_data:
-            for entry in history_data:
+            logger.info(f"[SCRAPE-WITH-HISTORY] Processando {len(history_data)} entradas de histórico...")
+            for i, entry in enumerate(history_data):
+                logger.info(f"[SCRAPE-WITH-HISTORY] Processando entrada {i+1}/{len(history_data)}: {entry}")
+                
                 # Verificar se já existe snapshot para esta data
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
@@ -522,7 +535,7 @@ async def scrape_character_with_history(
                 
                 if existing_snapshot:
                     # SOBRESCREVER dados existentes com informações mais recentes
-                    logger.info(f"Atualizando snapshot existente para {entry['date']}: "
+                    logger.info(f"[SCRAPE-WITH-HISTORY] Atualizando snapshot existente para {entry['date']}: "
                               f"experiência {existing_snapshot.experience:,} → {entry['experience_gained']:,}")
                     
                     existing_snapshot.level = scraped_data['level']
@@ -547,7 +560,7 @@ async def scrape_character_with_history(
                     snapshots_updated += 1  # Contar como atualizado
                 else:
                     # Criar novo snapshot para esta data
-                    logger.info(f"Criando novo snapshot para {entry['date']}: "
+                    logger.info(f"[SCRAPE-WITH-HISTORY] Criando novo snapshot para {entry['date']}: "
                               f"experiência {entry['experience_gained']:,}")
                     
                     snapshot = CharacterSnapshotModel(
@@ -576,6 +589,7 @@ async def scrape_character_with_history(
                     snapshots_created += 1
         else:
             # Se não há histórico, criar snapshot apenas atual
+            logger.info(f"[SCRAPE-WITH-HISTORY] Nenhum histórico encontrado, criando snapshot atual...")
             snapshot = CharacterSnapshotModel(
                 character_id=character.id,
                 level=scraped_data['level'],
@@ -602,8 +616,11 @@ async def scrape_character_with_history(
             snapshots_created = 1
             snapshots_updated = 0
         
+        logger.info(f"[SCRAPE-WITH-HISTORY] Salvando no banco de dados...")
         await db.commit()
         await db.refresh(character)
+        
+        logger.info(f"[SCRAPE-WITH-HISTORY] Concluído! Snapshots criados: {snapshots_created}, atualizados: {snapshots_updated}")
         
         return {
             "success": True,
@@ -628,6 +645,7 @@ async def scrape_character_with_history(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"[SCRAPE-WITH-HISTORY] Erro: {str(e)}")
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
