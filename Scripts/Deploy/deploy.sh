@@ -158,11 +158,21 @@ deploy_application() {
     
     # Copiar .env do diretório atual se existir, senão tentar do /opt
     if [[ -f "$CURRENT_DIR/.env" ]]; then
-        log "Copiando arquivo .env do diretório atual..."
-        sudo cp "$CURRENT_DIR/.env" "$PROJECT_DIR/.env"
+        # Verificar se origem e destino são diferentes
+        if [[ "$CURRENT_DIR" != "$PROJECT_DIR" ]]; then
+            log "Copiando arquivo .env do diretório atual..."
+            sudo cp "$CURRENT_DIR/.env" "$PROJECT_DIR/.env"
+        else
+            log "Arquivo .env já está no diretório correto, pulando cópia..."
+        fi
     elif [[ -f "/opt/.env" ]]; then
-        log "Copiando arquivo .env de /opt/..."
-        sudo cp "/opt/.env" "$PROJECT_DIR/.env"
+        # Verificar se origem e destino são diferentes
+        if [[ "/opt" != "$PROJECT_DIR" ]]; then
+            log "Copiando arquivo .env de /opt/..."
+            sudo cp "/opt/.env" "$PROJECT_DIR/.env"
+        else
+            log "Arquivo .env já está no diretório correto, pulando cópia..."
+        fi
     else
         log "Nenhum arquivo .env encontrado para copiar"
     fi
