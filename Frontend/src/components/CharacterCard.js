@@ -21,6 +21,7 @@ import {
   Public,
   Schedule,
   Analytics,
+  OpenInNew,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -80,6 +81,18 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
     return colors[vocation] || 'default';
   };
 
+  const getTibiaUrl = (character) => {
+    // Mapear servidores para URLs corretas
+    const serverUrls = {
+      'taleon': 'https://taleon.com.br',
+      'rubini': 'https://rubini.com.br',
+      // Adicionar outros servidores conforme necessário
+    };
+    
+    const baseUrl = serverUrls[character.server] || 'https://tibia.com';
+    return `${baseUrl}/char/${character.name}`;
+  };
+
   const latest = character.latest_snapshot;
 
   return (
@@ -103,6 +116,18 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
             <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
               {character.name}
             </Typography>
+            <Tooltip title="Ver no Tibia">
+              <IconButton
+                component="a"
+                href={getTibiaUrl(character)}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{ ml: 1, color: 'primary.main' }}
+              >
+                <OpenInNew fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
           
           {onToggleFavorite && (
