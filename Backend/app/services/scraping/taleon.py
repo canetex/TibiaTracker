@@ -131,7 +131,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         if not date_text or date_text.lower() in ['never', 'nunca', '-', '']:
             return None
         
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Formato do Taleon: "27 Jun 2025, 19:33 → 27 Jun 2025, 20:17"
@@ -158,35 +158,35 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             return self._parse_date(date_text)
                 
         except Exception as e:
-            logger.warning(f"[TALEON-{world_name}] Erro ao parsear data '{date_text}': {e}")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao parsear data '{date_text}': {e}")
             return None
     
     def _extract_outfit_image_url(self, soup: BeautifulSoup) -> str:
         """Extrair URL da imagem do outfit do Taleon"""
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Procurar por imagem do outfit no padrão outfits.taleon.online
             outfit_img = soup.find('img', src=re.compile(r'outfits\.taleon\.online/outfit\.php'))
             if outfit_img and outfit_img.get('src'):
-                logger.debug(f"[TALEON-{world_name}] Outfit image encontrada: {outfit_img['src']}")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Outfit image encontrada: {outfit_img['src']}")
                 return outfit_img['src']
             return None
         except Exception as e:
-            logger.warning(f"[TALEON-{world_name}] Erro ao extrair URL do outfit: {e}")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao extrair URL do outfit: {e}")
             return None
     
     def _extract_experience_history_data(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
         """Extrair dados históricos de experiência de vários dias"""
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         history_data = []
         
         try:
-            logger.info(f"[TALEON-{world_name}] Iniciando extração de histórico de experiência...")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Iniciando extração de histórico de experiência...")
             
             # Debug: Verificar todo o texto da página para encontrar padrões
             page_text = soup.get_text().lower()
-            logger.debug(f"[TALEON-{world_name}] Verificando texto da página...")
+            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Verificando texto da página...")
             
             # Buscar diferentes variações do texto "experience history"
             possible_phrases = [
@@ -201,41 +201,41 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             for phrase in possible_phrases:
                 if phrase in page_text:
                     found_phrase = phrase
-                    logger.info(f"[TALEON-{world_name}] ✅ Encontrada frase: '{phrase}'")
+                    logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] ✅ Encontrada frase: '{phrase}'")
                     break
             
             if not found_phrase:
-                logger.warning(f"[TALEON-{world_name}] ❌ Nenhuma das frases de experiência encontrada na página")
-                logger.debug(f"[TALEON-{world_name}] Frases procuradas: {possible_phrases}")
+                logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] ❌ Nenhuma das frases de experiência encontrada na página")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Frases procuradas: {possible_phrases}")
                 return []
             
             # Buscar seção "experience history" para extrair histórico completo
             exp_section = soup.find(text=re.compile(r'experience history', re.IGNORECASE))
             if not exp_section:
-                logger.warning(f"[TALEON-{world_name}] Seção 'experience history' não encontrada")
+                logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Seção 'experience history' não encontrada")
                 return []
             
-            logger.info(f"[TALEON-{world_name}] Seção 'experience history' encontrada")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Seção 'experience history' encontrada")
             
             exp_table = exp_section.find_next('table')
             if not exp_table:
-                logger.warning(f"[TALEON-{world_name}] Tabela de experiência não encontrada após a seção")
+                logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Tabela de experiência não encontrada após a seção")
                 return []
             
-            logger.info(f"[TALEON-{world_name}] Tabela de experiência encontrada")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Tabela de experiência encontrada")
             
             exp_rows = exp_table.find_all('tr')
-            logger.info(f"[TALEON-{world_name}] Encontradas {len(exp_rows)} linhas na tabela de experiência")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Encontradas {len(exp_rows)} linhas na tabela de experiência")
             
             for i, row in enumerate(exp_rows[1:], 1):  # Pular header, começar contagem em 1
                 cells = row.find_all(['td', 'th'])
-                logger.debug(f"[TALEON-{world_name}] Linha {i}: {len(cells)} células encontradas")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: {len(cells)} células encontradas")
                 
                 if len(cells) >= 2:
                     date_text = cells[0].get_text().strip()
                     exp_text = cells[1].get_text().strip()
                     
-                    logger.debug(f"[TALEON-{world_name}] Linha {i}: Data='{date_text}', Exp='{exp_text}'")
+                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Data='{date_text}', Exp='{exp_text}'")
                     
                     # Processar diferentes tipos de data
                     experience_gained = 0
@@ -243,28 +243,28 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                     
                     if 'no experience gained' in exp_text.lower():
                         experience_gained = 0
-                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Sem experiência ganha")
+                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Sem experiência ganha")
                     else:
                         experience_gained = self._extract_number(exp_text)
-                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Experiência extraída: {experience_gained:,}")
+                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Experiência extraída: {experience_gained:,}")
                     
                     # Converter data
                     if date_text.lower() == 'today':
                         from datetime import datetime
                         snapshot_date = datetime.now().date()
-                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Data 'today' convertida para {snapshot_date}")
+                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Data 'today' convertida para {snapshot_date}")
                     elif date_text.lower() == 'yesterday':
                         from datetime import datetime, timedelta
                         snapshot_date = (datetime.now() - timedelta(days=1)).date()
-                        logger.debug(f"[TALEON-{world_name}] Linha {i}: Data 'yesterday' convertida para {snapshot_date}")
+                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Data 'yesterday' convertida para {snapshot_date}")
                     else:
                         # Tentar parsear data no formato DD/MM/YYYY
                         try:
                             from datetime import datetime
                             snapshot_date = datetime.strptime(date_text, '%d/%m/%Y').date()
-                            logger.debug(f"[TALEON-{world_name}] Linha {i}: Data '{date_text}' convertida para {snapshot_date}")
+                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Data '{date_text}' convertida para {snapshot_date}")
                         except ValueError:
-                            logger.warning(f"[TALEON-{world_name}] Linha {i}: Não foi possível parsear data: {date_text}")
+                            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Não foi possível parsear data: {date_text}")
                             continue
                     
                     if snapshot_date and experience_gained >= 0:
@@ -273,27 +273,27 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             'experience_gained': experience_gained,
                             'date_text': date_text
                         })
-                        logger.info(f"[TALEON-{world_name}] ✅ Linha {i}: Adicionado histórico - {date_text} = {experience_gained:,}")
+                        logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] ✅ Linha {i}: Adicionado histórico - {date_text} = {experience_gained:,}")
                     else:
-                        logger.warning(f"[TALEON-{world_name}] Linha {i}: Dados inválidos - data={snapshot_date}, exp={experience_gained}")
+                        logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Dados inválidos - data={snapshot_date}, exp={experience_gained}")
                 else:
-                    logger.warning(f"[TALEON-{world_name}] Linha {i}: Células insuficientes ({len(cells)})")
+                    logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Linha {i}: Células insuficientes ({len(cells)})")
             
-            logger.info(f"[TALEON-{world_name}] ✅ Extração concluída: {len(history_data)} registros de histórico de experiência")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] ✅ Extração concluída: {len(history_data)} registros de histórico de experiência")
             
             # Log detalhado de todos os registros extraídos
             for i, entry in enumerate(history_data, 1):
-                logger.debug(f"[TALEON-{world_name}] Registro {i}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Registro {i}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
             
             return history_data
             
         except Exception as e:
-            logger.error(f"[TALEON-{world_name}] ❌ Erro ao extrair histórico de experiência: {e}", exc_info=True)
+            logger.error(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] ❌ Erro ao extrair histórico de experiência: {e}", exc_info=True)
             return []
 
     def _extract_total_experience(self, soup: BeautifulSoup) -> int:
         """Extrair experiência total atual do personagem"""
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Procurar por experiência total na página
@@ -315,7 +315,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                     if exp_str.isdigit():
                         exp_value = int(exp_str)
                         if exp_value > 1000000:  # Experiência total deve ser alta
-                            logger.debug(f"[TALEON-{world_name}] Experiência total encontrada: {exp_value:,}")
+                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Experiência total encontrada: {exp_value:,}")
                             return exp_value
             
             # Procurar em tabelas específicas
@@ -331,34 +331,34 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         if 'experience' in label or 'exp' in label:
                             exp_value = self._extract_number(value)
                             if exp_value > 1000000:  # Experiência total deve ser alta
-                                logger.debug(f"[TALEON-{world_name}] Experiência total encontrada na tabela: {exp_value:,}")
+                                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Experiência total encontrada na tabela: {exp_value:,}")
                                 return exp_value
             
-            logger.warning(f"[TALEON-{world_name}] Experiência total não encontrada")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Experiência total não encontrada")
             return 0
             
         except Exception as e:
-            logger.error(f"[TALEON-{world_name}] Erro ao extrair experiência total: {e}")
+            logger.error(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao extrair experiência total: {e}")
             return 0
     
     def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:
         """Extrair experiência ganha hoje do histórico (mantém compatibilidade)"""
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         history_data = self._extract_experience_history_data(soup)
         
         # Retornar experiência de hoje para compatibilidade
         for entry in history_data:
             if entry['date_text'].lower() == 'today':
-                logger.debug(f"[TALEON-{world_name}] Experiência ganha hoje: {entry['experience_gained']:,}")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Experiência ganha hoje: {entry['experience_gained']:,}")
                 return entry['experience_gained']
         
-        logger.warning(f"[TALEON-{world_name}] Não foi possível encontrar experiência de hoje no histórico")
+        logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Não foi possível encontrar experiência de hoje no histórico")
         return 0
     
     def _count_deaths_from_list(self, soup: BeautifulSoup) -> int:
         """Contar mortes da death list"""
-        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
         
         try:
             # Buscar seção "death list" para contar mortes
@@ -374,11 +374,11 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             death_text = cells[0].get_text().strip()
                             if death_text and 'no victims' not in death_text.lower():
                                 death_count += 1
-                    logger.debug(f"[TALEON-{world_name}] Mortes contadas: {death_count}")
+                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Mortes contadas: {death_count}")
                     return death_count
             return 0
         except Exception as e:
-            logger.warning(f"[TALEON-{world_name}] Erro ao contar mortes: {e}")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao contar mortes: {e}")
             return 0
     
     async def _extract_character_data(self, html: str, url: str) -> Dict[str, Any]:
@@ -414,8 +414,10 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                 try:
                     from app.services.outfit_service import OutfitService
                     outfit_service = OutfitService()
+                    # Usar o mundo atual da configuração
+                    current_world = self.current_world_config.name if self.current_world_config else "unknown"
                     outfit_data = await outfit_service.process_outfit(
-                        outfit_url, data['name'], self._get_server_name(), world
+                        outfit_url, data['name'], self._get_server_name(), current_world
                     )
                     if outfit_data:
                         data['outfit_data'] = json.dumps(outfit_data)
@@ -423,7 +425,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         if 'local_url' in outfit_data:
                             data['outfit_image_url'] = outfit_data['local_url']
                 except Exception as e:
-                    logger.warning(f"[TALEON-{world_name}] Erro ao processar outfit: {e}")
+                    logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Erro ao processar outfit: {e}")
             
             # Procurar pela tabela principal com informações do personagem
             # A estrutura do Taleon usa tabelas com duas colunas: label | valor
@@ -521,20 +523,20 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             data['deaths'] = self._count_deaths_from_list(soup)
             
             # Validação final dos dados extraídos
-            world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+            self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
             
             if not data['name']:
-                raise ValueError(f"[TALEON-{world_name}] Nome do personagem não encontrado")
+                raise ValueError(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Nome do personagem não encontrado")
             
             if data['level'] < 1:
-                raise ValueError(f"[TALEON-{world_name}] Level inválido encontrado: {data['level']}")
+                raise ValueError(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Level inválido encontrado: {data['level']}")
             
-            logger.info(f"✅ [TALEON-{world_name}] Dados extraídos - {data['name']}: Level {data['level']}, Vocation {data['vocation']}")
-            logger.debug(f"[TALEON-{world_name}] Dados completos: {data}")
+            logger.info(f"✅ [TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Dados extraídos - {data['name']}: Level {data['level']}, Vocation {data['vocation']}")
+            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Dados completos: {data}")
             
         except Exception as e:
-            world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
-            logger.error(f"❌ [TALEON-{world_name}] Erro ao extrair dados do HTML: {e}")
+            self.current_world_config.name if self.current_world_config else "UNKNOWN" = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+            logger.error(f"❌ [TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao extrair dados do HTML: {e}")
             raise
         
         return data
