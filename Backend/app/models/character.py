@@ -138,6 +138,7 @@ class CharacterSnapshot(Base):
     # ===== OUTFIT INFORMATION =====
     outfit_image_url = Column(String(500), nullable=True)  # URL da imagem do outfit
     outfit_data = Column(Text, nullable=True)  # JSON string com dados detalhados do outfit
+    profile_url = Column(String(500), nullable=True)  # URL do perfil original
     
     # ===== METADADOS DO SCRAPING =====
     scraped_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)

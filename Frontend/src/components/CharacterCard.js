@@ -21,6 +21,7 @@ import {
   Public,
   Schedule,
   Analytics,
+  OpenInNew,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -99,10 +100,39 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <Person sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
-              {character.name}
-            </Typography>
+            {latest?.outfit_image_url ? (
+              <Box
+                component="img"
+                src={latest.outfit_image_url}
+                alt={`Outfit de ${character.name}`}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  mr: 1,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider'
+                }}
+              />
+            ) : (
+              <Person sx={{ mr: 1, color: 'primary.main' }} />
+            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
+                {character.name}
+              </Typography>
+              {latest?.profile_url && (
+                <Tooltip title="Ver perfil original">
+                  <IconButton
+                    size="small"
+                    onClick={() => window.open(latest.profile_url, '_blank')}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <OpenInNew fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
           </Box>
           
           {onToggleFavorite && (

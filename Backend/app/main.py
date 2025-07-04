@@ -9,9 +9,11 @@ Desenvolvido com FastAPI, PostgreSQL e Redis.
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 import uvicorn
+import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -97,6 +99,11 @@ if settings.ENVIRONMENT == "production":
 # Incluir rotas
 app.include_router(health.router, prefix="/health", tags=["Health"])
 app.include_router(characters.router, prefix="/api/v1", tags=["Characters"])
+
+# Servir arquivos estáticos de outfits
+outfits_dir = "outfits"
+if os.path.exists(outfits_dir):
+    app.mount("/outfits", StaticFiles(directory=outfits_dir), name="outfits")
 
 
 @app.get("/", tags=["Root"])

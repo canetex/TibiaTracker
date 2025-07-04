@@ -77,6 +77,7 @@ services:
     volumes:
       - ./Backend:/app
       - backend_logs:/var/log/tibia-tracker
+      - outfits_data:/app/outfits
     networks:
       - tibia-network
     depends_on:
@@ -185,6 +186,8 @@ volumes:
   redis_data:
     driver: local
   backend_logs:
+    driver: local
+  outfits_data:
     driver: local
   caddy_data:
     driver: local

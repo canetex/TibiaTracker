@@ -36,6 +36,7 @@ COPY . .
 
 # Criar diretórios necessários
 RUN mkdir -p /var/log/tibia-tracker && \
+    mkdir -p /app/outfits && \
     chown -R tibia:tibia /app /var/log/tibia-tracker
 
 # Mudar para usuário não-root

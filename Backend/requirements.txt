@@ -64,4 +64,5 @@ openpyxl==3.1.2
 pandas==2.1.4
 
 # Image processing (para futuras funcionalidades)
-pillow==10.1.0 
+pillow==10.1.0
+aiofiles==23.2.1 

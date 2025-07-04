@@ -12,6 +12,7 @@ Estrutura de URLs por mundo:
 """
 
 import re
+import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from urllib.parse import quote
@@ -290,6 +291,56 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             logger.error(f"[TALEON-{world_name}] ❌ Erro ao extrair histórico de experiência: {e}", exc_info=True)
             return []
 
+    def _extract_total_experience(self, soup: BeautifulSoup) -> int:
+        """Extrair experiência total atual do personagem"""
+        world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
+        
+        try:
+            # Procurar por experiência total na página
+            # Pode estar em diferentes formatos: "Experience: 8,581,520" ou "8,581,520"
+            experience_patterns = [
+                r'experience[:\s]*([\d,]+)',
+                r'exp[:\s]*([\d,]+)',
+                r'([\d,]+)\s*experience',
+                r'([\d,]+)\s*exp'
+            ]
+            
+            page_text = soup.get_text().lower()
+            
+            for pattern in experience_patterns:
+                matches = re.findall(pattern, page_text, re.IGNORECASE)
+                for match in matches:
+                    # Limpar e converter para número
+                    exp_str = match.replace(',', '').strip()
+                    if exp_str.isdigit():
+                        exp_value = int(exp_str)
+                        if exp_value > 1000000:  # Experiência total deve ser alta
+                            logger.debug(f"[TALEON-{world_name}] Experiência total encontrada: {exp_value:,}")
+                            return exp_value
+            
+            # Procurar em tabelas específicas
+            tables = soup.find_all('table')
+            for table in tables:
+                rows = table.find_all('tr')
+                for row in rows:
+                    cells = row.find_all(['td', 'th'])
+                    if len(cells) >= 2:
+                        label = cells[0].get_text().strip().lower()
+                        value = cells[1].get_text().strip()
+                        
+                        if 'experience' in label or 'exp' in label:
+                            exp_value = self._extract_number(value)
+                            if exp_value > 1000000:  # Experiência total deve ser alta
+                                logger.debug(f"[TALEON-{world_name}] Experiência total encontrada na tabela: {exp_value:,}")
+                                return exp_value
+            
+            logger.warning(f"[TALEON-{world_name}] Experiência total não encontrada")
+            return 0
+            
+        except Exception as e:
+            logger.error(f"[TALEON-{world_name}] Erro ao extrair experiência total: {e}")
+            return 0
+    
     def _extract_experience_from_history(self, soup: BeautifulSoup) -> int:
         """Extrair experiência ganha hoje do histórico (mantém compatibilidade)"""
         world_name = self.current_world_config.name if self.current_world_config else "UNKNOWN"
@@ -355,7 +406,24 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         
         try:
             # Extrair URL da imagem do outfit
-            data['outfit_image_url'] = self._extract_outfit_image_url(soup)
+            outfit_url = self._extract_outfit_image_url(soup)
+            data['outfit_image_url'] = outfit_url
+            
+            # Processar outfit se disponível
+            if outfit_url:
+                try:
+                    from app.services.outfit_service import OutfitService
+                    outfit_service = OutfitService()
+                    outfit_data = await outfit_service.process_outfit(
+                        outfit_url, data['name'], self._get_server_name(), world
+                    )
+                    if outfit_data:
+                        data['outfit_data'] = json.dumps(outfit_data)
+                        # Usar URL local se disponível
+                        if 'local_url' in outfit_data:
+                            data['outfit_image_url'] = outfit_data['local_url']
+                except Exception as e:
+                    logger.warning(f"[TALEON-{world_name}] Erro ao processar outfit: {e}")
             
             # Procurar pela tabela principal com informações do personagem
             # A estrutura do Taleon usa tabelas com duas colunas: label | valor
@@ -377,7 +445,15 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             data['name'] = re.sub(r'\s+', ' ', value).strip()
                         
                         elif 'level' in label:
-                            data['level'] = self._extract_number(value)
+                            # Extrair level corretamente - pode estar em formato "Level: 1995"
+                            level_value = self._extract_number(value)
+                            if level_value > 0:
+                                data['level'] = level_value
+                            else:
+                                # Tentar extrair de outras formas
+                                level_match = re.search(r'(\d+)', value)
+                                if level_match:
+                                    data['level'] = int(level_match.group(1))
                         
                         elif 'vocation' in label:
                             data['vocation'] = value if value not in ['-', 'None', ''] else 'None'
@@ -431,8 +507,12 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             data['name'] = match.group(1).strip()
                             break
             
-            # Extrair experiência ganha hoje do histórico
-            data['experience'] = self._extract_experience_from_history(soup)
+            # Extrair experiência total atual (não apenas a ganha hoje)
+            data['experience'] = self._extract_total_experience(soup)
+            
+            # Se não conseguiu extrair experiência total, tentar do histórico
+            if data['experience'] == 0:
+                data['experience'] = self._extract_experience_from_history(soup)
             
             # Extrair histórico completo de experiência
             data['experience_history'] = self._extract_experience_history_data(soup)

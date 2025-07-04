@@ -112,6 +112,7 @@ class CharacterSnapshotBase(BaseModel):
     # Outfit
     outfit_image_url: Optional[str] = Field(None, max_length=500, description="URL da imagem do outfit")
     outfit_data: Optional[str] = Field(None, description="Dados do outfit em JSON")
+    profile_url: Optional[str] = Field(None, max_length=500, description="URL do perfil original")
 
     @validator('experience')
     def validate_experience(cls, v):

@@ -131,6 +131,9 @@ class CharacterService:
                 guild_rank=snapshot_data.get('guild_rank'),
                 is_online=snapshot_data.get('is_online', False),
                 last_login=snapshot_data.get('last_login'),
+                outfit_image_url=snapshot_data.get('outfit_image_url'),
+                outfit_data=snapshot_data.get('outfit_data'),
+                profile_url=snapshot_data.get('profile_url'),
                 scrape_source=source
             )
 
