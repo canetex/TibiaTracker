@@ -474,8 +474,8 @@ async def scrape_character_with_history(
         scraped_data = scrape_result.data
         logger.info(f"[SCRAPE-WITH-HISTORY] Scraping concluído com sucesso")
         
-        # Obter histórico de experiência se disponível
-        history_data = scraped_data.get('experience_history', [])
+        # Extrair histórico completo de experiência
+        data['experience_history'] = self._extract_experience_history_data(soup)
         
         logger.info(f"[SCRAPE-WITH-HISTORY] Personagem {character_name}: {len(history_data)} entradas de histórico encontradas")
         logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {list(scraped_data.keys())}")
@@ -521,13 +521,13 @@ async def scrape_character_with_history(
             for i, entry in enumerate(history_data):
                 logger.info(f"[SCRAPE-WITH-HISTORY] Processando entrada {i+1}/{len(history_data)}: {entry}")
                 
-                # Verificar se já existe snapshot para esta data
+                # Verificar se já existe snapshot para esta data (pegar o mais recente)
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
                         CharacterSnapshotModel.character_id == character.id,
                         func.date(CharacterSnapshotModel.scraped_at) == entry['date']
                     )
-                )
+                ).order_by(desc(CharacterSnapshotModel.scraped_at)).limit(1)
                 snapshot_result = await db.execute(existing_snapshot_query)
                 existing_snapshot = snapshot_result.scalar_one_or_none()
                 

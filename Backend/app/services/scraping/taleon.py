@@ -183,6 +183,31 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         try:
             logger.info(f"[TALEON-{world_name}] Iniciando extração de histórico de experiência...")
             
+            # Debug: Verificar todo o texto da página para encontrar padrões
+            page_text = soup.get_text().lower()
+            logger.debug(f"[TALEON-{world_name}] Verificando texto da página...")
+            
+            # Buscar diferentes variações do texto "experience history"
+            possible_phrases = [
+                'experience history',
+                'experience gained',
+                'experience log',
+                'experience tracking',
+                'experience summary'
+            ]
+            
+            found_phrase = None
+            for phrase in possible_phrases:
+                if phrase in page_text:
+                    found_phrase = phrase
+                    logger.info(f"[TALEON-{world_name}] ✅ Encontrada frase: '{phrase}'")
+                    break
+            
+            if not found_phrase:
+                logger.warning(f"[TALEON-{world_name}] ❌ Nenhuma das frases de experiência encontrada na página")
+                logger.debug(f"[TALEON-{world_name}] Frases procuradas: {possible_phrases}")
+                return []
+            
             # Buscar seção "experience history" para extrair histórico completo
             exp_section = soup.find(text=re.compile(r'experience history', re.IGNORECASE))
             if not exp_section:
