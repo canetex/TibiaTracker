@@ -55,9 +55,9 @@ const Home = () => {
       setLoadingRecent(true);
       setError(null);
       
-      // Carregar TODOS os personagens (sem limite) e estatísticas globais em paralelo
+      // Carregar personagens recentes (limitado) e estatísticas globais em paralelo
       const [recent, stats] = await Promise.all([
-        apiService.getRecentCharacters(1000), // Carregar muitos personagens
+        apiService.getRecentCharacters(10), // Carregar apenas 10 recentes
         apiService.getGlobalStats(),
       ]);
       
@@ -67,6 +67,26 @@ const Home = () => {
       
     } catch (err) {
       console.error('Erro ao carregar dados iniciais:', err);
+      setError('Erro ao carregar dados. Tente novamente.');
+    } finally {
+      setLoadingRecent(false);
+    }
+  };
+
+  // Função para carregar todos os personagens quando necessário para filtros
+  const loadAllCharacters = async () => {
+    try {
+      setLoadingRecent(true);
+      setError(null);
+      
+      // Carregar TODOS os personagens para filtros
+      const allCharacters = await apiService.listCharacters({ limit: 1000 });
+      
+      setRecentCharacters(allCharacters.characters || []);
+      setFilteredCharacters(allCharacters.characters || []);
+      
+    } catch (err) {
+      console.error('Erro ao carregar todos os personagens:', err);
       setError('Erro ao carregar dados. Tente novamente.');
     } finally {
       setLoadingRecent(false);
@@ -137,8 +157,18 @@ const Home = () => {
     return filtered;
   };
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = async (newFilters) => {
     setFilters(newFilters);
+    
+    // Se há filtros ativos e temos poucos personagens carregados, carregar todos
+    const hasActiveFilters = Object.values(newFilters).some(value => value !== '' && value !== 'all');
+    const hasFewCharacters = recentCharacters.length < 50;
+    
+    if (hasActiveFilters && hasFewCharacters) {
+      // Carregar todos os personagens para aplicar filtros corretamente
+      await loadAllCharacters();
+    }
+    
     const filtered = applyFilters(recentCharacters, newFilters);
     setFilteredCharacters(filtered);
   };
