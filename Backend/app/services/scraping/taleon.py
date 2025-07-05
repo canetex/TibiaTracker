@@ -393,6 +393,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             'house': None,
             'guild': None,
             'guild_rank': None,
+            'guild_url': None,
             'experience': 0,
             'deaths': 0,
             'charm_points': None,
@@ -490,6 +491,27 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         elif 'guild rank' in label and value not in ['-', 'None', '']:
                             data['guild_rank'] = value
                             logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild rank encontrado: {value}")
+                        
+                        # Verificar se é uma linha de guild (estrutura específica do Taleon)
+                        elif ('leader of' in label.lower() or 
+                              'vice-leader of' in label.lower() or 
+                              'member of' in label.lower() or
+                              'boss of' in label.lower() or
+                              'general of' in label.lower()):
+                            # Procurar link da guild na célula
+                            guild_link = value_cell.find('a')
+                            if guild_link:
+                                guild_name = guild_link.get_text().strip()
+                                guild_url = guild_link.get('href')
+                                if guild_name and guild_name not in ['-', 'None', '']:
+                                    data['guild'] = guild_name
+                                    data['guild_url'] = guild_url
+                                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via link: {guild_name} ({guild_url})")
+                            else:
+                                # Se não tem link, usar o texto da célula
+                                if value and value not in ['-', 'None', '']:
+                                    data['guild'] = value
+                                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via texto: {value}")
             
             # Se não encontrou o nome na tabela, tentar extrair do título da página
             if not data['name']:
@@ -524,27 +546,18 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             # Contar mortes da death list
             data['deaths'] = self._count_deaths_from_list(soup)
             
-            # Busca adicional por guild se não foi encontrada na tabela
+            # Busca adicional por links de guild se não foi encontrada na tabela
             if not data['guild']:
-                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Buscando guild em texto da página...")
-                page_text = soup.get_text().lower()
-                
-                # Procurar por padrões de guild no texto da página
-                guild_patterns = [
-                    r'guild[:\s]*([^\n\r,]+)',
-                    r'guild name[:\s]*([^\n\r,]+)',
-                    r'([a-zA-Z\s]+)\s*guild',
-                ]
-                
-                for pattern in guild_patterns:
-                    matches = re.findall(pattern, page_text, re.IGNORECASE)
-                    for match in matches:
-                        guild_name = match.strip()
-                        if guild_name and guild_name not in ['none', '-', ''] and len(guild_name) > 2:
-                            data['guild'] = guild_name
-                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via regex: {guild_name}")
-                            break
-                    if data['guild']:
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Buscando links de guild na página...")
+                # Procurar por todos os links que seguem o padrão guilds.php
+                guild_links = soup.find_all('a', href=re.compile(r'guilds\.php\?name='))
+                for link in guild_links:
+                    guild_name = link.get_text().strip()
+                    guild_url = link.get('href')
+                    if guild_name and guild_name not in ['-', 'None', '']:
+                        data['guild'] = guild_name
+                        data['guild_url'] = guild_url
+                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via busca de links: {guild_name} ({guild_url})")
                         break
             
             # Validação final dos dados extraídos
