@@ -4,6 +4,7 @@ Script para verificar se o campo outfit_image_path existe na tabela characters
 """
 
 import asyncio
+from sqlalchemy import text
 from app.db.database import engine
 
 async def check_outfit_field():
@@ -12,15 +13,15 @@ async def check_outfit_field():
         async with engine.begin() as conn:
             # Verificar se o campo existe na tabela characters
             result = await conn.execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name = 'characters' AND column_name = 'outfit_image_path'"
+                text("SELECT column_name FROM information_schema.columns "
+                     "WHERE table_name = 'characters' AND column_name = 'outfit_image_path'")
             )
             characters_exists = result.rowcount > 0
             
             # Verificar se o campo existe na tabela character_snapshots
             result = await conn.execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name = 'character_snapshots' AND column_name = 'outfit_image_path'"
+                text("SELECT column_name FROM information_schema.columns "
+                     "WHERE table_name = 'character_snapshots' AND column_name = 'outfit_image_path'")
             )
             snapshots_exists = result.rowcount > 0
             
