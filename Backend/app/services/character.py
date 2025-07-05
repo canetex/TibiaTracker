@@ -153,6 +153,21 @@ class CharacterService:
 
             await self.db.commit()
 
+            # Atualizar o campo guild do personagem principal com base no snapshot mais recente
+            character = await self.get_character(character_id)
+            if character:
+                latest_snapshot_result = await self.db.execute(
+                    select(CharacterSnapshotModel)
+                    .where(CharacterSnapshotModel.character_id == character_id)
+                    .order_by(CharacterSnapshotModel.scraped_at.desc())
+                    .limit(1)
+                )
+                latest_snapshot = latest_snapshot_result.scalar_one_or_none()
+                if latest_snapshot:
+                    character.guild = latest_snapshot.guild
+                    await self.db.commit()
+                    logger.info(f"Guild do personagem {character_id} atualizada para: {latest_snapshot.guild}")
+
             logger.info(f"Snapshot criado para personagem {character_id} via {source}")
             return snapshot
 
