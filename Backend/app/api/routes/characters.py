@@ -170,10 +170,10 @@ async def search_character(
                 latest_snapshot = sorted(existing_character.snapshots, key=lambda x: x.scraped_at, reverse=True)[0]
             
             # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            thirty_days_ago = datetime.utcnow().replace(tzinfo=None) - timedelta(days=30)
             recent_snapshots = [
                 snap for snap in existing_character.snapshots 
-                if snap.scraped_at >= thirty_days_ago
+                if snap.scraped_at.replace(tzinfo=None) >= thirty_days_ago
             ]
             
             # Calcular estatísticas
@@ -707,7 +707,7 @@ async def get_recent_characters(
             total_snapshots = count_result.scalar()
             
             # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            thirty_days_ago = datetime.utcnow().replace(tzinfo=None) - timedelta(days=30)
             exp_stats_result = await db.execute(
                 select(CharacterSnapshotModel)
                 .where(
