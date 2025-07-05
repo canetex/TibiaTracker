@@ -55,9 +55,9 @@ const Home = () => {
       setLoadingRecent(true);
       setError(null);
       
-      // Carregar personagens recentes e estatísticas globais em paralelo
+      // Carregar TODOS os personagens (sem limite) e estatísticas globais em paralelo
       const [recent, stats] = await Promise.all([
-        apiService.getRecentCharacters(),
+        apiService.getRecentCharacters(1000), // Carregar muitos personagens
         apiService.getGlobalStats(),
       ]);
       
@@ -132,6 +132,7 @@ const Home = () => {
       const limit = parseInt(currentFilters.limit);
       filtered = filtered.slice(0, limit);
     }
+    // Se limit for 'all', não aplicar nenhum corte - mostrar todos os filtrados
 
     return filtered;
   };

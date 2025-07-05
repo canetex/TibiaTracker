@@ -244,11 +244,13 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                   onChange={(e) => handleFilterChange('limit', e.target.value)}
                   label="Mostrar"
                 >
-                  <MenuItem value="all">Todos</MenuItem>
-                  <MenuItem value="3">3 Personagens</MenuItem>
-                  <MenuItem value="30">30 Personagens</MenuItem>
-                  <MenuItem value="60">60 Personagens</MenuItem>
-                  <MenuItem value="90">90 Personagens</MenuItem>
+                                  <MenuItem value="all">Todos os Personagens</MenuItem>
+                <MenuItem value="3">3 Personagens</MenuItem>
+                <MenuItem value="10">10 Personagens</MenuItem>
+                <MenuItem value="30">30 Personagens</MenuItem>
+                <MenuItem value="60">60 Personagens</MenuItem>
+                <MenuItem value="90">90 Personagens</MenuItem>
+                <MenuItem value="150">150 Personagens</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

@@ -119,6 +119,15 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                 src={character.outfit_image_url}
                 alt={`Outfit de ${character.name}`}
                 sx={{
+                  marginLeft: '-76px',
+                  marginTop: '-32px',
+                  paddingRight: '10px',
+                  border: 0,
+                  height: 'auto',
+                  maxWidth: '100%',
+                  verticalAlign: 'middle',
+                  overflowClipMargin: 'content-box',
+                  overflow: 'clip',
                   width: 32,
                   height: 32,
                   mr: 1,
