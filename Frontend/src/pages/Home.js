@@ -79,7 +79,7 @@ const Home = () => {
       return characters;
     }
 
-    return characters.filter(character => {
+    let filtered = characters.filter(character => {
       // Filtro por nome
       if (currentFilters.search && !character.name.toLowerCase().includes(currentFilters.search.toLowerCase())) {
         return false;
@@ -126,6 +126,14 @@ const Home = () => {
 
       return true;
     });
+
+    // Aplicar limite de quantidade
+    if (currentFilters.limit && currentFilters.limit !== 'all') {
+      const limit = parseInt(currentFilters.limit);
+      filtered = filtered.slice(0, limit);
+    }
+
+    return filtered;
   };
 
   const handleFilterChange = (newFilters) => {
@@ -144,23 +152,22 @@ const Home = () => {
       setSearchLoading(true);
       setError(null);
       
-      // Primeiro fazer busca normal
-      const searchResult = await apiService.searchCharacter(
+      // Primeiro verificar se o personagem já existe
+      console.log('Verificando se o personagem já existe...');
+      const existingCharacter = await apiService.searchCharacter(
         searchData.name,
         searchData.server,
         searchData.world
       );
       
-      // Extrair o character corretamente da resposta
       let character = null;
-      if (searchResult.success && searchResult.character) {
-        character = searchResult.character;
-      } else {
-        throw new Error('Resposta inválida do servidor');
-      }
       
-      // Se encontrou o character, fazer scraping com histórico para obter dados completos
-      if (character.id) {
+      if (existingCharacter.success && existingCharacter.character) {
+        // Personagem já existe - usar como filtro
+        console.log('Personagem já existe, usando como filtro...');
+        character = existingCharacter.character;
+        
+        // Fazer scraping com histórico para obter dados completos
         try {
           console.log('Fazendo scraping com histórico para dados completos...');
           await apiService.scrapeWithHistory(
@@ -171,18 +178,54 @@ const Home = () => {
           console.log('Scraping com histórico concluído');
         } catch (historyError) {
           console.warn('Erro no scraping com histórico, usando dados básicos:', historyError);
-          // Continua com os dados básicos se houver erro no histórico
+        }
+        
+        setSearchResult(character);
+        
+        // Aplicar filtro automático para mostrar apenas este personagem
+        const filterForCharacter = {
+          search: searchData.name,
+          server: searchData.server,
+          world: searchData.world,
+        };
+        handleFilterChange(filterForCharacter);
+        
+      } else {
+        // Personagem não existe - tentar adicionar
+        console.log('Personagem não existe, tentando adicionar...');
+        try {
+          const addResult = await apiService.scrapeAndCreate(
+            searchData.name,
+            searchData.server,
+            searchData.world
+          );
+          
+          if (addResult.success && addResult.character) {
+            character = addResult.character;
+            setSearchResult(character);
+            
+            // Aplicar filtro automático para mostrar apenas este personagem
+            const filterForCharacter = {
+              search: searchData.name,
+              server: searchData.server,
+              world: searchData.world,
+            };
+            handleFilterChange(filterForCharacter);
+          } else {
+            throw new Error('Erro ao adicionar personagem');
+          }
+        } catch (addError) {
+          console.error('Erro ao adicionar personagem:', addError);
+          throw new Error('Personagem não encontrado no servidor ou erro ao adicionar');
         }
       }
       
-      setSearchResult(character);
-      
-      // Atualizar lista de recentes após busca bem-sucedida
+      // Atualizar lista de recentes após operação bem-sucedida
       setTimeout(loadInitialData, 1000);
       
     } catch (err) {
       console.error('Erro na busca:', err);
-      setError(err.response?.data?.detail?.message || 'Personagem não encontrado ou erro no servidor');
+      setError(err.message || 'Personagem não encontrado ou erro no servidor');
       setSearchResult(null);
     } finally {
       setSearchLoading(false);

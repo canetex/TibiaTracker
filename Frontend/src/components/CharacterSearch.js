@@ -200,15 +200,15 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
             disabled={loading}
             sx={{ height: 56 }} // Mesma altura dos outros campos
           >
-            {loading ? 'Buscando...' : 'Buscar'}
+            {loading ? 'Processando...' : 'Buscar/Adicionar'}
           </Button>
         </Grid>
       </Grid>
 
       {/* Dica para o usuário */}
       <Box sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
-        💡 <strong>Dica:</strong> No momento, apenas o servidor <strong>Taleon</strong> está disponível. 
-        Outros servidores serão adicionados em breve!
+        💡 <strong>Dica:</strong> O botão "Buscar/Adicionar" primeiro verifica se o personagem já existe. 
+        Se existir, mostra como filtro. Se não existir, adiciona automaticamente!
       </Box>
     </Box>
   );

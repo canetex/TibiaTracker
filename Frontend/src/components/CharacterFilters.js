@@ -33,6 +33,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
     minLevel: '',
     maxLevel: '',
     isFavorited: '',
+    limit: 'all',
   });
 
   const handleFilterChange = (field, value) => {
@@ -50,6 +51,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
       minLevel: '',
       maxLevel: '',
       isFavorited: '',
+      limit: 'all',
     };
     setFilters(clearedFilters);
     onClearFilters();
@@ -230,6 +232,23 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                   <MenuItem value="">Todos</MenuItem>
                   <MenuItem value="true">Apenas Favoritos</MenuItem>
                   <MenuItem value="false">Não Favoritos</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Mostrar</InputLabel>
+                <Select
+                  value={filters.limit}
+                  onChange={(e) => handleFilterChange('limit', e.target.value)}
+                  label="Mostrar"
+                >
+                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="3">3 Personagens</MenuItem>
+                  <MenuItem value="30">30 Personagens</MenuItem>
+                  <MenuItem value="60">60 Personagens</MenuItem>
+                  <MenuItem value="90">90 Personagens</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
