@@ -118,6 +118,7 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                 component="img"
                 src={character.outfit_image_url}
                 alt={`Outfit de ${character.name}`}
+                className="outfitImg"
                 sx={{
                   width: 32,
                   height: 32,
@@ -126,7 +127,7 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                   border: '1px solid',
                   borderColor: 'divider',
                   objectFit: 'contain',
-                  bgcolor: 'grey.100',
+                  bgcolor: 'transparent',
                   // CSS específico para outfit - versão simplificada
                   maxWidth: '100%',
                   verticalAlign: 'middle',
