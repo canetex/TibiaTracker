@@ -120,18 +120,16 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                 alt={`Outfit de ${character.name}`}
                 className="outfitImg"
                 sx={{
-                  width: 32,
-                  height: 32,
-                  mr: 1,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  width: 170,
+                  height: 64,
+                  marginRight: -40,
+                  borderRadius: 45,
+                  border: '0px solid rgb(51, 51, 51)',
                   objectFit: 'contain',
                   bgcolor: 'transparent',
-                  // CSS específico para outfit - versão simplificada
                   maxWidth: '100%',
-                  verticalAlign: 'middle',
-                  overflow: 'clip'
+                  verticalAlign: 'top',
+                  overflow: 'hidden'
                 }}
                 onError={(e) => {
                   // Fallback para ícone se a imagem falhar
