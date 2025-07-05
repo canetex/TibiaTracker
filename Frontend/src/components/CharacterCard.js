@@ -112,7 +112,36 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <Person sx={{ mr: 1, color: 'primary.main' }} />
+            {/* Outfit Image or Fallback Icon */}
+            {character.outfit_image_url ? (
+              <Box
+                component="img"
+                src={character.outfit_image_url}
+                alt={`Outfit de ${character.name}`}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  mr: 1,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  objectFit: 'contain',
+                  bgcolor: 'grey.100'
+                }}
+                onError={(e) => {
+                  // Fallback para ícone se a imagem falhar
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+            ) : null}
+            <Person 
+              sx={{ 
+                mr: 1, 
+                color: 'primary.main',
+                display: character.outfit_image_url ? 'none' : 'block'
+              }} 
+            />
             <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
               {character.name}
             </Typography>
