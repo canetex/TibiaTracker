@@ -119,15 +119,6 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                 src={character.outfit_image_url}
                 alt={`Outfit de ${character.name}`}
                 sx={{
-                  marginLeft: '-76px',
-                  marginTop: '-32px',
-                  paddingRight: '10px',
-                  border: 0,
-                  height: 'auto',
-                  maxWidth: '100%',
-                  verticalAlign: 'middle',
-                  overflowClipMargin: 'content-box',
-                  overflow: 'clip',
                   width: 32,
                   height: 32,
                   mr: 1,
@@ -135,7 +126,11 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
                   border: '1px solid',
                   borderColor: 'divider',
                   objectFit: 'contain',
-                  bgcolor: 'grey.100'
+                  bgcolor: 'grey.100',
+                  // CSS específico para outfit - versão simplificada
+                  maxWidth: '100%',
+                  verticalAlign: 'middle',
+                  overflow: 'clip'
                 }}
                 onError={(e) => {
                   // Fallback para ícone se a imagem falhar
