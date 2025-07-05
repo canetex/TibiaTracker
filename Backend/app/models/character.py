@@ -63,6 +63,7 @@ class Character(Base):
     level = Column(Integer, default=0)
     vocation = Column(String(50), default="None")
     residence = Column(String(255))
+    guild = Column(String(255), nullable=True)
     
     # Status e configurações
     is_active = Column(Boolean, default=True, index=True)

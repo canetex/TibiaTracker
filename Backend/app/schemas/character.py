@@ -49,6 +49,7 @@ class CharacterBase(BaseModel):
     level: Optional[int] = Field(0, ge=0, le=1000, description="Level atual do personagem")
     vocation: Optional[str] = Field("None", max_length=50, description="Vocação do personagem")
     residence: Optional[str] = Field(None, max_length=255, description="Residência do personagem")
+    guild: Optional[str] = None
 
     @validator('name')
     def validate_name(cls, v):
@@ -187,6 +188,7 @@ class CharacterSummary(BaseModel):
     last_scraped_at: Optional[datetime]
     snapshots_count: Optional[int] = 0
     outfit_image_url: Optional[str] = None
+    guild: Optional[str] = None
 
     class Config:
         from_attributes = True

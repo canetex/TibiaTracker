@@ -826,6 +826,7 @@ async def list_characters(
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
     is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
+    guild: Optional[str] = Query(None, description="Filtrar por guild"),
     db: AsyncSession = Depends(get_db)
 ):
     """Listar personagens com filtros e paginação"""
@@ -844,6 +845,8 @@ async def list_characters(
         filters.append(CharacterModel.is_favorited == is_favorited)
     if search:
         filters.append(CharacterModel.name.ilike(f"%{search}%"))
+    if guild:
+        filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
     
     if filters:
         query = query.where(and_(*filters))
@@ -899,12 +902,13 @@ async def list_characters_alias(
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
     is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
+    guild: Optional[str] = Query(None, description="Filtrar por guild"),
     db: AsyncSession = Depends(get_db)
 ):
     """Listar personagens com filtros e paginação (alias com barra para compatibilidade)"""
     
     # Chamamos a função principal
-    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, db)
+    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, guild, db)
 
 
 @router.post("/", response_model=CharacterSchema)

@@ -320,6 +320,15 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
         pb: 2
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* Imagem do outfit */}
+          {character?.outfit_image_url && (
+            <img
+              src={character.outfit_image_url}
+              alt={`Outfit de ${character.name}`}
+              className="outfitImg"
+              style={{ marginRight: 8 }}
+            />
+          )}
           <Analytics sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6">
             Gráficos - {character?.name}
