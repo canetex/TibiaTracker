@@ -84,13 +84,13 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
   const getTibiaUrl = (character) => {
     // Mapear servidores para URLs corretas
     const serverUrls = {
-      'taleon': 'https://taleon.com.br',
+      'taleon': `https://${character.world}.taleon.online`,
       'rubini': 'https://rubini.com.br',
       // Adicionar outros servidores conforme necessário
     };
     
     const baseUrl = serverUrls[character.server] || 'https://tibia.com';
-    return `${baseUrl}/char/${character.name}`;
+    return `${baseUrl}/characterprofile.php?name=${encodeURIComponent(character.name)}`;
   };
 
   const latest = character.latest_snapshot;

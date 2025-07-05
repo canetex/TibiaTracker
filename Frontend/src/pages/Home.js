@@ -22,11 +22,13 @@ import {
   TrendingUp,
   Person,
   Analytics,
+  FilterList,
 } from '@mui/icons-material';
 
 import CharacterCard from '../components/CharacterCard';
 import CharacterSearch from '../components/CharacterSearch';
 import CharacterChartsModal from '../components/CharacterChartsModal';
+import CharacterFilters from '../components/CharacterFilters';
 import { apiService } from '../services/api';
 
 const Home = () => {
@@ -36,6 +38,8 @@ const Home = () => {
   const [globalStats, setGlobalStats] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({});
+  const [filteredCharacters, setFilteredCharacters] = useState([]);
   
   // Estados para o modal de gráficos
   const [chartsModalOpen, setChartsModalOpen] = useState(false);
@@ -58,6 +62,7 @@ const Home = () => {
       ]);
       
       setRecentCharacters(recent);
+      setFilteredCharacters(recent);
       setGlobalStats(stats);
       
     } catch (err) {
@@ -66,6 +71,72 @@ const Home = () => {
     } finally {
       setLoadingRecent(false);
     }
+  };
+
+  // Função para aplicar filtros
+  const applyFilters = (characters, currentFilters) => {
+    if (!currentFilters || Object.keys(currentFilters).length === 0) {
+      return characters;
+    }
+
+    return characters.filter(character => {
+      // Filtro por nome
+      if (currentFilters.search && !character.name.toLowerCase().includes(currentFilters.search.toLowerCase())) {
+        return false;
+      }
+
+      // Filtro por servidor
+      if (currentFilters.server && character.server !== currentFilters.server) {
+        return false;
+      }
+
+      // Filtro por mundo
+      if (currentFilters.world && character.world !== currentFilters.world) {
+        return false;
+      }
+
+      // Filtro por vocação
+      if (currentFilters.vocation && character.vocation !== currentFilters.vocation) {
+        return false;
+      }
+
+      // Filtro por level mínimo
+      if (currentFilters.minLevel) {
+        const level = character.latest_snapshot?.level || character.level || 0;
+        if (level < parseInt(currentFilters.minLevel)) {
+          return false;
+        }
+      }
+
+      // Filtro por level máximo
+      if (currentFilters.maxLevel) {
+        const level = character.latest_snapshot?.level || character.level || 0;
+        if (level > parseInt(currentFilters.maxLevel)) {
+          return false;
+        }
+      }
+
+      // Filtro por favoritos
+      if (currentFilters.isFavorited !== '') {
+        const isFavorited = currentFilters.isFavorited === 'true';
+        if (character.is_favorited !== isFavorited) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    const filtered = applyFilters(recentCharacters, newFilters);
+    setFilteredCharacters(filtered);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+    setFilteredCharacters(recentCharacters);
   };
 
   const handleCharacterSearch = async (searchData) => {
@@ -225,6 +296,12 @@ const Home = () => {
         </CardContent>
       </Card>
 
+      {/* Filters Section */}
+      <CharacterFilters 
+        onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+      />
+
       {/* Search Result */}
       {searchResult && (
         <Box sx={{ mb: 4 }}>
@@ -245,6 +322,14 @@ const Home = () => {
           <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center' }}>
             <TrendingUp sx={{ mr: 1 }} />
             {searchResult ? 'Outros Personagens Recentes' : 'Personagens Adicionados Recentemente'}
+            {Object.keys(filters).length > 0 && (
+              <Chip 
+                label={`${filteredCharacters.length} de ${recentCharacters.length}`}
+                size="small"
+                color="primary"
+                sx={{ ml: 1 }}
+              />
+            )}
           </Typography>
           
           <Button
@@ -262,9 +347,9 @@ const Home = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
           </Box>
-        ) : recentCharacters.length > 0 ? (
+        ) : filteredCharacters.length > 0 ? (
           <Grid container spacing={3}>
-            {recentCharacters.map((character) => (
+            {filteredCharacters.map((character) => (
               <Grid item xs={12} md={6} lg={4} key={character.id}>
                 <CharacterCard 
                   character={character} 
@@ -273,6 +358,25 @@ const Home = () => {
               </Grid>
             ))}
           </Grid>
+        ) : recentCharacters.length > 0 ? (
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              bgcolor: 'grey.50',
+              border: '2px dashed',
+              borderColor: 'grey.300'
+            }}
+          >
+            <FilterList sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">
+              Nenhum personagem encontrado com os filtros aplicados
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Tente ajustar os filtros ou limpar para ver todos os personagens
+            </Typography>
+          </Paper>
         ) : (
           <Paper 
             elevation={0} 
