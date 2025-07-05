@@ -1458,7 +1458,9 @@ async def refresh_character_data(
                 db.add(snapshot)
                 snapshots_created = 1
         
-        # Atualizar o campo guild do personagem principal com base no snapshot mais recente
+        await db.commit()
+
+        # Atualizar o campo guild do personagem principal com base no snapshot mais recente (sempre após o commit)
         latest_snapshot_result = await db.execute(
             select(CharacterSnapshotModel)
             .where(CharacterSnapshotModel.character_id == character.id)
@@ -1471,8 +1473,6 @@ async def refresh_character_data(
             await db.commit()
             logger.info(f"[REFRESH] Guild do personagem {character.id} atualizada para: {latest_snapshot.guild}")
 
-        await db.commit()
-        
         return {
             "success": True,
             "message": f"Dados de '{character.name}' atualizados com sucesso!",
