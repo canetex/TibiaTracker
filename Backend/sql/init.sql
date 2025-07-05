@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS characters (
     profile_url VARCHAR(500),
     character_url VARCHAR(500),
     outfit_image_url VARCHAR(500),  -- URL da imagem do outfit atual
+    outfit_image_path VARCHAR(500),  -- Caminho local da imagem do outfit
     
     -- Metadados de scraping
     last_scraped_at TIMESTAMP WITH TIME ZONE,
@@ -103,6 +104,7 @@ CREATE TABLE IF NOT EXISTS character_snapshots (
     
     -- ===== OUTFIT INFORMATION =====
     outfit_image_url VARCHAR(500),  -- URL da imagem do outfit
+    outfit_image_path VARCHAR(500),  -- Caminho local da imagem do outfit
     outfit_data TEXT,  -- JSON string com dados detalhados do outfit
     
     -- ===== METADADOS DO SCRAPING =====

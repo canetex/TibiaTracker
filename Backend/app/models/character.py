@@ -75,6 +75,7 @@ class Character(Base):
     
     # Outfit atual (URL da imagem se disponível)
     outfit_image_url = Column(String(500), nullable=True)
+    outfit_image_path = Column(String(500), nullable=True)  # Caminho local da imagem
     
     # Metadados de scraping
     last_scraped_at = Column(DateTime(timezone=True), nullable=True)
@@ -137,6 +138,7 @@ class CharacterSnapshot(Base):
     
     # ===== OUTFIT INFORMATION =====
     outfit_image_url = Column(String(500), nullable=True)  # URL da imagem do outfit
+    outfit_image_path = Column(String(500), nullable=True)  # Caminho local da imagem
     outfit_data = Column(Text, nullable=True)  # JSON string com dados detalhados do outfit
     profile_url = Column(String(500), nullable=True)  # URL do perfil original
     
