@@ -111,11 +111,12 @@ add_character() {
     
     log "🔄 Adicionando: $name ($server/$world)"
     
-    # Fazer a requisição para a API usando o prefixo correto
+    # Montar query string
+    local url="$API_URL/api/v1/characters/scrape-and-create?server=$(echo "$server" | jq -sRr @uri)&world=$(echo "$world" | jq -sRr @uri)&character_name=$(echo "$name" | jq -sRr @uri)"
+    
+    # Fazer a requisição para a API usando o prefixo correto e parâmetros na query string
     response=$(curl -s -w "%{http_code}" -o /tmp/response.json \
-        -X POST "$API_URL/api/v1/characters/scrape-and-create" \
-        -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "server=$server&world=$world&character_name=$name" 2>/dev/null)
+        -X POST "$url" 2>/dev/null)
     
     http_code="${response: -3}"
     response_body=$(cat /tmp/response.json 2>/dev/null || echo "{}")
