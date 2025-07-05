@@ -674,7 +674,7 @@ async def scrape_character_with_history(
 
 @router.get("/recent")
 async def get_recent_characters(
-    limit: int = Query(10, ge=1, le=50, description="Número máximo de personagens"),
+    limit: int = Query(10, ge=1, le=100, description="Número máximo de personagens"),
     db: AsyncSession = Depends(get_db)
 ):
     """Obter personagens adicionados recentemente"""
@@ -820,7 +820,7 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
 @router.get("", response_model=CharacterListResponse)
 async def list_characters(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
-    limit: int = Query(50, ge=1, le=100, description="Número máximo de registros"),
+    limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
     server: Optional[str] = Query(None, description="Filtrar por servidor"),
     world: Optional[str] = Query(None, description="Filtrar por world"),
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
@@ -892,7 +892,7 @@ async def list_characters(
 @router.get("/", response_model=CharacterListResponse)
 async def list_characters_alias(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
-    limit: int = Query(50, ge=1, le=100, description="Número máximo de registros"),
+    limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
     server: Optional[str] = Query(None, description="Filtrar por servidor"),
     world: Optional[str] = Query(None, description="Filtrar por world"),
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),

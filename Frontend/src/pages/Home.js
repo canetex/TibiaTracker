@@ -79,8 +79,8 @@ const Home = () => {
       setLoadingRecent(true);
       setError(null);
       
-      // Carregar TODOS os personagens para filtros (sem limit para pegar todos)
-      const allCharacters = await apiService.listCharacters();
+      // Carregar TODOS os personagens para filtros (usando limite alto)
+      const allCharacters = await apiService.listCharacters({ limit: 1000 });
       
       setRecentCharacters(allCharacters.characters || []);
       setFilteredCharacters(allCharacters.characters || []);
