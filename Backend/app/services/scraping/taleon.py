@@ -157,7 +157,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             return self._parse_date(date_text)
                 
         except Exception as e:
-            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao parsear data '{date_text}': {e}")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Erro ao parsear data '{date_text}': {e}")
             return None
     
     def _extract_outfit_image_url(self, soup: BeautifulSoup) -> str:
