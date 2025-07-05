@@ -406,6 +406,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         }
         
         try:
+            logger.info(f"[TALEON] Iniciando scraping do personagem na URL: {url}")
             # Extrair URL da imagem do outfit
             outfit_url = self._extract_outfit_image_url(soup)
             data['outfit_image_url'] = outfit_url
@@ -444,14 +445,15 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         
                         # Mapear campos baseado na estrutura real do Taleon
                         if 'name' in label:
-                            # Nome pode estar na segunda célula, extrair apenas o texto
                             data['name'] = re.sub(r'\s+', ' ', value).strip()
+                            logger.debug(f"[TALEON] Nome extraído: {data['name']}")
                         
                         elif 'level' in label:
                             # Extrair level corretamente - pode estar em formato "Level: 1995"
                             level_value = self._extract_number(value)
                             if level_value > 0:
                                 data['level'] = level_value
+                                logger.debug(f"[TALEON] Level extraído: {data['level']}")
                             else:
                                 # Tentar extrair de outras formas
                                 level_match = re.search(r'(\d+)', value)
@@ -460,6 +462,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         
                         elif 'vocation' in label:
                             data['vocation'] = value if value not in ['-', 'None', ''] else 'None'
+                            logger.debug(f"[TALEON] Vocation extraída: {data['vocation']}")
                         
                         elif 'achievement points' in label:
                             data['achievement_points'] = self._extract_number(value) or None
@@ -486,11 +489,11 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         
                         elif 'guild' in label and 'rank' not in label and value not in ['-', 'None', '']:
                             data['guild'] = value
-                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada: {value}")
+                            logger.info(f"[TALEON] Guild encontrada por label: {value}")
                         
                         elif 'guild rank' in label and value not in ['-', 'None', '']:
                             data['guild_rank'] = value
-                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild rank encontrado: {value}")
+                            logger.info(f"[TALEON] Guild rank encontrado: {value}")
                         
                         # Verificar se é uma linha de guild (estrutura específica do Taleon)
                         elif ('leader of' in label.lower() or 
@@ -506,12 +509,12 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                                 if guild_name and guild_name not in ['-', 'None', '']:
                                     data['guild'] = guild_name
                                     data['guild_url'] = guild_url
-                                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via link: {guild_name} ({guild_url})")
+                                    logger.info(f"[TALEON] Guild encontrada via link: {guild_name} ({guild_url})")
                             else:
                                 # Se não tem link, usar o texto da célula
                                 if value and value not in ['-', 'None', '']:
                                     data['guild'] = value
-                                    logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via texto: {value}")
+                                    logger.info(f"[TALEON] Guild encontrada via texto: {value}")
             
             # Se não encontrou o nome na tabela, tentar extrair do título da página
             if not data['name']:
@@ -548,7 +551,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             
             # Busca adicional por links de guild se não foi encontrada na tabela
             if not data['guild']:
-                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Buscando links de guild na página...")
+                logger.warning(f"[TALEON] Nenhuma guild encontrada na tabela. Buscando links de guild na página...")
                 # Procurar por todos os links que seguem o padrão guilds.php
                 guild_links = soup.find_all('a', href=re.compile(r'guilds\.php\?name='))
                 for link in guild_links:
@@ -557,8 +560,10 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                     if guild_name and guild_name not in ['-', 'None', '']:
                         data['guild'] = guild_name
                         data['guild_url'] = guild_url
-                        logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via busca de links: {guild_name} ({guild_url})")
+                        logger.info(f"[TALEON] Guild encontrada via busca de links: {guild_name} ({guild_url})")
                         break
+                if not data['guild']:
+                    logger.warning(f"[TALEON] Nenhuma guild encontrada nem por busca de links para {data.get('name')}")
             
             # Validação final dos dados extraídos
             
@@ -570,9 +575,9 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             
             logger.info(f"✅ [TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Dados extraídos - {data['name']}: Level {data['level']}, Vocation {data['vocation']}")
             logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Dados completos: {data}")
-            
+            logger.info(f"[TALEON] Dados finais extraídos: {data}")
         except Exception as e:
-            logger.error(f"❌ [TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Erro ao extrair dados do HTML: {e}")
+            logger.error(f"❌ [TALEON] Erro ao extrair dados do HTML: {e}")
             raise
         
         return data
