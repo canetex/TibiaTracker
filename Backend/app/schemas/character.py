@@ -186,6 +186,7 @@ class CharacterSummary(BaseModel):
     is_favorited: bool
     last_scraped_at: Optional[datetime]
     snapshots_count: Optional[int] = 0
+    outfit_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True

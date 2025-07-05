@@ -877,7 +877,8 @@ async def list_characters(
             is_active=char.is_active,
             is_favorited=char.is_favorited,
             last_scraped_at=char.last_scraped_at,
-            snapshots_count=snapshots_count
+            snapshots_count=snapshots_count,
+            outfit_image_url=char.outfit_image_url
         )
         character_summaries.append(summary)
     
