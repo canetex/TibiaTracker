@@ -145,6 +145,7 @@ class CharacterService:
                 character.level = snapshot_data.get('level', character.level)
                 character.vocation = snapshot_data.get('vocation', character.vocation)
                 character.residence = snapshot_data.get('residence', character.residence)
+                character.guild = snapshot_data.get('guild', character.guild)  # Atualiza a guild
                 character.last_scraped_at = datetime.now()
                 character.scrape_error_count = 0
                 character.last_scrape_error = None
