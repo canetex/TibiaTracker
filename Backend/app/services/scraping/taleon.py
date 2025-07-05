@@ -179,11 +179,11 @@ class TaleonCharacterScraper(BaseCharacterScraper):
         history_data = []
         
         try:
-            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Iniciando extração de histórico de experiência...")
+            logger.info(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Iniciando extração de histórico de experiência...")
             
             # Debug: Verificar todo o texto da página para encontrar padrões
             page_text = soup.get_text().lower()
-            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Verificando texto da página...")
+            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Verificando texto da página...")
             
             # Buscar diferentes variações do texto "experience history"
             possible_phrases = [
