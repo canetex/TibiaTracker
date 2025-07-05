@@ -1,0 +1,34 @@
+# =============================================================================
+# COMANDO PARA EXECUTAR DIRETAMENTE NO SSH
+# =============================================================================
+# Copie e cole este comando no terminal SSH do servidor
+# =============================================================================
+
+# Primeiro, dar permissão de execução ao script
+chmod +x /opt/tibia-tracker/Scripts/Manutenção/bulk-add-characters.sh
+
+# Executar o script
+/opt/tibia-tracker/Scripts/Manutenção/bulk-add-characters.sh
+
+# =============================================================================
+# COMANDO ALTERNATIVO (se preferir executar tudo em uma linha)
+# =============================================================================
+
+chmod +x /opt/tibia-tracker/Scripts/Manutenção/bulk-add-characters.sh && /opt/tibia-tracker/Scripts/Manutenção/bulk-add-characters.sh
+
+# =============================================================================
+# COMANDO PARA MONITORAR O PROGRESSO
+# =============================================================================
+
+# Em outro terminal SSH, execute para acompanhar os logs em tempo real:
+tail -f /var/log/tibia-tracker/bulk-add.log
+
+# =============================================================================
+# COMANDO PARA VERIFICAR O STATUS APÓS A EXECUÇÃO
+# =============================================================================
+
+# Verificar quantos personagens foram adicionados:
+curl -s http://localhost:8000/characters/stats/global | jq '.total_characters'
+
+# Verificar personagens recentes:
+curl -s http://localhost:8000/characters/recent | jq 'length' 

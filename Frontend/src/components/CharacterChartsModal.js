@@ -453,19 +453,31 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
               </Typography>
               <Grid container spacing={3}>
                 {chartData.experience?.summary && (
-                  <Grid item xs={12} md={4}>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Experiência Total Ganha
-                      </Typography>
-                      <Typography variant="h6">
-                        {chartData.experience.summary.total_gained?.toLocaleString('pt-BR') || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </Grid>
+                  <>
+                    <Grid item xs={12} md={3}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Experiência Total Ganha
+                        </Typography>
+                        <Typography variant="h6">
+                          {chartData.experience.summary.total_gained?.toLocaleString('pt-BR') || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Média Diária
+                        </Typography>
+                        <Typography variant="h6">
+                          {chartData.experience.summary.average_daily?.toLocaleString('pt-BR') || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </>
                 )}
                 {chartData.level?.summary && (
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         Levels Ganhos
@@ -476,7 +488,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                     </Box>
                   </Grid>
                 )}
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={3}>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       Dados Coletados

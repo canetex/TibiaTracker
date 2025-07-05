@@ -354,29 +354,30 @@ class CharacterService:
             
             # Encontrar picos
             highest_level = max((snap.level for snap in snapshots), default=0)
-            highest_experience = max((snap.experience for snap in snapshots), default=0)
+            
+            # Calcular experiência total ganha no período (soma dos dias)
+            total_experience_gained = sum(max(0, snap.experience) for snap in snapshots)
             
             # Encontrar datas dos picos
             highest_level_date = None
-            highest_experience_date = None
             for snap in snapshots:
                 if snap.level == highest_level and highest_level_date is None:
                     highest_level_date = snap.scraped_at
-                if snap.experience == highest_experience and highest_experience_date is None:
-                    highest_experience_date = snap.scraped_at
 
             # Calcular médias
             average_daily_exp_gain = None
             average_level_per_month = None
             if len(snapshots) > 1:
-                exp_gain = snapshots[-1].experience - snapshots[0].experience
                 days_diff = (snapshots[-1].scraped_at - snapshots[0].scraped_at).days
                 if days_diff > 0:
-                    average_daily_exp_gain = exp_gain / days_diff
+                    average_daily_exp_gain = total_experience_gained / days_diff
                     
                 level_gain = snapshots[-1].level - snapshots[0].level
                 if days_diff > 0:
                     average_level_per_month = (level_gain * 30) / days_diff
+            else:
+                # Se há apenas um snapshot, usar a experiência desse dia
+                average_daily_exp_gain = total_experience_gained
 
             # Worlds visitados
             worlds_visited = list(set(snap.world for snap in snapshots))
@@ -389,8 +390,8 @@ class CharacterService:
                 last_snapshot=last_snapshot,
                 highest_level=highest_level,
                 highest_level_date=highest_level_date,
-                highest_experience=highest_experience,
-                highest_experience_date=highest_experience_date,
+                highest_experience=total_experience_gained,  # Total de experiência ganha no período
+                highest_experience_date=last_snapshot,  # Data do último snapshot
                 average_daily_exp_gain=average_daily_exp_gain,
                 average_level_per_month=average_level_per_month,
                 worlds_visited=worlds_visited

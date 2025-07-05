@@ -81,6 +81,18 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
     return colors[vocation] || 'default';
   };
 
+  const getTibiaUrl = (character) => {
+    // Mapear servidores para URLs corretas
+    const serverUrls = {
+      'taleon': 'https://taleon.com.br',
+      'rubini': 'https://rubini.com.br',
+      // Adicionar outros servidores conforme necessário
+    };
+    
+    const baseUrl = serverUrls[character.server] || 'https://tibia.com';
+    return `${baseUrl}/char/${character.name}`;
+  };
+
   const latest = character.latest_snapshot;
 
   return (
@@ -100,39 +112,22 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            {latest?.outfit_image_url ? (
-              <Box
-                component="img"
-                src={latest.outfit_image_url}
-                alt={`Outfit de ${character.name}`}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  mr: 1,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'divider'
-                }}
-              />
-            ) : (
-              <Person sx={{ mr: 1, color: 'primary.main' }} />
-            )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
-                {character.name}
-              </Typography>
-              {latest?.profile_url && (
-                <Tooltip title="Ver perfil original">
-                  <IconButton
-                    size="small"
-                    onClick={() => window.open(latest.profile_url, '_blank')}
-                    sx={{ color: 'primary.main' }}
-                  >
-                    <OpenInNew fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
+            <Person sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
+              {character.name}
+            </Typography>
+            <Tooltip title="Ver no Tibia">
+              <IconButton
+                component="a"
+                href={getTibiaUrl(character)}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{ ml: 1, color: 'primary.main' }}
+              >
+                <OpenInNew fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
           
           {onToggleFavorite && (
@@ -211,6 +206,43 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
             </Box>
           </Grid>
         </Grid>
+
+        {/* Quick Stats - Média Diária */}
+        {character.total_snapshots > 1 && (
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              📊 Estatísticas Rápidas (30 dias)
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Média Diária
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    {character.average_daily_exp ? 
+                      `${character.average_daily_exp.toLocaleString('pt-BR')} exp/dia` : 
+                      'Clique em "Ver Gráficos" para ver'
+                    }
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Período
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {character.total_exp_gained ? 
+                      `${character.total_exp_gained.toLocaleString('pt-BR')} exp` : 
+                      'Clique em "Ver Gráficos" para ver'
+                    }
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
 
         {/* Additional Stats (if available) */}
         {(latest?.charm_points || latest?.bosstiary_points || latest?.achievement_points) && (

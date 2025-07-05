@@ -287,6 +287,102 @@ EOF
 }
 
 # =============================================================================
+# CONFIGURAÇÃO DE AGENDAMENTO AUTOMÁTICO
+# =============================================================================
+
+setup_scheduling() {
+    log "Configurando agendamento automático..."
+    
+    # Verificar se o scheduler está configurado no .env
+    if [[ -f "$PROJECT_DIR/.env" ]]; then
+        # Verificar se as configurações de agendamento estão definidas
+        if ! grep -q "DAILY_UPDATE_HOUR" "$PROJECT_DIR/.env"; then
+            log "Adicionando configurações de agendamento ao .env..."
+            echo "" >> "$PROJECT_DIR/.env"
+            echo "# Configurações de Agendamento" >> "$PROJECT_DIR/.env"
+            echo "DAILY_UPDATE_HOUR=0" >> "$PROJECT_DIR/.env"
+            echo "DAILY_UPDATE_MINUTE=10" >> "$PROJECT_DIR/.env"
+            echo "SCHEDULER_TIMEZONE=America/Sao_Paulo" >> "$PROJECT_DIR/.env"
+            echo "SCRAPE_DELAY_SECONDS=2" >> "$PROJECT_DIR/.env"
+            echo "SCRAPE_RETRY_ATTEMPTS=3" >> "$PROJECT_DIR/.env"
+            echo "SCRAPE_RETRY_DELAY_MINUTES=5" >> "$PROJECT_DIR/.env"
+        fi
+        
+        # Verificar se o horário está configurado para 00:10
+        if grep -q "DAILY_UPDATE_HOUR=0" "$PROJECT_DIR/.env" && grep -q "DAILY_UPDATE_MINUTE=10" "$PROJECT_DIR/.env"; then
+            log "✅ Agendamento já configurado para 00:10"
+        else
+            log "Atualizando horário do agendamento para 00:10..."
+            # Atualizar horário para 00:10
+            sed -i 's/DAILY_UPDATE_HOUR=.*/DAILY_UPDATE_HOUR=0/' "$PROJECT_DIR/.env"
+            sed -i 's/DAILY_UPDATE_MINUTE=.*/DAILY_UPDATE_MINUTE=10/' "$PROJECT_DIR/.env"
+        fi
+    else
+        warning "Arquivo .env não encontrado. Configure manualmente as variáveis de agendamento:"
+        warning "DAILY_UPDATE_HOUR=0"
+        warning "DAILY_UPDATE_MINUTE=10"
+        warning "SCHEDULER_TIMEZONE=America/Sao_Paulo"
+    fi
+    
+    # Criar script de verificação do agendamento
+    sudo tee /usr/local/bin/check-tibia-scheduler.sh > /dev/null <<'EOF'
+#!/bin/bash
+# Script para verificar status do agendamento do Tibia Tracker
+
+PROJECT_DIR="/opt/tibia-tracker"
+LOG_FILE="/var/log/tibia-tracker/scheduler.log"
+
+echo "=== Status do Agendamento Tibia Tracker ==="
+echo "Data/Hora: $(date)"
+echo ""
+
+# Verificar se o container está rodando
+if docker-compose -f "$PROJECT_DIR/docker-compose.yml" ps | grep -q "backend.*Up"; then
+    echo "✅ Container backend está rodando"
+    
+    # Verificar logs do scheduler
+    echo ""
+    echo "=== Últimos logs do scheduler ==="
+    docker-compose -f "$PROJECT_DIR/docker-compose.yml" logs --tail=20 backend | grep -i "scheduler\|agendamento\|update" || echo "Nenhum log de scheduler encontrado"
+    
+    # Verificar jobs agendados via API (se disponível)
+    echo ""
+    echo "=== Tentando verificar jobs via API ==="
+    if curl -s -f http://localhost:8000/health/ > /dev/null 2>&1; then
+        echo "✅ API está respondendo"
+        # Aqui você pode adicionar uma chamada para um endpoint que retorne info do scheduler
+    else
+        echo "❌ API não está respondendo"
+    fi
+    
+else
+    echo "❌ Container backend não está rodando"
+    echo ""
+    echo "=== Status dos containers ==="
+    docker-compose -f "$PROJECT_DIR/docker-compose.yml" ps
+fi
+
+echo ""
+echo "=== Configurações de agendamento ==="
+if [[ -f "$PROJECT_DIR/.env" ]]; then
+    grep -E "(DAILY_UPDATE|SCHEDULER)" "$PROJECT_DIR/.env" || echo "Configurações não encontradas no .env"
+else
+    echo "Arquivo .env não encontrado"
+fi
+EOF
+
+    # Dar permissão de execução
+    sudo chmod +x /usr/local/bin/check-tibia-scheduler.sh
+    
+    # Criar entrada no crontab para verificação diária do agendamento
+    (crontab -l 2>/dev/null; echo "# Verificação diária do agendamento Tibia Tracker - 06:00") | crontab -
+    (crontab -l 2>/dev/null; echo "0 6 * * * /usr/local/bin/check-tibia-scheduler.sh >> /var/log/tibia-tracker/scheduler-check.log 2>&1") | crontab -
+    
+    log "✅ Agendamento automático configurado para 00:10 todos os dias"
+    log "📋 Use 'check-tibia-scheduler.sh' para verificar o status do agendamento"
+}
+
+# =============================================================================
 # CONFIGURAÇÃO DE FIREWALL
 # =============================================================================
 
@@ -411,6 +507,7 @@ main() {
     create_backup
     deploy_application
     setup_systemd
+    setup_scheduling
     setup_firewall
     verify_deployment
     
@@ -424,6 +521,13 @@ main() {
     info "  sudo systemctl stop tibia-tracker     # Parar"
     info "  sudo systemctl status tibia-tracker   # Status"
     info "  sudo docker-compose logs -f           # Ver logs"
+    info ""
+    info "Para verificar o agendamento:"
+    info "  check-tibia-scheduler.sh              # Status do scheduler"
+    info "  sudo docker-compose logs backend | grep -i scheduler  # Logs do scheduler"
+    info ""
+    info "📅 Agendamento automático configurado para 00:10 todos os dias"
+    info "🔄 Todos os personagens serão atualizados automaticamente"
 }
 
 # =============================================================================
