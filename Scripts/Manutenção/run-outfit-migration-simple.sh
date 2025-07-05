@@ -66,9 +66,9 @@ log "✅ Todos os serviços estão funcionando"
 echo ""
 warn "⚠️  ATENÇÃO: Esta operação irá:"
 echo "   1. Fazer backup completo do banco de dados"
-echo "   2. Adicionar novas colunas ao banco (outfit_image_path)"
-echo "   3. Baixar todas as imagens de outfit do banco"
-echo "   4. Atualizar os registros com os caminhos locais"
+echo "   2. Exportar URLs de outfit do banco"
+echo "   3. Baixar todas as imagens de outfit"
+echo "   4. Organizar por hash MD5 (economiza espaço)"
 echo ""
 echo "   📁 As imagens serão salvas em: /app/outfits/images/"
 echo "   💾 Backup será salvo em: ./backups/"
@@ -90,11 +90,23 @@ else
     warn "Script de backup não encontrado, pulando..."
 fi
 
+# Exportar URLs do banco
+log "📤 Exportando URLs de outfit do banco..."
+docker exec tibia-tracker-postgres psql -U tibia_user -d tibia_tracker -t -c "SELECT DISTINCT outfit_image_url FROM characters WHERE outfit_image_url IS NOT NULL AND outfit_image_url != '';" > /tmp/outfit_urls.txt
+
+# Verificar quantas URLs foram exportadas
+URL_COUNT=$(wc -l < /tmp/outfit_urls.txt)
+log "📊 Exportadas $URL_COUNT URLs únicas"
+
+# Copiar arquivo para o container
+log "📋 Copiando arquivo de URLs para o container..."
+docker cp /tmp/outfit_urls.txt tibia-tracker-backend:/tmp/outfit_urls.txt
+
 # Executar migração
 log "🚀 Iniciando migração de imagens de outfit..."
 
 # Executar script Python dentro do container do backend
-docker exec tibia-tracker-backend python /app/Scripts/Manutenção/migrate-outfit-images.py
+docker exec -w /app -e PYTHONPATH=/app tibia-tracker-backend python /app/Scripts/Manutenção/migrate-outfit-images.py
 
 if [ $? -eq 0 ]; then
     log "🎉 Migração concluída com sucesso!"
@@ -122,6 +134,7 @@ if [ $? -eq 0 ]; then
     log "📁 Localização dos arquivos:"
     log "   - Imagens: /app/outfits/images/ (dentro do container)"
     log "   - Backup: ./backups/ (no host)"
+    log "   - URLs: /tmp/outfit_urls.txt (no host)"
     
     echo ""
     log "✅ Migração finalizada com sucesso!"
