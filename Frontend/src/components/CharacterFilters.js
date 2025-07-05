@@ -29,6 +29,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
     server: '',
     world: '',
     vocation: '',
+    guild: '',
     search: '',
     minLevel: '',
     maxLevel: '',
@@ -47,6 +48,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
       server: '',
       world: '',
       vocation: '',
+      guild: '',
       search: '',
       minLevel: '',
       maxLevel: '',
@@ -186,6 +188,17 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                 ))}
               </Select>
             </FormControl>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Guild"
+              value={filters.guild}
+              onChange={(e) => handleFilterChange('guild', e.target.value)}
+              placeholder="Digite o nome da guild..."
+            />
           </Grid>
         </Grid>
 

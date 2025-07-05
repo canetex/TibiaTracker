@@ -197,6 +197,7 @@ async def search_character(
                     "world": existing_character.world,
                     "level": existing_character.level,
                     "vocation": existing_character.vocation,
+                    "guild": existing_character.guild,
                     "outfit_image_url": existing_character.outfit_image_url,
                     "last_scraped_at": existing_character.last_scraped_at,
                     "is_favorited": existing_character.is_favorited,
@@ -239,6 +240,7 @@ async def search_character(
             level=scraped_data['level'],
             vocation=scraped_data['vocation'],
             residence=scraped_data.get('residence'),
+            guild=scraped_data.get('guild'),
             profile_url=scraped_data.get('profile_url'),
             outfit_image_url=scraped_data.get('outfit_image_url'),
             is_active=True,
@@ -287,6 +289,7 @@ async def search_character(
                 "world": character.world,
                 "level": character.level,
                 "vocation": character.vocation,
+                "guild": character.guild,
                 "outfit_image_url": character.outfit_image_url,
                 "last_scraped_at": character.last_scraped_at,
                 "is_favorited": character.is_favorited,
@@ -391,6 +394,7 @@ async def scrape_and_create_character(
             level=scraped_data['level'],
             vocation=scraped_data['vocation'],
             residence=scraped_data.get('residence'),
+            guild=scraped_data.get('guild'),
             profile_url=scraped_data.get('profile_url'),
             outfit_image_url=scraped_data.get('outfit_image_url'),
             is_active=True,
@@ -881,7 +885,8 @@ async def list_characters(
             is_favorited=char.is_favorited,
             last_scraped_at=char.last_scraped_at,
             snapshots_count=snapshots_count,
-            outfit_image_url=char.outfit_image_url
+            outfit_image_url=char.outfit_image_url,
+            guild=char.guild
         )
         character_summaries.append(summary)
     

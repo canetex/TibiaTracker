@@ -168,6 +168,14 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
               variant="outlined"
             />
           )}
+          {character.guild && (
+            <Chip 
+              label={character.guild}
+              size="small"
+              color="secondary"
+              variant="outlined"
+            />
+          )}
         </Box>
 
         {/* Stats Grid */}

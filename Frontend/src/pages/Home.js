@@ -120,6 +120,11 @@ const Home = () => {
         return false;
       }
 
+      // Filtro por guild
+      if (currentFilters.guild && character.guild && !character.guild.toLowerCase().includes(currentFilters.guild.toLowerCase())) {
+        return false;
+      }
+
       // Filtro por level mínimo
       if (currentFilters.minLevel) {
         const level = character.latest_snapshot?.level || character.level || 0;
