@@ -167,11 +167,11 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             # Procurar por imagem do outfit no padrão outfits.taleon.online
             outfit_img = soup.find('img', src=re.compile(r'outfits\.taleon\.online/outfit\.php'))
             if outfit_img and outfit_img.get('src'):
-                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Outfit image encontrada: {outfit_img['src']}")
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Outfit image encontrada: {outfit_img['src']}")
                 return outfit_img['src']
             return None
         except Exception as e:
-            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else "UNKNOWN"}] Erro ao extrair URL do outfit: {e}")
+            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Erro ao extrair URL do outfit: {e}")
             return None
     
     def _extract_experience_history_data(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
