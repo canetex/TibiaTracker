@@ -485,9 +485,11 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         
                         elif 'guild' in label and 'rank' not in label and value not in ['-', 'None', '']:
                             data['guild'] = value
+                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada: {value}")
                         
                         elif 'guild rank' in label and value not in ['-', 'None', '']:
                             data['guild_rank'] = value
+                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild rank encontrado: {value}")
             
             # Se não encontrou o nome na tabela, tentar extrair do título da página
             if not data['name']:
@@ -521,6 +523,29 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             
             # Contar mortes da death list
             data['deaths'] = self._count_deaths_from_list(soup)
+            
+            # Busca adicional por guild se não foi encontrada na tabela
+            if not data['guild']:
+                logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Buscando guild em texto da página...")
+                page_text = soup.get_text().lower()
+                
+                # Procurar por padrões de guild no texto da página
+                guild_patterns = [
+                    r'guild[:\s]*([^\n\r,]+)',
+                    r'guild name[:\s]*([^\n\r,]+)',
+                    r'([a-zA-Z\s]+)\s*guild',
+                ]
+                
+                for pattern in guild_patterns:
+                    matches = re.findall(pattern, page_text, re.IGNORECASE)
+                    for match in matches:
+                        guild_name = match.strip()
+                        if guild_name and guild_name not in ['none', '-', ''] and len(guild_name) > 2:
+                            data['guild'] = guild_name
+                            logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Guild encontrada via regex: {guild_name}")
+                            break
+                    if data['guild']:
+                        break
             
             # Validação final dos dados extraídos
             
