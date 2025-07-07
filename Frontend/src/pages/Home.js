@@ -170,16 +170,21 @@ const Home = () => {
   const handleFilterChange = async (newFilters) => {
     setFilters(newFilters);
     
-    // Se há filtros ativos e temos poucos personagens carregados, carregar todos
+    // Verificar se há filtros ativos
     const hasActiveFilters = Object.values(newFilters).some(value => value !== '' && value !== 'all');
+    const hasGuildFilter = newFilters.guild && newFilters.guild.trim() !== '';
     const hasFewCharacters = recentCharacters.length < 50;
     
-    if (hasActiveFilters && hasFewCharacters) {
-      // Carregar todos os personagens para aplicar filtros corretamente
+    console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}, Guild filter: ${hasGuildFilter}, Poucos chars: ${hasFewCharacters}`);
+    
+    // Se há filtro de guild ou outros filtros ativos com poucos personagens, carregar todos
+    if ((hasActiveFilters && hasFewCharacters) || hasGuildFilter) {
+      console.log('[FILTER] Carregando todos os personagens para aplicar filtros...');
       await loadAllCharacters();
     }
     
     const filtered = applyFilters(recentCharacters, newFilters);
+    console.log(`[FILTER] Aplicados filtros: ${filtered.length} personagens encontrados`);
     setFilteredCharacters(filtered);
   };
 
