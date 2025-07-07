@@ -175,25 +175,41 @@ const Home = () => {
     
     // Verificar se há filtros ativos
     const hasActiveFilters = Object.values(newFilters).some(value => value !== '' && value !== 'all');
-    const hasGuildFilter = newFilters.guild && newFilters.guild.trim() !== '';
-    const hasFewCharacters = recentCharacters.length < 50;
     
-    console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}, Guild filter: ${hasGuildFilter}, Poucos chars: ${hasFewCharacters}`);
+    console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}`);
     
-    // Aplicar filtros primeiro com os dados atuais
-    let filtered = applyFilters(recentCharacters, newFilters);
-    console.log(`[FILTER] Aplicados filtros: ${filtered.length} personagens encontrados`);
-    
-    // Se há filtro de guild e não encontramos resultados, carregar todos os personagens
-    if (hasGuildFilter && filtered.length === 0 && hasFewCharacters) {
-      console.log('[FILTER] Nenhum resultado encontrado, carregando todos os personagens...');
-      await loadAllCharacters();
-      // Aplicar filtros novamente com todos os personagens
-      filtered = applyFilters(recentCharacters, newFilters);
-      console.log(`[FILTER] Após carregar todos: ${filtered.length} personagens encontrados`);
+    if (hasActiveFilters) {
+      // Se há filtros ativos, fazer requisição para o servidor com os filtros
+      console.log('[FILTER] Fazendo requisição para o servidor com filtros...');
+      try {
+        const filterParams = {};
+        
+        // Adicionar apenas filtros não vazios
+        if (newFilters.search) filterParams.search = newFilters.search;
+        if (newFilters.server) filterParams.server = newFilters.server;
+        if (newFilters.world) filterParams.world = newFilters.world;
+        if (newFilters.vocation) filterParams.vocation = newFilters.vocation;
+        if (newFilters.guild) filterParams.guild = newFilters.guild;
+        if (newFilters.minLevel) filterParams.minLevel = newFilters.minLevel;
+        if (newFilters.maxLevel) filterParams.maxLevel = newFilters.maxLevel;
+        if (newFilters.isFavorited !== '') filterParams.isFavorited = newFilters.isFavorited;
+        if (newFilters.limit && newFilters.limit !== 'all') filterParams.limit = newFilters.limit;
+        
+        console.log('[FILTER] Parâmetros de filtro:', filterParams);
+        
+        const response = await apiService.listCharacters(filterParams);
+        console.log(`[FILTER] Servidor retornou ${response.characters?.length || 0} personagens`);
+        
+        setFilteredCharacters(response.characters || []);
+      } catch (error) {
+        console.error('[FILTER] Erro ao buscar personagens filtrados:', error);
+        setError('Erro ao aplicar filtros. Tente novamente.');
+      }
+    } else {
+      // Se não há filtros, usar os personagens recentes
+      console.log('[FILTER] Sem filtros ativos, usando personagens recentes');
+      setFilteredCharacters(recentCharacters);
     }
-    
-    setFilteredCharacters(filtered);
   };
 
   const handleClearFilters = () => {

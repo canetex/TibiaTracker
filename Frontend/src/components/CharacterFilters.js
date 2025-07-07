@@ -37,10 +37,13 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
     limit: 'all',
   });
 
-  const handleFilterChange = (field, value) => {
+  const handleFieldChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+  };
+
+  const handleApplyFilters = () => {
+    onFilterChange(filters);
   };
 
   const handleClearFilters = () => {
@@ -104,6 +107,15 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
           </Box>
           
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              size="small"
+              startIcon={<FilterList />}
+              onClick={handleApplyFilters}
+              variant="contained"
+              color="primary"
+            >
+              Filtrar
+            </Button>
             {hasActiveFilters && (
               <Button
                 size="small"
@@ -131,7 +143,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
               size="small"
               label="Buscar por nome"
               value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={(e) => handleFieldChange('search', e.target.value)}
               placeholder="Digite o nome..."
             />
           </Grid>
@@ -141,7 +153,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
               <InputLabel>Servidor</InputLabel>
               <Select
                 value={filters.server}
-                onChange={(e) => handleFilterChange('server', e.target.value)}
+                onChange={(e) => handleFieldChange('server', e.target.value)}
                 label="Servidor"
               >
                 <MenuItem value="">Todos</MenuItem>
@@ -159,7 +171,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
               <InputLabel>Mundo</InputLabel>
               <Select
                 value={filters.world}
-                onChange={(e) => handleFilterChange('world', e.target.value)}
+                onChange={(e) => handleFieldChange('world', e.target.value)}
                 label="Mundo"
               >
                 <MenuItem value="">Todos</MenuItem>
@@ -177,7 +189,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
               <InputLabel>Vocação</InputLabel>
               <Select
                 value={filters.vocation}
-                onChange={(e) => handleFilterChange('vocation', e.target.value)}
+                onChange={(e) => handleFieldChange('vocation', e.target.value)}
                 label="Vocação"
               >
                 <MenuItem value="">Todas</MenuItem>
@@ -196,7 +208,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
               size="small"
               label="Guild"
               value={filters.guild}
-              onChange={(e) => handleFilterChange('guild', e.target.value)}
+              onChange={(e) => handleFieldChange('guild', e.target.value)}
               placeholder="Digite o nome da guild..."
             />
           </Grid>
@@ -217,7 +229,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                 label="Level Mínimo"
                 type="number"
                 value={filters.minLevel}
-                onChange={(e) => handleFilterChange('minLevel', e.target.value)}
+                onChange={(e) => handleFieldChange('minLevel', e.target.value)}
                 placeholder="0"
               />
             </Grid>
@@ -229,7 +241,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                 label="Level Máximo"
                 type="number"
                 value={filters.maxLevel}
-                onChange={(e) => handleFilterChange('maxLevel', e.target.value)}
+                onChange={(e) => handleFieldChange('maxLevel', e.target.value)}
                 placeholder="9999"
               />
             </Grid>
@@ -239,7 +251,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                 <InputLabel>Favoritos</InputLabel>
                 <Select
                   value={filters.isFavorited}
-                  onChange={(e) => handleFilterChange('isFavorited', e.target.value)}
+                  onChange={(e) => handleFieldChange('isFavorited', e.target.value)}
                   label="Favoritos"
                 >
                   <MenuItem value="">Todos</MenuItem>
@@ -254,7 +266,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                 <InputLabel>Mostrar</InputLabel>
                 <Select
                   value={filters.limit}
-                  onChange={(e) => handleFilterChange('limit', e.target.value)}
+                  onChange={(e) => handleFieldChange('limit', e.target.value)}
                   label="Mostrar"
                 >
                                   <MenuItem value="all">Todos os Personagens</MenuItem>
