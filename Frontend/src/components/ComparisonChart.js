@@ -279,7 +279,7 @@ const ComparisonChart = ({
                 <XAxis 
                   dataKey="date" 
                   type="category"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#666666' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
@@ -287,12 +287,16 @@ const ComparisonChart = ({
                 <YAxis 
                   yAxisId="level" 
                   orientation="left"
-                  label={{ value: 'Level', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666' }}
+                  tick={{ fontSize: 12, fill: '#666666' }}
+                  tickFormatter={(value) => value.toLocaleString('pt-BR')}
                 />
                 <YAxis 
                   yAxisId="experience" 
                   orientation="right"
-                  label={{ value: 'Experiência', angle: 90, position: 'insideRight' }}
+                  label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#666666' }}
+                  tick={{ fontSize: 12, fill: '#666666' }}
+                  tickFormatter={(value) => value.toLocaleString('pt-BR')}
                 />
                 
                 <RechartsTooltip 
