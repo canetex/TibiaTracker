@@ -177,9 +177,9 @@ const Home = () => {
     
     console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}, Guild filter: ${hasGuildFilter}, Poucos chars: ${hasFewCharacters}`);
     
-    // Se há filtro de guild ou outros filtros ativos com poucos personagens, carregar todos
-    if ((hasActiveFilters && hasFewCharacters) || hasGuildFilter) {
-      console.log('[FILTER] Carregando todos os personagens para aplicar filtros...');
+    // Se há filtro de guild e temos poucos personagens, carregar todos
+    if (hasGuildFilter && hasFewCharacters) {
+      console.log('[FILTER] Carregando todos os personagens para aplicar filtro de guild...');
       await loadAllCharacters();
     }
     
