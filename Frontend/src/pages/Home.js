@@ -121,8 +121,13 @@ const Home = () => {
       }
 
       // Filtro por guild
-      if (currentFilters.guild && character.guild && !character.guild.toLowerCase().includes(currentFilters.guild.toLowerCase())) {
-        return false;
+      if (currentFilters.guild) {
+        console.log(`[FILTER] Verificando guild: "${currentFilters.guild}" vs "${character.guild}"`);
+        if (!character.guild || !character.guild.toLowerCase().includes(currentFilters.guild.toLowerCase())) {
+          console.log(`[FILTER] Guild não corresponde: "${character.guild}" não contém "${currentFilters.guild}"`);
+          return false;
+        }
+        console.log(`[FILTER] Guild corresponde: "${character.guild}" contém "${currentFilters.guild}"`);
       }
 
       // Filtro por level mínimo

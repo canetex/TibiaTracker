@@ -742,6 +742,7 @@ async def get_recent_characters(
                 "world": char.world,
                 "level": char.level,
                 "vocation": char.vocation,
+                "guild": char.guild,
                 "outfit_image_url": char.outfit_image_url,
                 "last_scraped_at": char.last_scraped_at,
                 "is_favorited": char.is_favorited,
