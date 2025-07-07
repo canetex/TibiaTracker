@@ -29,6 +29,8 @@ import CharacterCard from '../components/CharacterCard';
 import CharacterSearch from '../components/CharacterSearch';
 import CharacterChartsModal from '../components/CharacterChartsModal';
 import CharacterFilters from '../components/CharacterFilters';
+import ComparisonPanel from '../components/ComparisonPanel';
+import ComparisonChart from '../components/ComparisonChart';
 import { apiService } from '../services/api';
 
 const Home = () => {
@@ -44,6 +46,11 @@ const Home = () => {
   // Estados para o modal de gráficos
   const [chartsModalOpen, setChartsModalOpen] = useState(false);
   const [selectedCharacterForCharts, setSelectedCharacterForCharts] = useState(null);
+  
+  // Estados para comparação de personagens
+  const [comparisonCharacters, setComparisonCharacters] = useState([]);
+  const [comparisonChartOpen, setComparisonChartOpen] = useState(false);
+  const [filteredChartOpen, setFilteredChartOpen] = useState(false);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -215,6 +222,42 @@ const Home = () => {
   const handleClearFilters = () => {
     setFilters({});
     setFilteredCharacters(recentCharacters);
+  };
+
+  // Funções para comparação de personagens
+  const handleAddToComparison = (character) => {
+    if (comparisonCharacters.length >= 10) {
+      setError('Limite máximo de 10 personagens para comparação atingido.');
+      return;
+    }
+    
+    if (comparisonCharacters.find(c => c.id === character.id)) {
+      setError('Personagem já está na comparação.');
+      return;
+    }
+    
+    setComparisonCharacters(prev => [...prev, character]);
+    setError(null);
+  };
+
+  const handleRemoveFromComparison = (characterId) => {
+    setComparisonCharacters(prev => prev.filter(c => c.id !== characterId));
+  };
+
+  const handleClearComparison = () => {
+    setComparisonCharacters([]);
+  };
+
+  const handleShowComparison = () => {
+    setComparisonChartOpen(true);
+  };
+
+  const handleShowFilteredChart = () => {
+    if (filteredCharacters.length > 15) {
+      setError('Para mostrar o gráfico, filtre para no máximo 15 personagens.');
+      return;
+    }
+    setFilteredChartOpen(true);
   };
 
   const handleCharacterSearch = async (searchData) => {
@@ -413,6 +456,8 @@ const Home = () => {
       <CharacterFilters 
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
+        onShowChart={handleShowFilteredChart}
+        filteredCount={filteredCharacters.length}
       />
 
       {/* Search Result */}
@@ -467,6 +512,9 @@ const Home = () => {
                 <CharacterCard 
                   character={character} 
                   onViewCharts={handleViewCharts}
+                  onAddToComparison={handleAddToComparison}
+                  onRemoveFromComparison={handleRemoveFromComparison}
+                  isInComparison={comparisonCharacters.some(c => c.id === character.id)}
                 />
               </Grid>
             ))}
@@ -517,6 +565,29 @@ const Home = () => {
         open={chartsModalOpen}
         onClose={handleCloseChartsModal}
         character={selectedCharacterForCharts}
+      />
+
+      {/* Painel de Comparação */}
+      <ComparisonPanel
+        characters={comparisonCharacters}
+        onRemoveCharacter={handleRemoveFromComparison}
+        onShowComparison={handleShowComparison}
+        onClearAll={handleClearComparison}
+        maxCharacters={10}
+      />
+
+      {/* Gráfico de Comparação */}
+      <ComparisonChart
+        characters={comparisonCharacters}
+        open={comparisonChartOpen}
+        onClose={() => setComparisonChartOpen(false)}
+      />
+
+      {/* Gráfico dos Personagens Filtrados */}
+      <ComparisonChart
+        characters={filteredCharacters}
+        open={filteredChartOpen}
+        onClose={() => setFilteredChartOpen(false)}
       />
     </Box>
   );

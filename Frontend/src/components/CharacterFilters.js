@@ -21,9 +21,10 @@ import {
   Clear,
   ExpandMore,
   ExpandLess,
+  TrendingUp,
 } from '@mui/icons-material';
 
-const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
+const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
   const [expanded, setExpanded] = useState(false);
   const [filters, setFilters] = useState({
     server: '',
@@ -34,6 +35,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
     minLevel: '',
     maxLevel: '',
     isFavorited: '',
+    activityFilter: '',
     limit: 'all',
   });
 
@@ -56,6 +58,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
       minLevel: '',
       maxLevel: '',
       isFavorited: '',
+      activityFilter: '',
       limit: 'all',
     };
     setFilters(clearedFilters);
@@ -84,6 +87,13 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
     { value: 'san', label: 'San' },
     { value: 'aura', label: 'Aura' },
     { value: 'gaia', label: 'Gaia' },
+  ];
+
+  const activityFilters = [
+    { value: 'active_today', label: 'Ativos Hoje' },
+    { value: 'active_yesterday', label: 'Ativos D-1 (ontem)' },
+    { value: 'active_2days', label: 'Ativos D-2' },
+    { value: 'active_3days', label: 'Ativos D-3' },
   ];
 
   return (
@@ -116,6 +126,20 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
             >
               Filtrar
             </Button>
+            
+            {filteredCount > 0 && (
+              <Button
+                size="small"
+                startIcon={<TrendingUp />}
+                onClick={onShowChart}
+                variant="outlined"
+                color="secondary"
+                disabled={filteredCount > 15}
+              >
+                Gráfico ({filteredCount})
+              </Button>
+            )}
+            
             {hasActiveFilters && (
               <Button
                 size="small"
@@ -257,6 +281,24 @@ const CharacterFilters = ({ onFilterChange, onClearFilters }) => {
                   <MenuItem value="">Todos</MenuItem>
                   <MenuItem value="true">Apenas Favoritos</MenuItem>
                   <MenuItem value="false">Não Favoritos</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Atividade</InputLabel>
+                <Select
+                  value={filters.activityFilter}
+                  onChange={(e) => handleFieldChange('activityFilter', e.target.value)}
+                  label="Atividade"
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {activityFilters.map((filter) => (
+                    <MenuItem key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>

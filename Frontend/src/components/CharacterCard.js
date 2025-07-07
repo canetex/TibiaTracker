@@ -22,11 +22,13 @@ import {
   Schedule,
   Analytics,
   OpenInNew,
+  Compare,
+  CompareOutlined,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts }) => {
+const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, onAddToComparison, onRemoveFromComparison, isInComparison = false }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
 
@@ -55,6 +57,14 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
   const handleViewCharts = () => {
     if (onViewCharts) {
       onViewCharts(character);
+    }
+  };
+
+  const handleToggleComparison = () => {
+    if (isInComparison) {
+      onRemoveFromComparison?.(character.id);
+    } else {
+      onAddToComparison?.(character);
     }
   };
 
@@ -105,7 +115,8 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: 4,
-        }
+        },
+        border: isInComparison ? '2px solid #1976d2' : 'none',
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
@@ -140,20 +151,37 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
             </Tooltip>
           </Box>
           
-          {onToggleFavorite && (
-            <IconButton
-              onClick={handleToggleFavorite}
-              disabled={favoriting}
-              size="small"
-              sx={{ color: character.is_favorited ? 'error.main' : 'action.disabled' }}
-            >
-              {character.is_favorited ? <Favorite /> : <FavoriteBorder />}
-            </IconButton>
-          )}
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {onToggleFavorite && (
+              <IconButton
+                onClick={handleToggleFavorite}
+                disabled={favoriting}
+                size="small"
+                sx={{ color: character.is_favorited ? 'error.main' : 'action.disabled' }}
+              >
+                {character.is_favorited ? <Favorite /> : <FavoriteBorder />}
+              </IconButton>
+            )}
+            
+            {onAddToComparison && (
+              <Tooltip title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}>
+                <IconButton
+                  onClick={handleToggleComparison}
+                  size="small"
+                  sx={{ 
+                    color: isInComparison ? 'primary.main' : 'action.disabled',
+                    bgcolor: isInComparison ? 'primary.50' : 'transparent'
+                  }}
+                >
+                  {isInComparison ? <Compare /> : <CompareOutlined />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
 
         {/* Server/World Info */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
           <Chip 
             label={`${character.server}/${character.world}`}
             size="small"
@@ -201,7 +229,7 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
               </Typography>
             </Box>
           </Grid>
-
+          
           <Grid item xs={6}>
             <Box>
               <Typography variant="body2" color="text.secondary">
@@ -212,7 +240,7 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
               </Typography>
             </Box>
           </Grid>
-
+          
           <Grid item xs={6}>
             <Box>
               <Typography variant="body2" color="text.secondary">
@@ -225,130 +253,57 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts })
           </Grid>
         </Grid>
 
-        {/* Quick Stats - Média Diária */}
-        {character.total_snapshots > 1 && (
-          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              📊 Estatísticas Rápidas (30 dias)
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Média Diária
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    {character.average_daily_exp ? 
-                      `${character.average_daily_exp.toLocaleString('pt-BR')} exp/dia` : 
-                      'Clique em "Ver Gráficos" para ver'
-                    }
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Período
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {character.total_exp_gained ? 
-                      `${character.total_exp_gained.toLocaleString('pt-BR')} exp` : 
-                      'Clique em "Ver Gráficos" para ver'
-                    }
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        )}
-
-        {/* Additional Stats (if available) */}
-        {(latest?.charm_points || latest?.bosstiary_points || latest?.achievement_points) && (
+        {/* Experience Progress */}
+        {latest?.experience && (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Pontos Especiais
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {latest.charm_points && (
-                <Chip 
-                  label={`Charm: ${latest.charm_points}`}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-              {latest.bosstiary_points && (
-                <Chip 
-                  label={`Bosstiary: ${latest.bosstiary_points}`}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-              {latest.achievement_points && (
-                <Chip 
-                  label={`Achievements: ${latest.achievement_points}`}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Progresso (30 dias)
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                +{character.total_exp_gained?.toLocaleString('pt-BR') || 0}
+              </Typography>
             </Box>
+            <LinearProgress 
+              variant="determinate" 
+              value={Math.min((character.total_exp_gained || 0) / 1000000 * 100, 100)}
+              sx={{ height: 6, borderRadius: 3 }}
+            />
           </Box>
         )}
 
         {/* Last Update */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Schedule sx={{ fontSize: '1rem', color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            Última atualização: {formatDate(character.last_scraped_at)}
+        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+          <Schedule sx={{ fontSize: 16, mr: 0.5 }} />
+          <Typography variant="caption">
+            Atualizado: {formatDate(character.last_scraped_at)}
           </Typography>
         </Box>
-
-        {/* Error indicator */}
-        {character.scrape_error_count > 0 && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" color="error.main">
-              ⚠️ {character.scrape_error_count} erro(s) de atualização
-            </Typography>
-          </Box>
-        )}
       </CardContent>
 
       {/* Actions */}
-      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
+      <CardActions sx={{ pt: 0, justifyContent: 'space-between' }}>
         <Button
           size="small"
           startIcon={<Analytics />}
-          disabled={!onViewCharts}
           onClick={handleViewCharts}
-          sx={{ color: 'text.secondary' }}
+          variant="outlined"
         >
-          Ver Gráficos
+          Gráficos
         </Button>
-
+        
         {onRefresh && (
-          <Tooltip title="Atualizar dados">
-            <IconButton
-              onClick={handleRefresh}
-              disabled={refreshing}
-              size="small"
-              color="primary"
-            >
-              <Refresh />
-            </IconButton>
-          </Tooltip>
+          <Button
+            size="small"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outlined"
+          >
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
+          </Button>
         )}
       </CardActions>
-
-      {/* Loading indicator */}
-      {refreshing && (
-        <LinearProgress 
-          sx={{ 
-            position: 'absolute', 
-            bottom: 0, 
-            left: 0, 
-            right: 0 
-          }} 
-        />
-      )}
     </Card>
   );
 };
