@@ -76,12 +76,14 @@ const Home = () => {
   // Função para carregar todos os personagens quando necessário para filtros
   const loadAllCharacters = async () => {
     try {
+      console.log('[LOAD] Iniciando carregamento de todos os personagens...');
       setLoadingRecent(true);
       setError(null);
       
       // Carregar TODOS os personagens para filtros (usando limite alto)
       const allCharacters = await apiService.listCharacters({ limit: 1000 });
       
+      console.log(`[LOAD] Carregados ${allCharacters.characters?.length || 0} personagens`);
       setRecentCharacters(allCharacters.characters || []);
       setFilteredCharacters(allCharacters.characters || []);
       
@@ -168,6 +170,7 @@ const Home = () => {
   };
 
   const handleFilterChange = async (newFilters) => {
+    console.log('[FILTER] handleFilterChange chamado com:', newFilters);
     setFilters(newFilters);
     
     // Verificar se há filtros ativos
@@ -177,14 +180,19 @@ const Home = () => {
     
     console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}, Guild filter: ${hasGuildFilter}, Poucos chars: ${hasFewCharacters}`);
     
-    // Se há filtro de guild e temos poucos personagens, carregar todos
-    if (hasGuildFilter && hasFewCharacters) {
-      console.log('[FILTER] Carregando todos os personagens para aplicar filtro de guild...');
+    // Aplicar filtros primeiro com os dados atuais
+    let filtered = applyFilters(recentCharacters, newFilters);
+    console.log(`[FILTER] Aplicados filtros: ${filtered.length} personagens encontrados`);
+    
+    // Se há filtro de guild e não encontramos resultados, carregar todos os personagens
+    if (hasGuildFilter && filtered.length === 0 && hasFewCharacters) {
+      console.log('[FILTER] Nenhum resultado encontrado, carregando todos os personagens...');
       await loadAllCharacters();
+      // Aplicar filtros novamente com todos os personagens
+      filtered = applyFilters(recentCharacters, newFilters);
+      console.log(`[FILTER] Após carregar todos: ${filtered.length} personagens encontrados`);
     }
     
-    const filtered = applyFilters(recentCharacters, newFilters);
-    console.log(`[FILTER] Aplicados filtros: ${filtered.length} personagens encontrados`);
     setFilteredCharacters(filtered);
   };
 
