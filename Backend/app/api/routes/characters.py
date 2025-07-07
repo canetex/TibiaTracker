@@ -1477,6 +1477,11 @@ async def refresh_character_data(
         return {
             "success": True,
             "message": f"Dados de '{character.name}' atualizados com sucesso!",
+            "id": character.id,
+            "scraping_date": latest_snapshot.scraped_at.isoformat() if latest_snapshot else None,
+            "guild": latest_snapshot.guild if latest_snapshot else None,
+            "level": latest_snapshot.level if latest_snapshot else None,
+            "experience": latest_snapshot.experience if latest_snapshot else None,
             "snapshots_created": snapshots_created,
             "snapshots_updated": snapshots_updated,
             "history_entries": len(history_data),
