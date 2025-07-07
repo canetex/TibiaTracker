@@ -1470,6 +1470,7 @@ async def refresh_character_data(
         latest_snapshot = latest_snapshot_result.scalar_one_or_none()
         if latest_snapshot:
             character.guild = latest_snapshot.guild  # Pode ser None!
+            await db.flush()  # Força a persistência imediata
             await db.commit()
             logger.info(f"[REFRESH] Guild do personagem {character.id} atualizada para: {latest_snapshot.guild}")
 
