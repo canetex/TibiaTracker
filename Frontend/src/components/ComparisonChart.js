@@ -39,6 +39,7 @@ const ComparisonChart = ({
   const [showLevel, setShowLevel] = useState(true);
   const [showExperience, setShowExperience] = useState(true);
   const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Cores únicas para cada personagem
   const colors = [
@@ -47,7 +48,7 @@ const ComparisonChart = ({
   ];
 
   useEffect(() => {
-    if (characters.length > 0) {
+    if (characters.length > 0 && open) {
       // Inicializar visibilidade para todos os personagens
       const initialVisibility = {};
       characters.forEach(char => {
@@ -58,20 +59,80 @@ const ComparisonChart = ({
       // Preparar dados do gráfico
       prepareChartData();
     }
-  }, [characters]);
+  }, [characters, open]);
 
-  const prepareChartData = () => {
-    // Aqui você pode implementar a lógica para buscar dados históricos
-    // Por enquanto, vamos usar dados simulados
-    const data = characters.map((char, index) => ({
-      name: char.name,
-      level: char.level || 0,
-      experience: char.latest_snapshot?.experience || 0,
-      color: colors[index % colors.length],
-      character: char,
-    }));
-    
-    setChartData(data);
+  const prepareChartData = async () => {
+    if (characters.length === 0) return;
+
+    setLoading(true);
+    try {
+      // Buscar dados históricos para cada personagem
+      const characterDataPromises = characters.map(async (character, index) => {
+        try {
+          // Buscar dados de level e experiência
+          const [levelResponse, expResponse] = await Promise.all([
+            fetch(`http://192.168.1.227:8000/api/v1/characters/${character.id}/charts/level?days=30`),
+            fetch(`http://192.168.1.227:8000/api/v1/characters/${character.id}/charts/experience?days=30`)
+          ]);
+
+          const levelData = await levelResponse.json();
+          const expData = await expResponse.json();
+
+          return {
+            character,
+            color: colors[index % colors.length],
+            levelData: levelData.data || [],
+            expData: expData.data || []
+          };
+        } catch (error) {
+          console.error(`Erro ao buscar dados para ${character.name}:`, error);
+          return {
+            character,
+            color: colors[index % colors.length],
+            levelData: [],
+            expData: []
+          };
+        }
+      });
+
+      const allCharacterData = await Promise.all(characterDataPromises);
+
+      // Combinar todos os dados em um formato para o gráfico
+      const combinedData = {};
+      
+      allCharacterData.forEach(({ character, color, levelData, expData }) => {
+        // Processar dados de level
+        levelData.forEach(item => {
+          const date = item.date;
+          if (!combinedData[date]) {
+            combinedData[date] = { date };
+          }
+          combinedData[date][`${character.name}_level`] = item.level;
+        });
+
+        // Processar dados de experiência
+        expData.forEach(item => {
+          const date = item.date;
+          if (!combinedData[date]) {
+            combinedData[date] = { date };
+          }
+          combinedData[date][`${character.name}_exp`] = item.experience || item.experience_gained || 0;
+        });
+      });
+
+      // Converter para array e ordenar por data
+      const chartDataArray = Object.values(combinedData).sort((a, b) => 
+        new Date(a.date) - new Date(b.date)
+      );
+
+      console.log('Dados do gráfico preparados:', chartDataArray);
+      setChartData(chartDataArray);
+
+    } catch (error) {
+      console.error('Erro ao preparar dados do gráfico:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleCharacter = (characterId) => {
@@ -135,7 +196,7 @@ const ComparisonChart = ({
         </Box>
 
         {/* Controls */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item>
               <Typography variant="subtitle2" color="text.secondary">
@@ -174,7 +235,7 @@ const ComparisonChart = ({
         </Box>
 
         {/* Character Controls */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Visibilidade por Personagem:
           </Typography>
@@ -201,91 +262,121 @@ const ComparisonChart = ({
         </Box>
 
         {/* Chart */}
-        <Box sx={{ height: 'calc(100% - 200px)', minHeight: 400 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="name" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis yAxisId="level" />
-              <YAxis yAxisId="experience" orientation="right" />
-              
-              <RechartsTooltip 
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <Paper sx={{ p: 2, bgcolor: 'background.paper' }}>
-                        <Typography variant="subtitle2" gutterBottom>
-                          {label}
-                        </Typography>
-                        {payload.map((entry, index) => (
-                          <Typography key={index} variant="body2" sx={{ color: entry.color }}>
-                            {entry.name}: {entry.value?.toLocaleString('pt-BR')}
+        <Box sx={{ height: 'calc(100% - 200px)', position: 'relative' }}>
+          {loading ? (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%' 
+            }}>
+              <Typography>Carregando dados...</Typography>
+            </Box>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  type="category"
+                  tick={{ fontSize: 12 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  yAxisId="level" 
+                  orientation="left"
+                  label={{ value: 'Level', angle: -90, position: 'insideLeft' }}
+                />
+                <YAxis 
+                  yAxisId="experience" 
+                  orientation="right"
+                  label={{ value: 'Experiência', angle: 90, position: 'insideRight' }}
+                />
+                
+                <RechartsTooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <Paper sx={{ p: 2, bgcolor: 'background.paper' }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            {label}
                           </Typography>
-                        ))}
-                      </Paper>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              
-              <Legend />
-              
-              {/* Level Lines */}
-              {showLevel && characters.map((character, index) => (
-                <Line
-                  key={`level-${character.id}`}
-                  type="monotone"
-                  dataKey="level"
-                  yAxisId="level"
-                  stroke={getCharacterColor(character.id)}
-                  strokeWidth={3}
-                  dot={{ fill: getCharacterColor(character.id), strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name={`${character.name} - Level`}
-                  hide={!visibility[character.id]}
+                          {payload.map((entry, index) => (
+                            <Typography key={index} variant="body2" sx={{ color: entry.color }}>
+                              {entry.name}: {entry.value?.toLocaleString('pt-BR')}
+                            </Typography>
+                          ))}
+                        </Paper>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-              ))}
-              
-              {/* Experience Lines */}
-              {showExperience && characters.map((character, index) => (
-                <Line
-                  key={`exp-${character.id}`}
-                  type="monotone"
-                  dataKey="experience"
-                  yAxisId="experience"
-                  stroke={getCharacterColor(character.id)}
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  dot={{ fill: getCharacterColor(character.id), strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5 }}
-                  name={`${character.name} - Experiência`}
-                  hide={!visibility[character.id]}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                
+                <Legend />
+                
+                {/* Level Lines (sólidas) */}
+                {showLevel && characters.map((character) => {
+                  const color = getCharacterColor(character.id);
+                  const dataKey = `${character.name}_level`;
+                  
+                  return (
+                    <Line
+                      key={`level-${character.id}`}
+                      type="monotone"
+                      dataKey={dataKey}
+                      yAxisId="level"
+                      stroke={color}
+                      strokeWidth={3}
+                      dot={{ fill: color, strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name={`${character.name} - Level`}
+                      hide={!visibility[character.id]}
+                    />
+                  );
+                })}
+                
+                {/* Experience Lines (tracejadas) */}
+                {showExperience && characters.map((character) => {
+                  const color = getCharacterColor(character.id);
+                  const dataKey = `${character.name}_exp`;
+                  
+                  return (
+                    <Line
+                      key={`exp-${character.id}`}
+                      type="monotone"
+                      dataKey={dataKey}
+                      yAxisId="experience"
+                      stroke={color}
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={{ fill: color, strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name={`${character.name} - Experiência`}
+                      hide={!visibility[character.id]}
+                    />
+                  );
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </Box>
 
         {/* Legend */}
         <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
+          <Typography variant="subtitle2" gutterBottom>
             Legenda:
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 20, height: 3, bgcolor: 'black' }} />
-              <Typography variant="body2">Level (linha sólida)</Typography>
+              <Box sx={{ width: 20, height: 3, bgcolor: 'grey.600' }} />
+              <Typography variant="body2">Linha sólida = Level</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 20, height: 3, bgcolor: 'black', borderTop: '2px dashed black' }} />
-              <Typography variant="body2">Experiência (linha tracejada)</Typography>
+              <Box sx={{ width: 20, height: 2, bgcolor: 'grey.600', borderTop: '2px dashed grey.600' }} />
+              <Typography variant="body2">Linha tracejada = Experiência</Typography>
             </Box>
           </Box>
         </Box>
