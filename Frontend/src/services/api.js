@@ -170,11 +170,9 @@ export const apiService = {
   /**
    * Favoritar/desfavoritar personagem
    */
-  async toggleFavorite(characterId, isFavorited) {
+  async toggleFavorite(characterId) {
     try {
-      const response = await api.post(`/api/v1/characters/${characterId}/favorite`, {
-        is_favorited: isFavorited
-      });
+      const response = await api.get(`/api/v1/characters/${characterId}/toggle-favorite`);
       return response.data;
     } catch (error) {
       throw error;

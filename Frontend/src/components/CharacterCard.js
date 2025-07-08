@@ -13,8 +13,8 @@ import {
   Grid,
 } from '@mui/material';
 import {
-  Favorite,
-  FavoriteBorder,
+  Star,
+  StarBorder,
   Refresh,
   TrendingUp,
   Person,
@@ -28,7 +28,16 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, onAddToComparison, onRemoveFromComparison, isInComparison = false }) => {
+const CharacterCard = ({ 
+  character, 
+  onRefresh, 
+  onToggleFavorite, 
+  onViewCharts, 
+  onAddToComparison, 
+  onRemoveFromComparison, 
+  isInComparison = false,
+  onQuickFilter // Nova prop para filtros rápidos
+}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
 
@@ -65,6 +74,13 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
       onRemoveFromComparison?.(character.id);
     } else {
       onAddToComparison?.(character);
+    }
+  };
+
+  // Função para filtros rápidos via tags
+  const handleQuickFilter = (filterType, value) => {
+    if (onQuickFilter) {
+      onQuickFilter(filterType, value);
     }
   };
 
@@ -159,7 +175,7 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
                 size="small"
                 sx={{ color: character.is_favorited ? 'error.main' : 'action.disabled' }}
               >
-                {character.is_favorited ? <Favorite /> : <FavoriteBorder />}
+                {character.is_favorited ? <Star /> : <StarBorder />}
               </IconButton>
             )}
             
@@ -180,13 +196,15 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
           </Box>
         </Box>
 
-        {/* Server/World Info */}
+        {/* Server/World Info - Tags clicáveis para filtros rápidos */}
         <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
           <Chip 
             label={`${character.server}/${character.world}`}
             size="small"
             color="primary"
             variant="outlined"
+            onClick={() => handleQuickFilter('server', character.server)}
+            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
           />
           {character.vocation && (
             <Chip 
@@ -194,6 +212,8 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
               size="small"
               color={getVocationColor(character.vocation)}
               variant="outlined"
+              onClick={() => handleQuickFilter('vocation', character.vocation)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
             />
           )}
           {character.guild && (
@@ -202,6 +222,8 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
               size="small"
               color="secondary"
               variant="outlined"
+              onClick={() => handleQuickFilter('guild', character.guild)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'secondary.50' } }}
             />
           )}
         </Box>
@@ -222,10 +244,11 @@ const CharacterCard = ({ character, onRefresh, onToggleFavorite, onViewCharts, o
           <Grid item xs={6}>
             <Box>
               <Typography variant="body2" color="text.secondary">
-                Experiência
+                Experiência (último dia)
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {latest?.experience ? latest.experience.toLocaleString('pt-BR') : 'N/A'}
+                {character.previous_experience ? character.previous_experience.toLocaleString('pt-BR') : 
+                 latest?.experience ? latest.experience.toLocaleString('pt-BR') : 'N/A'}
               </Typography>
             </Box>
           </Grid>

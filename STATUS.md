@@ -12,17 +12,35 @@ Tibia Tracker/
 │   ├── Manutenção/                      # Scripts de manutenção ✅ COMPLETO
 │   │   ├── refresh-database.sh         # Refresh do banco PostgreSQL ✅
 │   │   ├── rebuild-containers.sh       # Rebuild de containers Docker ✅
-│   │   └── clear-cache.sh              # Limpeza de caches (Redis, Docker, Sistema) ✅
+│   │   ├── clear-cache.sh              # Limpeza de caches (Redis, Docker, Sistema) ✅
+│   │   ├── full-rescrape-all-characters.py # Rescraping completo de personagens ✅
+│   │   └── monitor-rescrape.sh         # Monitoramento de processos de rescraping ✅
 │   ├── Verificação/                     # Scripts de verificação ✅ COMPLETO
 │   │   ├── health-check.sh             # Verificação completa de saúde (35+ testes) ✅
-│   │   └── network-test.sh             # Testes de conectividade e rede ✅
+│   │   ├── network-test.sh             # Testes de conectividade e rede ✅
+│   │   ├── test_sr_burns_complete_fixed.py # Testes específicos de personagens ✅
+│   │   ├── test_sr_burns_simple.py     # Testes simplificados ✅
+│   │   └── test_world_field.py         # Testes de campo world ✅
 │   ├── Remoção/                         # Scripts de remoção ✅ COMPLETO
 │   │   ├── uninstall.sh                # Desinstalação completa do sistema ✅
 │   │   └── clean-docker.sh             # Limpeza específica do Docker ✅
 │   └── Testes/                          # Scripts de testes ✅ COMPLETO
 │       ├── run-tests.sh                # Execução de todos os testes automatizados ✅
 │       └── api-tests.sh                # Testes específicos da API ✅
-├── Frontend/                            # Aplicação React (próximo passo)
+├── Frontend/                            # Aplicação React ✅ MELHORADO
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── CharacterCard.js        # Cards de personagens ✅
+│   │   │   ├── CharacterChartsModal.js # Modal de gráficos ✅
+│   │   │   ├── CharacterFilters.js     # Filtros de busca ✅
+│   │   │   ├── CharacterSearch.js      # Busca de personagens ✅
+│   │   │   ├── ComparisonChart.js      # Gráficos de comparação ✅
+│   │   │   ├── ComparisonPanel.js      # Painel de comparação ✅
+│   │   │   └── ErrorBoundary.js        # Tratamento de erros ✅
+│   │   ├── pages/
+│   │   │   └── Home.js                 # Página principal ✅
+│   │   └── services/
+│   │       └── api.js                  # Serviços de API ✅
 ├── Backend/                             # API FastAPI ✅ MELHORADO
 │   ├── app/
 │   │   ├── api/                         # Rotas da API ✅ EXPANDIDO
@@ -39,6 +57,7 @@ Tibia Tracker/
 │   └── tests/                          # Testes ✅
 ├── docker-compose.yml                  # Orquestração ✅
 ├── env.template                        # Template de variáveis ✅
+├── env-production.template             # Template de produção ✅
 ├── git-push.sh                         # Script Git Push ✅
 ├── git-pull.sh                         # Script Git Pull ✅
 ├── README.md                           # Documentação ✅
@@ -127,18 +146,26 @@ Tibia Tracker/
 - [x] Implementar endpoints CRUD completos
 - [x] Adicionar funcionalidades de evolução e estatísticas
 
-### 3. 🔄 Web Scraping e Automação
-- [ ] Implementar web scraping do Taleon (San, Aura, Gaia)
-- [ ] Integrar scraping com endpoints POST /characters/{id}/snapshots
-- [ ] Configurar scheduler automático (00:01 diário)
-- [ ] Implementar retry e error handling
+### 3. ✅ CONCLUÍDO - Web Scraping e Automação
+- [x] Implementar web scraping do Taleon (San, Aura, Gaia)
+- [x] Integrar scraping com endpoints POST /characters/{id}/snapshots
+- [x] Configurar scheduler automático (00:01 diário)
+- [x] Implementar retry e error handling
+- [x] Script de rescraping completo de todos os personagens
+- [x] Sistema de monitoramento de processos
 
-### 4. 🚀 Desenvolvimento de Funcionalidades
-- [ ] Completar integração Frontend com API
-- [ ] Implementar busca de personagens no Frontend
-- [ ] Adicionar gráficos de evolução temporal
-- [ ] Sistema de favoritos no Frontend
-- [ ] Dashboard com estatísticas
+### 4. 🔄 Desenvolvimento de Funcionalidades Frontend
+- [x] Completar integração Frontend com API
+- [x] Implementar busca de personagens no Frontend
+- [x] Adicionar gráficos de evolução temporal
+- [x] Sistema de comparação entre personagens
+- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
+  - [ ] Incluir botão de favoritar em cada personagem
+  - [ ] Guardar cookie/sessão dos favoritos
+  - [ ] Revisar cards - mostrar "experiência do último dia"
+  - [ ] Implementar tecla Enter nos filtros
+  - [ ] Implementar filtros rápidos via tags dos cards
+  - [ ] Seleção múltipla no filtro Atividade
 
 ### 5. 🔄 Configuração de Produção
 - [ ] Configurar domínio DNS para o IP 192.168.1.227
@@ -147,10 +174,11 @@ Tibia Tracker/
 - [ ] Implementar backup automático
 
 ### 6. 🎨 Melhorias no Frontend
-- [ ] Integrar com endpoints da API
-- [ ] Implementar busca de personagens
-- [ ] Adicionar gráficos de evolução
-- [ ] Sistema de favoritos
+- [x] Integrar com endpoints da API
+- [x] Implementar busca de personagens
+- [x] Adicionar gráficos de evolução
+- [x] Sistema de comparação entre personagens
+- [ ] Sistema de favoritos com persistência
 
 ## 🛠️ STACK IMPLEMENTADA
 
@@ -188,6 +216,19 @@ Backend/app/services/scraping/
 - 🆕 **Logs Específicos**: Identificação clara de `[TALEON-SAN]`, `[TALEON-AURA]`, etc.
 - 🆕 **APIs Detalhadas**: Endpoints específicos para configurações por mundo
 
+### ✅ Frontend (React) - INTERFACE MELHORADA
+- **Framework**: React 18 com hooks modernos
+- **UI Library**: Material-UI (MUI) v5
+- **Roteamento**: React Router DOM v6
+- **HTTP Client**: Axios para comunicação com API
+- **Gráficos**: Chart.js + React-Chartjs-2
+- **Estado**: Context API + useState/useEffect
+- **🆕 Componentes Avançados**: 
+  - CharacterCard com informações detalhadas
+  - CharacterFilters com filtros avançados
+  - ComparisonPanel para comparação entre personagens
+  - CharacterChartsModal para visualização de gráficos
+
 ### ✅ Infraestrutura
 - **Containerização**: Docker multi-stage
 - **Proxy**: Caddy com SSL automático
@@ -202,6 +243,8 @@ Backend/app/services/scraping/
 - **Verificação**: Health check completo e testes de rede
 - **Remoção**: Desinstalação segura e limpeza Docker
 - **Testes**: Testes automatizados de API e sistema
+- **🆕 Rescraping**: Script completo para atualizar todos os personagens
+- **🆕 Monitoramento**: Script para monitorar processos de rescraping
 
 ## 📋 FUNCIONALIDADES IMPLEMENTADAS E PLANEJADAS
 
@@ -217,11 +260,18 @@ Backend/app/services/scraping/
 - [x] **Endpoints CRUD para personagens**
 - [x] **Sistema de snapshots históricos**
 - [x] **Funcionalidades de análise e estatísticas**
-- [ ] Web scraping Taleon (San, Aura, Gaia)
-- [ ] Agendamento automático (00:01 diário)
-- [ ] Interface React responsiva
-- [ ] Gráficos de evolução
-- [ ] Sistema de favoritos
+- [x] **Web scraping Taleon (San, Aura, Gaia)**
+- [x] **Agendamento automático (00:01 diário)**
+- [x] **Interface React responsiva**
+- [x] **Gráficos de evolução**
+- [x] **Sistema de comparação entre personagens**
+- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
+  - [ ] Botão de favoritar em cada personagem
+  - [ ] Cookie/sessão dos favoritos
+  - [ ] Revisão dos cards - experiência do último dia
+  - [ ] Tecla Enter nos filtros
+  - [ ] Filtros rápidos via tags
+  - [ ] Seleção múltipla no filtro Atividade
 
 ### 🔐 Autenticação (Futuro)
 - [ ] Login Google OAuth
@@ -265,6 +315,12 @@ sudo ./Scripts/Verificação/network-test.sh
 
 # Testes automatizados
 sudo ./Scripts/Testes/run-tests.sh
+
+# 🆕 Rescraping completo de personagens
+sudo ./Scripts/Manutenção/full-rescrape-all-characters.py
+
+# 🆕 Monitorar processo de rescraping
+sudo ./Scripts/Manutenção/monitor-rescrape.sh
 ```
 
 ### Deploy Servidor
@@ -293,10 +349,15 @@ sudo ./Scripts/Remoção/clean-docker.sh
 - **`refresh-database.sh`**: Refresh completo do PostgreSQL com backup automático e verificação
 - **`rebuild-containers.sh`**: Rebuild de containers com opções específicas (all/backend/frontend)
 - **`clear-cache.sh`**: Limpeza de caches Redis, Docker, logs e sistema
+- **🆕 `full-rescrape-all-characters.py`**: Rescraping completo de todos os personagens ativos
+- **🆕 `monitor-rescrape.sh`**: Monitoramento de processos de rescraping com notificações
 
 ### ✅ Verificação
 - **`health-check.sh`**: 35+ verificações de saúde (sistema, containers, banco, API, segurança)
 - **`network-test.sh`**: Testes de conectividade externa/interna, portas e comunicação
+- **🆕 `test_sr_burns_complete_fixed.py`**: Testes específicos de personagens com correções
+- **🆕 `test_sr_burns_simple.py`**: Testes simplificados de personagens
+- **🆕 `test_world_field.py`**: Testes específicos do campo world
 
 ### 🗑️ Remoção
 - **`uninstall.sh`**: Desinstalação completa com backup final e verificação
@@ -349,6 +410,20 @@ sudo ./Scripts/Remoção/clean-docker.sh
 - **Análises**: Evolução temporal e estatísticas
 - **Utilitários**: Toggle favorite/active
 
+## 🆕 MELHORIAS RECENTES (2025-07-08)
+
+### ✅ Web Scraping e Automação
+- **Rescraping Completo**: Script para atualizar todos os personagens ativos
+- **Monitoramento de Processos**: Sistema para acompanhar execução de scripts
+- **Correções de World Field**: Campo world adicionado aos snapshots
+- **Logs Detalhados**: Sistema de logging melhorado para debugging
+
+### ✅ Frontend Melhorado
+- **Sistema de Comparação**: Comparação entre múltiplos personagens
+- **Gráficos Avançados**: Visualização de evolução temporal
+- **Filtros Avançados**: Sistema de filtros mais robusto
+- **Interface Responsiva**: Melhor experiência do usuário
+
 ## 📞 SUPPORT
 
 Para dúvidas ou problemas:
@@ -359,6 +434,6 @@ Para dúvidas ou problemas:
 
 ---
 
-**Status Atual**: 🎉 **BANCO E API IMPLEMENTADOS** - Estrutura completa para persistência  
+**Status Atual**: 🎉 **SISTEMA COMPLETO** - Web scraping, automação e frontend funcionando  
 **Servidor**: LXC Debian 192.168.1.227 - Todos os serviços operacionais  
-**Próximo**: Web scraping e automação, integração Frontend 
+**Próximo**: Melhorias de UX/UI e configuração de produção 

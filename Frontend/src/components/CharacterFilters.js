@@ -15,6 +15,9 @@ import {
   IconButton,
   Collapse,
   Divider,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
 } from '@mui/material';
 import {
   FilterList,
@@ -35,7 +38,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
     minLevel: '',
     maxLevel: '',
     isFavorited: '',
-    activityFilter: '',
+    activityFilter: [],
     limit: 'all',
   });
 
@@ -58,14 +61,51 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
       minLevel: '',
       maxLevel: '',
       isFavorited: '',
-      activityFilter: '',
+      activityFilter: [],
       limit: 'all',
     };
     setFilters(clearedFilters);
     onClearFilters();
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  // Função para lidar com tecla Enter
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      handleApplyFilters();
+    }
+  };
+
+  // Função para filtros rápidos
+  const handleQuickFilter = (filterType, value) => {
+    const newFilters = { ...filters };
+    
+    switch (filterType) {
+      case 'server':
+        newFilters.server = value;
+        break;
+      case 'world':
+        newFilters.world = value;
+        break;
+      case 'vocation':
+        newFilters.vocation = value;
+        break;
+      case 'guild':
+        newFilters.guild = value;
+        break;
+      default:
+        break;
+    }
+    
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== '' && value !== 'all';
+  });
 
   const vocations = [
     'Sorcerer',
@@ -168,6 +208,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               label="Buscar por nome"
               value={filters.search}
               onChange={(e) => handleFieldChange('search', e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="Digite o nome..."
             />
           </Grid>
@@ -178,6 +219,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               <Select
                 value={filters.server}
                 onChange={(e) => handleFieldChange('server', e.target.value)}
+                onKeyPress={handleKeyPress}
                 label="Servidor"
               >
                 <MenuItem value="">Todos</MenuItem>
@@ -196,6 +238,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               <Select
                 value={filters.world}
                 onChange={(e) => handleFieldChange('world', e.target.value)}
+                onKeyPress={handleKeyPress}
                 label="Mundo"
               >
                 <MenuItem value="">Todos</MenuItem>
@@ -214,6 +257,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               <Select
                 value={filters.vocation}
                 onChange={(e) => handleFieldChange('vocation', e.target.value)}
+                onKeyPress={handleKeyPress}
                 label="Vocação"
               >
                 <MenuItem value="">Todas</MenuItem>
@@ -233,6 +277,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               label="Guild"
               value={filters.guild}
               onChange={(e) => handleFieldChange('guild', e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="Digite o nome da guild..."
             />
           </Grid>
@@ -254,6 +299,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
                 type="number"
                 value={filters.minLevel}
                 onChange={(e) => handleFieldChange('minLevel', e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="0"
               />
             </Grid>
@@ -266,6 +312,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
                 type="number"
                 value={filters.maxLevel}
                 onChange={(e) => handleFieldChange('maxLevel', e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="9999"
               />
             </Grid>
@@ -276,6 +323,7 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
                 <Select
                   value={filters.isFavorited}
                   onChange={(e) => handleFieldChange('isFavorited', e.target.value)}
+                  onKeyPress={handleKeyPress}
                   label="Favoritos"
                 >
                   <MenuItem value="">Todos</MenuItem>
@@ -289,14 +337,26 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
               <FormControl fullWidth size="small">
                 <InputLabel>Atividade</InputLabel>
                 <Select
+                  multiple
                   value={filters.activityFilter}
                   onChange={(e) => handleFieldChange('activityFilter', e.target.value)}
-                  label="Atividade"
+                  onKeyPress={handleKeyPress}
+                  input={<OutlinedInput label="Atividade" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => {
+                        const filter = activityFilters.find(f => f.value === value);
+                        return (
+                          <Chip key={value} label={filter?.label || value} size="small" />
+                        );
+                      })}
+                    </Box>
+                  )}
                 >
-                  <MenuItem value="">Todos</MenuItem>
                   {activityFilters.map((filter) => (
                     <MenuItem key={filter.value} value={filter.value}>
-                      {filter.label}
+                      <Checkbox checked={filters.activityFilter.indexOf(filter.value) > -1} />
+                      <ListItemText primary={filter.label} />
                     </MenuItem>
                   ))}
                 </Select>
@@ -309,15 +369,16 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
                 <Select
                   value={filters.limit}
                   onChange={(e) => handleFieldChange('limit', e.target.value)}
+                  onKeyPress={handleKeyPress}
                   label="Mostrar"
                 >
-                                  <MenuItem value="all">Todos os Personagens</MenuItem>
-                <MenuItem value="3">3 Personagens</MenuItem>
-                <MenuItem value="10">10 Personagens</MenuItem>
-                <MenuItem value="30">30 Personagens</MenuItem>
-                <MenuItem value="60">60 Personagens</MenuItem>
-                <MenuItem value="90">90 Personagens</MenuItem>
-                <MenuItem value="150">150 Personagens</MenuItem>
+                  <MenuItem value="all">Todos os Personagens</MenuItem>
+                  <MenuItem value="3">3 Personagens</MenuItem>
+                  <MenuItem value="10">10 Personagens</MenuItem>
+                  <MenuItem value="30">30 Personagens</MenuItem>
+                  <MenuItem value="60">60 Personagens</MenuItem>
+                  <MenuItem value="90">90 Personagens</MenuItem>
+                  <MenuItem value="150">150 Personagens</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

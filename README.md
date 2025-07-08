@@ -11,7 +11,10 @@ Portal de monitoramento de personagens do Tibia desenvolvido com FastAPI (Backen
 - ✅ Scripts completos de automação e manutenção
 - ✅ Sistema de verificação e monitoramento
 - ✅ Testes automatizados
-- ✅ **Correções de deploy aplicadas** (2025-06-27)
+- ✅ **Web scraping automatizado do Taleon (San, Aura, Gaia)**
+- ✅ **Sistema de snapshots históricos completos**
+- ✅ **Interface React com gráficos e comparação**
+- ✅ **Scripts de rescraping e monitoramento**
 
 ## 🛠️ Stack Tecnológica
 
@@ -52,10 +55,15 @@ Tibia Tracker/
 │   ├── Manutenção/                 # Scripts de manutenção do sistema
 │   │   ├── refresh-database.sh    # Refresh do banco PostgreSQL
 │   │   ├── rebuild-containers.sh  # Rebuild de containers Docker
-│   │   └── clear-cache.sh         # Limpeza de caches
+│   │   ├── clear-cache.sh         # Limpeza de caches
+│   │   ├── full-rescrape-all-characters.py # Rescraping completo
+│   │   └── monitor-rescrape.sh    # Monitoramento de processos
 │   ├── Verificação/                # Scripts de verificação e monitoramento
 │   │   ├── health-check.sh        # Verificação completa de saúde
-│   │   └── network-test.sh        # Testes de conectividade
+│   │   ├── network-test.sh        # Testes de conectividade
+│   │   ├── test_sr_burns_complete_fixed.py # Testes específicos
+│   │   ├── test_sr_burns_simple.py # Testes simplificados
+│   │   └── test_world_field.py    # Testes de campo world
 │   ├── Remoção/                    # Scripts de desinstalação
 │   │   ├── uninstall.sh           # Desinstalação completa
 │   │   └── clean-docker.sh        # Limpeza Docker específica
@@ -63,13 +71,39 @@ Tibia Tracker/
 │       ├── run-tests.sh           # Todos os testes automatizados
 │       └── api-tests.sh           # Testes específicos da API
 ├── Frontend/                       # Aplicação React
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── CharacterCard.js   # Cards de personagens
+│   │   │   ├── CharacterChartsModal.js # Modal de gráficos
+│   │   │   ├── CharacterFilters.js # Filtros de busca
+│   │   │   ├── CharacterSearch.js # Busca de personagens
+│   │   │   ├── ComparisonChart.js # Gráficos de comparação
+│   │   │   ├── ComparisonPanel.js # Painel de comparação
+│   │   │   └── ErrorBoundary.js   # Tratamento de erros
+│   │   ├── pages/
+│   │   │   └── Home.js            # Página principal
+│   │   └── services/
+│   │       └── api.js             # Serviços de API
 ├── Backend/                        # API FastAPI
 │   ├── app/                       # Código da aplicação
+│   │   ├── api/                   # Rotas da API
+│   │   ├── core/                  # Configurações
+│   │   ├── models/                # Modelos do banco
+│   │   ├── schemas/               # Schemas Pydantic
+│   │   ├── services/              # Lógica de negócios
+│   │   │   └── scraping/          # Sistema de scraping modular
+│   │   │       ├── base.py        # Classe base abstrata
+│   │   │       ├── taleon.py      # Scraper Taleon
+│   │   │       └── rubini_template.py # Template para novos scrapers
+│   │   ├── db/                    # Configuração do banco
+│   │   └── main.py                # API Principal
 │   ├── requirements.txt           # Dependências Python
 │   ├── Dockerfile                 # Container do backend
+│   ├── sql/                       # Scripts SQL
 │   └── tests/                     # Testes unitários
 ├── docker-compose.yml             # Orquestração de containers
 ├── env.template                   # Template de variáveis
+├── env-production.template        # Template de produção
 └── LICENSE                        # Licença MIT
 ```
 
@@ -177,6 +211,12 @@ sudo ./Scripts/Manutenção/rebuild-containers.sh [all|backend|frontend|clean]
 
 # Limpeza de caches
 sudo ./Scripts/Manutenção/clear-cache.sh [all|redis|docker|logs|system|frontend|backend]
+
+# 🆕 Rescraping completo de personagens
+sudo ./Scripts/Manutenção/full-rescrape-all-characters.py
+
+# 🆕 Monitorar processo de rescraping
+sudo ./Scripts/Manutenção/monitor-rescrape.sh
 ```
 
 ### 🧪 Testes Automatizados
@@ -229,6 +269,19 @@ sudo ./Scripts/Remoção/clean-docker.sh [all|stop|containers|images|volumes|net
 - Testes de latência e performance
 - Verificação do proxy reverso
 
+### 🆕 Rescraping (`full-rescrape-all-characters.py`)
+- Rescraping completo de todos os personagens ativos
+- Logs detalhados de progresso
+- Tratamento de erros e retry
+- Detecção de level-ups
+- Criação de snapshots históricos
+
+### 🆕 Monitoramento (`monitor-rescrape.sh`)
+- Monitoramento de processos de rescraping
+- Notificações quando processo termina
+- Logs finais do processamento
+- Verificação de status em tempo real
+
 ## 📊 Funcionalidades Planejadas
 
 ### 🎯 Core Features
@@ -236,13 +289,20 @@ sudo ./Scripts/Remoção/clean-docker.sh [all|stop|containers|images|volumes|net
 - [x] Sistema de configuração
 - [x] Containerização completa
 - [x] Scripts de automação completos
-- [ ] Web scraping Taleon (San, Aura, Gaia)
-- [ ] Endpoint POST /characters
-- [ ] Histórico de snapshots
-- [ ] Agendamento automático (00:01 diário)
-- [ ] Interface React responsiva
-- [ ] Gráficos de evolução
-- [ ] Sistema de favoritos
+- [x] Web scraping Taleon (San, Aura, Gaia)
+- [x] Endpoint POST /characters
+- [x] Histórico de snapshots
+- [x] Agendamento automático (00:01 diário)
+- [x] Interface React responsiva
+- [x] Gráficos de evolução
+- [x] Sistema de comparação entre personagens
+- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
+  - [ ] Incluir botão de favoritar em cada personagem
+  - [ ] Guardar cookie/sessão dos favoritos
+  - [ ] Revisar cards - mostrar "experiência do último dia"
+  - [ ] Implementar tecla Enter nos filtros
+  - [ ] Implementar filtros rápidos via tags dos cards
+  - [ ] Seleção múltipla no filtro Atividade
 
 ### 🔐 Autenticação
 - [ ] Login Google OAuth
@@ -341,6 +401,6 @@ MIT License - Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
-**🎯 Status Atual**: 🎉 **DEPLOY COMPLETO** - Aplicação funcionando em produção
+**🎯 Status Atual**: 🎉 **SISTEMA COMPLETO** - Web scraping, automação e frontend funcionando
 **📍 Servidor LXC**: 192.168.1.227 - Todos os serviços operacionais  
-**📍 Próximo Passo**: Configuração de domínio e desenvolvimento de funcionalidades 
+**📍 Próximo Passo**: Melhorias de UX/UI e configuração de produção 

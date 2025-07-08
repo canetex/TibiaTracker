@@ -163,6 +163,18 @@ const Home = () => {
         }
       }
 
+      // Filtro por atividade (múltipla seleção)
+      if (currentFilters.activityFilter && currentFilters.activityFilter.length > 0) {
+        // Implementar lógica de filtro por atividade quando necessário
+        // Por enquanto, apenas verificar se o personagem tem snapshots recentes
+        const hasRecentActivity = character.last_scraped_at && 
+          new Date(character.last_scraped_at) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        
+        if (!hasRecentActivity) {
+          return false;
+        }
+      }
+
       return true;
     });
 
@@ -181,7 +193,12 @@ const Home = () => {
     setFilters(newFilters);
     
     // Verificar se há filtros ativos
-    const hasActiveFilters = Object.values(newFilters).some(value => value !== '' && value !== 'all');
+    const hasActiveFilters = Object.values(newFilters).some(value => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== '' && value !== 'all';
+    });
     
     console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}`);
     console.log(`[FILTER] activityFilter value: "${newFilters.activityFilter}"`);
@@ -199,26 +216,34 @@ const Home = () => {
         if (newFilters.world) filterParams.world = newFilters.world;
         if (newFilters.vocation) filterParams.vocation = newFilters.vocation;
         if (newFilters.guild) filterParams.guild = newFilters.guild;
-        if (newFilters.minLevel) filterParams.minLevel = newFilters.minLevel;
-        if (newFilters.maxLevel) filterParams.maxLevel = newFilters.maxLevel;
-        if (newFilters.isFavorited !== '') filterParams.isFavorited = newFilters.isFavorited;
-        if (newFilters.activityFilter) filterParams.activity_filter = newFilters.activityFilter;
-        if (newFilters.limit && newFilters.limit !== 'all') filterParams.limit = newFilters.limit;
+        if (newFilters.minLevel) filterParams.min_level = newFilters.minLevel;
+        if (newFilters.maxLevel) filterParams.max_level = newFilters.maxLevel;
+        if (newFilters.isFavorited !== '') filterParams.is_favorited = newFilters.isFavorited;
+        if (newFilters.activityFilter && newFilters.activityFilter.length > 0) {
+          filterParams.activity_filter = newFilters.activityFilter;
+        }
+        if (newFilters.limit && newFilters.limit !== 'all') {
+          filterParams.limit = newFilters.limit;
+        } else {
+          filterParams.limit = 1000; // Limite alto para filtros
+        }
         
         console.log('[FILTER] Parâmetros de filtro:', filterParams);
         
-        const response = await apiService.listCharacters(filterParams);
-        console.log(`[FILTER] Servidor retornou ${response.characters?.length || 0} personagens`);
+        const result = await apiService.listCharacters(filterParams);
+        console.log(`[FILTER] Resultado da API: ${result.characters?.length || 0} personagens`);
         
-        setFilteredCharacters(response.characters || []);
-      } catch (error) {
-        console.error('[FILTER] Erro ao buscar personagens filtrados:', error);
+        setFilteredCharacters(result.characters || []);
+        
+      } catch (err) {
+        console.error('Erro ao aplicar filtros:', err);
         setError('Erro ao aplicar filtros. Tente novamente.');
       }
     } else {
-      // Se não há filtros, usar os personagens recentes
-      console.log('[FILTER] Sem filtros ativos, usando personagens recentes');
-      setFilteredCharacters(recentCharacters);
+      // Se não há filtros ativos, usar os personagens carregados localmente
+      console.log('[FILTER] Usando filtros locais...');
+      const filtered = applyFilters(recentCharacters, newFilters);
+      setFilteredCharacters(filtered);
     }
   };
 
@@ -227,24 +252,45 @@ const Home = () => {
     setFilteredCharacters(recentCharacters);
   };
 
-  // Funções para comparação de personagens
+  // Função para filtros rápidos via tags dos cards
+  const handleQuickFilter = (filterType, value) => {
+    console.log(`[QUICK_FILTER] Aplicando filtro rápido: ${filterType} = ${value}`);
+    
+    const newFilters = { ...filters };
+    
+    switch (filterType) {
+      case 'server':
+        newFilters.server = value;
+        break;
+      case 'world':
+        newFilters.world = value;
+        break;
+      case 'vocation':
+        newFilters.vocation = value;
+        break;
+      case 'guild':
+        newFilters.guild = value;
+        break;
+      default:
+        break;
+    }
+    
+    handleFilterChange(newFilters);
+  };
+
   const handleAddToComparison = (character) => {
     if (comparisonCharacters.length >= 10) {
-      setError('Limite máximo de 10 personagens para comparação atingido.');
+      setError('Máximo de 10 personagens para comparação.');
       return;
     }
     
-    if (comparisonCharacters.find(c => c.id === character.id)) {
-      setError('Personagem já está na comparação.');
-      return;
+    if (!comparisonCharacters.some(c => c.id === character.id)) {
+      setComparisonCharacters([...comparisonCharacters, character]);
     }
-    
-    setComparisonCharacters(prev => [...prev, character]);
-    setError(null);
   };
 
   const handleRemoveFromComparison = (characterId) => {
-    setComparisonCharacters(prev => prev.filter(c => c.id !== characterId));
+    setComparisonCharacters(comparisonCharacters.filter(c => c.id !== characterId));
   };
 
   const handleClearComparison = () => {
@@ -252,15 +298,15 @@ const Home = () => {
   };
 
   const handleShowComparison = () => {
-    setComparisonChartOpen(true);
+    if (comparisonCharacters.length > 1) {
+      setComparisonChartOpen(true);
+    }
   };
 
   const handleShowFilteredChart = () => {
-    if (filteredCharacters.length > 15) {
-      setError('Para mostrar o gráfico, filtre para no máximo 15 personagens.');
-      return;
+    if (filteredCharacters.length > 1 && filteredCharacters.length <= 15) {
+      setFilteredChartOpen(true);
     }
-    setFilteredChartOpen(true);
   };
 
   const handleCharacterSearch = async (searchData) => {
@@ -268,135 +314,101 @@ const Home = () => {
       setSearchLoading(true);
       setError(null);
       
-      // Primeiro verificar se o personagem já existe
-      console.log('Verificando se o personagem já existe...');
-      const existingCharacter = await apiService.searchCharacter(
-        searchData.name,
-        searchData.server,
-        searchData.world
-      );
+      const result = await apiService.searchCharacter(searchData.name, searchData.server);
       
-      let character = null;
-      
-      if (existingCharacter.success && existingCharacter.character) {
-        // Personagem já existe - usar como filtro
-        console.log('Personagem já existe, usando como filtro...');
-        character = existingCharacter.character;
-        
-        // Fazer scraping com histórico para obter dados completos
-        try {
-          console.log('Fazendo scraping com histórico para dados completos...');
-          await apiService.scrapeWithHistory(
-            searchData.name,
-            searchData.server,
-            searchData.world
-          );
-          console.log('Scraping com histórico concluído');
-        } catch (historyError) {
-          console.warn('Erro no scraping com histórico, usando dados básicos:', historyError);
-        }
-        
-        setSearchResult(character);
-        
-        // Aplicar filtro automático para mostrar apenas este personagem
-        const filterForCharacter = {
-          search: searchData.name,
-          server: searchData.server,
-          world: searchData.world,
-        };
-        handleFilterChange(filterForCharacter);
-        
+      if (result) {
+        setSearchResult(result);
+        // Carregar todos os personagens para mostrar na lista
+        await loadAllCharacters();
       } else {
-        // Personagem não existe - tentar adicionar
-        console.log('Personagem não existe, tentando adicionar...');
-        try {
-          const addResult = await apiService.scrapeAndCreate(
-            searchData.name,
-            searchData.server,
-            searchData.world
-          );
-          
-          if (addResult.success && addResult.character) {
-            character = addResult.character;
-            setSearchResult(character);
-            
-            // Aplicar filtro automático para mostrar apenas este personagem
-            const filterForCharacter = {
-              search: searchData.name,
-              server: searchData.server,
-              world: searchData.world,
-            };
-            handleFilterChange(filterForCharacter);
-          } else {
-            throw new Error('Erro ao adicionar personagem');
-          }
-        } catch (addError) {
-          console.error('Erro ao adicionar personagem:', addError);
-          throw new Error('Personagem não encontrado no servidor ou erro ao adicionar');
-        }
+        setError('Personagem não encontrado.');
       }
-      
-      // Atualizar lista de recentes após operação bem-sucedida
-      setTimeout(loadInitialData, 1000);
-      
     } catch (err) {
       console.error('Erro na busca:', err);
-      setError(err.message || 'Personagem não encontrado ou erro no servidor');
-      setSearchResult(null);
+      setError('Erro ao buscar personagem. Tente novamente.');
     } finally {
       setSearchLoading(false);
     }
   };
 
-  const handleViewCharts = (character) => {
-    console.log('HandleViewCharts chamado com:', character);
-    // Verificar se o character tem ID válido
-    if (!character || !character.id) {
-      console.error('Character sem ID válido:', character);
-      setError('Erro: Personagem sem ID válido');
-      return;
+  // Função para favoritar/desfavoritar personagem
+  const handleToggleFavorite = async (characterId, isFavorited) => {
+    try {
+      console.log(`[FAVORITE] Alternando favorito para personagem ${characterId}: ${isFavorited}`);
+      
+      // Chamar API para alternar favorito
+      await apiService.toggleFavorite(characterId);
+      
+      // Atualizar o estado local (a API retorna o novo estado)
+      const updatedCharacters = recentCharacters.map(char => 
+        char.id === characterId 
+          ? { ...char, is_favorited: !char.is_favorited }
+          : char
+      );
+      
+      const updatedFilteredCharacters = filteredCharacters.map(char => 
+        char.id === characterId 
+          ? { ...char, is_favorited: !char.is_favorited }
+          : char
+      );
+      
+      setRecentCharacters(updatedCharacters);
+      setFilteredCharacters(updatedFilteredCharacters);
+      
+      // Atualizar estatísticas globais
+      const stats = await apiService.getGlobalStats();
+      setGlobalStats(stats);
+      
+      console.log(`[FAVORITE] Favorito alternado com sucesso para personagem ${characterId}`);
+      
+    } catch (err) {
+      console.error('Erro ao alternar favorito:', err);
+      setError('Erro ao favoritar personagem. Tente novamente.');
     }
-    
+  };
+
+  // Função para atualizar personagem
+  const handleRefreshCharacter = async (characterId) => {
+    try {
+      console.log(`[REFRESH] Atualizando personagem ${characterId}`);
+      
+      // Chamar API para atualizar personagem
+      await apiService.refreshCharacter(characterId);
+      
+      // Recarregar dados
+      await loadInitialData();
+      
+      console.log(`[REFRESH] Personagem ${characterId} atualizado com sucesso`);
+      
+    } catch (err) {
+      console.error('Erro ao atualizar personagem:', err);
+      setError('Erro ao atualizar personagem. Tente novamente.');
+    }
+  };
+
+  const handleViewCharts = (character) => {
     setSelectedCharacterForCharts(character);
     setChartsModalOpen(true);
   };
 
   const handleCloseChartsModal = () => {
-    try {
-      setChartsModalOpen(false);
-      setSelectedCharacterForCharts(null);
-    } catch (error) {
-      console.error('Erro ao fechar modal:', error);
-      // Force reset se houver erro
-      setTimeout(() => {
-        setChartsModalOpen(false);
-        setSelectedCharacterForCharts(null);
-      }, 100);
-    }
+    setChartsModalOpen(false);
+    setSelectedCharacterForCharts(null);
   };
 
   return (
-    <Box>
-      {/* Header/Welcome Section */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          background: 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
-          color: 'white',
-          p: 4,
-          mb: 4,
-          borderRadius: 2
-        }}
-      >
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
-          🏰 Bem-vindo ao Tibia Tracker
-        </Typography>
-        <Typography variant="h6" sx={{ opacity: 0.9, mb: 2 }}>
-          Monitore a evolução dos seus personagens favoritos do Tibia
-        </Typography>
-        
-        {/* Estatísticas Globais */}
-        {globalStats && (
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
+        🏰 Tibia Tracker
+      </Typography>
+
+      {/* Global Stats */}
+      {globalStats && (
+        <Paper sx={{ p: 3, mb: 4, bgcolor: 'primary.50' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+            📊 Estatísticas Globais
+          </Typography>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             <Grid item xs={12} sm={4}>
               <Box sx={{ textAlign: 'center' }}>
@@ -429,8 +441,8 @@ const Home = () => {
               </Box>
             </Grid>
           </Grid>
-        )}
-      </Paper>
+        </Paper>
+      )}
 
       {/* Search Section */}
       <Card sx={{ mb: 4 }}>
@@ -473,6 +485,9 @@ const Home = () => {
           <CharacterCard 
             character={searchResult} 
             onViewCharts={handleViewCharts}
+            onToggleFavorite={handleToggleFavorite}
+            onRefresh={handleRefreshCharacter}
+            onQuickFilter={handleQuickFilter}
           />
         </Box>
       )}
@@ -515,9 +530,12 @@ const Home = () => {
                 <CharacterCard 
                   character={character} 
                   onViewCharts={handleViewCharts}
+                  onToggleFavorite={handleToggleFavorite}
+                  onRefresh={handleRefreshCharacter}
                   onAddToComparison={handleAddToComparison}
                   onRemoveFromComparison={handleRemoveFromComparison}
                   isInComparison={comparisonCharacters.some(c => c.id === character.id)}
+                  onQuickFilter={handleQuickFilter}
                 />
               </Grid>
             ))}
