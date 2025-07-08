@@ -184,6 +184,8 @@ const Home = () => {
     const hasActiveFilters = Object.values(newFilters).some(value => value !== '' && value !== 'all');
     
     console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}`);
+    console.log(`[FILTER] activityFilter value: "${newFilters.activityFilter}"`);
+    console.log(`[FILTER] activityFilter type: ${typeof newFilters.activityFilter}`);
     
     if (hasActiveFilters) {
       // Se há filtros ativos, fazer requisição para o servidor com os filtros
