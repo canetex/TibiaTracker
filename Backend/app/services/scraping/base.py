@@ -158,6 +158,7 @@ class BaseCharacterScraper(ABC):
             'name': raw_data.get('name', ''),
             'level': int(raw_data.get('level', 0)),
             'vocation': raw_data.get('vocation', 'None'),
+            'world': raw_data.get('world', ''),  # Adicionar campo world
             'residence': raw_data.get('residence', ''),
             'house': raw_data.get('house'),
             'guild': raw_data.get('guild'),

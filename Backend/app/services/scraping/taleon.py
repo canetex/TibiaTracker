@@ -389,6 +389,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             'name': '',
             'level': 0,
             'vocation': 'None',
+            'world': self.current_world_config.name if self.current_world_config else '',  # Adicionar world
             'residence': '',
             'house': None,
             'guild': None,
