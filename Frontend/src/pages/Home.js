@@ -125,8 +125,13 @@ const Home = () => {
       }
 
       // Filtro por vocação
-      if (currentFilters.vocation && character.vocation !== currentFilters.vocation) {
-        return false;
+      if (currentFilters.vocation) {
+        console.log(`[FILTER] Verificando vocação: "${currentFilters.vocation}" vs "${character.vocation}"`);
+        if (!character.vocation || !character.vocation.toLowerCase().includes(currentFilters.vocation.toLowerCase())) {
+          console.log(`[FILTER] Vocação não corresponde: "${character.vocation}" não contém "${currentFilters.vocation}"`);
+          return false;
+        }
+        console.log(`[FILTER] Vocação corresponde: "${character.vocation}" contém "${currentFilters.vocation}"`);
       }
 
       // Filtro por guild
@@ -298,6 +303,9 @@ const Home = () => {
     }
     
     console.log(`[QUICK_FILTER] Novos filtros:`, newFilters);
+    console.log(`[QUICK_FILTER] Chamando handleFilterChange...`);
+    
+    // Forçar aplicação dos filtros
     handleFilterChange(newFilters);
   };
 

@@ -335,6 +335,9 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         if (name === 'experience') {
                           return [value.toLocaleString('pt-BR'), 'Experiência'];
                         }
+                        if (!isNaN(value)) {
+                          return [value.toLocaleString('pt-BR'), 'Level'];
+                        }
                         return [value, 'Level'];
                       }}
                       labelFormatter={(label) => {

@@ -252,7 +252,42 @@ const CharacterCard = ({
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
                 {(() => {
-                  const exp = character.previous_experience || latest?.experience || character.experience;
+                  // 1. Tenta previous_experience
+                  if (character.previous_experience) {
+                    return character.previous_experience.toLocaleString('pt-BR');
+                  }
+                  // 2. Tenta calcular diferença entre snapshots do dia anterior
+                  let expOntem = null;
+                  let expAntes = null;
+                  if (character.snapshots && Array.isArray(character.snapshots)) {
+                    // Ordena snapshots por data decrescente
+                    const sorted = [...character.snapshots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    const hoje = new Date();
+                    const ontem = new Date();
+                    ontem.setDate(hoje.getDate() - 1);
+                    // Busca snapshot de ontem
+                    for (let snap of sorted) {
+                      const snapDate = new Date(snap.created_at);
+                      if (
+                        snapDate.getDate() === ontem.getDate() &&
+                        snapDate.getMonth() === ontem.getMonth() &&
+                        snapDate.getFullYear() === ontem.getFullYear()
+                      ) {
+                        expOntem = snap.experience;
+                        // Busca snapshot anterior a ontem
+                        const idx = sorted.indexOf(snap);
+                        if (idx + 1 < sorted.length) {
+                          expAntes = sorted[idx + 1].experience;
+                        }
+                        break;
+                      }
+                    }
+                  }
+                  if (expOntem !== null && expAntes !== null) {
+                    return (expOntem - expAntes).toLocaleString('pt-BR');
+                  }
+                  // 3. Tenta latest ou character.experience
+                  const exp = latest?.experience || character.experience;
                   return exp ? exp.toLocaleString('pt-BR') : 'N/A';
                 })()}
               </Typography>
