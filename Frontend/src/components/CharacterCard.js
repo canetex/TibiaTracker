@@ -79,8 +79,12 @@ const CharacterCard = ({
 
   // Função para filtros rápidos via tags
   const handleQuickFilter = (filterType, value) => {
+    console.log(`[CHARACTER_CARD] handleQuickFilter chamado: ${filterType} = ${value}`);
     if (onQuickFilter) {
+      console.log(`[CHARACTER_CARD] Chamando onQuickFilter...`);
       onQuickFilter(filterType, value);
+    } else {
+      console.log(`[CHARACTER_CARD] onQuickFilter não está definido`);
     }
   };
 
@@ -236,7 +240,7 @@ const CharacterCard = ({
                 Level
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {latest?.level || character.level || 0}
+                {(latest?.level || character.level || 0).toLocaleString('pt-BR')}
               </Typography>
             </Box>
           </Grid>
@@ -247,8 +251,10 @@ const CharacterCard = ({
                 Experiência (último dia)
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {character.previous_experience ? character.previous_experience.toLocaleString('pt-BR') : 
-                 latest?.experience ? latest.experience.toLocaleString('pt-BR') : 'N/A'}
+                {(() => {
+                  const exp = character.previous_experience || latest?.experience || character.experience;
+                  return exp ? exp.toLocaleString('pt-BR') : 'N/A';
+                })()}
               </Typography>
             </Box>
           </Grid>
@@ -259,7 +265,7 @@ const CharacterCard = ({
                 Mortes
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {latest?.deaths || 0}
+                {(latest?.deaths || character.deaths || 0).toLocaleString('pt-BR')}
               </Typography>
             </Box>
           </Grid>
@@ -270,30 +276,34 @@ const CharacterCard = ({
                 Snapshots
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {character.total_snapshots || 0}
+                {(character.total_snapshots || character.snapshots_count || 0).toLocaleString('pt-BR')}
               </Typography>
             </Box>
           </Grid>
         </Grid>
 
         {/* Experience Progress */}
-        {latest?.experience && (
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Progresso (30 dias)
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                +{character.total_exp_gained?.toLocaleString('pt-BR') || 0}
-              </Typography>
+        {(() => {
+          const exp = latest?.experience || character.experience;
+          const totalGained = character.total_exp_gained || character.exp_gained || 0;
+          return exp ? (
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Progresso (30 dias)
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  +{totalGained.toLocaleString('pt-BR')}
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={Math.min(totalGained / 1000000 * 100, 100)}
+                sx={{ height: 6, borderRadius: 3 }}
+              />
             </Box>
-            <LinearProgress 
-              variant="determinate" 
-              value={Math.min((character.total_exp_gained || 0) / 1000000 * 100, 100)}
-              sx={{ height: 6, borderRadius: 3 }}
-            />
-          </Box>
-        )}
+          ) : null;
+        })()}
 
         {/* Last Update */}
         <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>

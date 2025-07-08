@@ -165,12 +165,32 @@ const Home = () => {
 
       // Filtro por atividade (múltipla seleção)
       if (currentFilters.activityFilter && currentFilters.activityFilter.length > 0) {
-        // Implementar lógica de filtro por atividade quando necessário
-        // Por enquanto, apenas verificar se o personagem tem snapshots recentes
-        const hasRecentActivity = character.last_scraped_at && 
-          new Date(character.last_scraped_at) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        const now = new Date();
+        const lastScraped = character.last_scraped_at ? new Date(character.last_scraped_at) : null;
         
-        if (!hasRecentActivity) {
+        // Verificar se o personagem atende a pelo menos um dos filtros de atividade selecionados
+        const meetsAnyActivityFilter = currentFilters.activityFilter.some(filterType => {
+          switch (filterType) {
+            case 'active_today':
+              return lastScraped && lastScraped.toDateString() === now.toDateString();
+            case 'active_yesterday':
+              const yesterday = new Date(now);
+              yesterday.setDate(yesterday.getDate() - 1);
+              return lastScraped && lastScraped.toDateString() === yesterday.toDateString();
+            case 'active_2days':
+              const twoDaysAgo = new Date(now);
+              twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+              return lastScraped && lastScraped >= twoDaysAgo;
+            case 'active_3days':
+              const threeDaysAgo = new Date(now);
+              threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+              return lastScraped && lastScraped >= threeDaysAgo;
+            default:
+              return false;
+          }
+        });
+        
+        if (!meetsAnyActivityFilter) {
           return false;
         }
       }
@@ -255,6 +275,7 @@ const Home = () => {
   // Função para filtros rápidos via tags dos cards
   const handleQuickFilter = (filterType, value) => {
     console.log(`[QUICK_FILTER] Aplicando filtro rápido: ${filterType} = ${value}`);
+    console.log(`[QUICK_FILTER] Filtros atuais:`, filters);
     
     const newFilters = { ...filters };
     
@@ -272,9 +293,11 @@ const Home = () => {
         newFilters.guild = value;
         break;
       default:
+        console.log(`[QUICK_FILTER] Tipo de filtro não reconhecido: ${filterType}`);
         break;
     }
     
+    console.log(`[QUICK_FILTER] Novos filtros:`, newFilters);
     handleFilterChange(newFilters);
   };
 
@@ -413,7 +436,7 @@ const Home = () => {
             <Grid item xs={12} sm={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {globalStats.total_characters || 0}
+                  {(globalStats.total_characters || 0).toLocaleString('pt-BR')}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
                   Personagens Monitorados
@@ -423,7 +446,7 @@ const Home = () => {
             <Grid item xs={12} sm={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {globalStats.total_snapshots || 0}
+                  {(globalStats.total_snapshots || 0).toLocaleString('pt-BR')}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
                   Snapshots Coletados
@@ -433,7 +456,7 @@ const Home = () => {
             <Grid item xs={12} sm={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {globalStats.favorited_characters || 0}
+                  {(globalStats.favorited_characters || 0).toLocaleString('pt-BR')}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
                   Personagens Favoritados
@@ -500,7 +523,7 @@ const Home = () => {
             {searchResult ? 'Outros Personagens Recentes' : 'Personagens Adicionados Recentemente'}
             {Object.keys(filters).length > 0 && (
               <Chip 
-                label={`${filteredCharacters.length} de ${recentCharacters.length}`}
+                label={`${filteredCharacters.length.toLocaleString('pt-BR')} de ${recentCharacters.length.toLocaleString('pt-BR')}`}
                 size="small"
                 color="primary"
                 sx={{ ml: 1 }}
