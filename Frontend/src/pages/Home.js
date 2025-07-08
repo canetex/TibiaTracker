@@ -126,22 +126,16 @@ const Home = () => {
 
       // Filtro por vocação
       if (currentFilters.vocation) {
-        console.log(`[FILTER] Verificando vocação: "${currentFilters.vocation}" vs "${character.vocation}"`);
-        if (!character.vocation || !character.vocation.toLowerCase().includes(currentFilters.vocation.toLowerCase())) {
-          console.log(`[FILTER] Vocação não corresponde: "${character.vocation}" não contém "${currentFilters.vocation}"`);
+        if (!character.vocation || character.vocation.toLowerCase() !== currentFilters.vocation.toLowerCase()) {
           return false;
         }
-        console.log(`[FILTER] Vocação corresponde: "${character.vocation}" contém "${currentFilters.vocation}"`);
       }
 
       // Filtro por guild
       if (currentFilters.guild) {
-        console.log(`[FILTER] Verificando guild: "${currentFilters.guild}" vs "${character.guild}"`);
-        if (!character.guild || !character.guild.toLowerCase().includes(currentFilters.guild.toLowerCase())) {
-          console.log(`[FILTER] Guild não corresponde: "${character.guild}" não contém "${currentFilters.guild}"`);
+        if (!character.guild || character.guild.toLowerCase() !== currentFilters.guild.toLowerCase()) {
           return false;
         }
-        console.log(`[FILTER] Guild corresponde: "${character.guild}" contém "${currentFilters.guild}"`);
       }
 
       // Filtro por level mínimo
@@ -273,7 +267,19 @@ const Home = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({});
+    const clearedFilters = {
+      server: '',
+      world: '',
+      vocation: '',
+      guild: '',
+      search: '',
+      minLevel: '',
+      maxLevel: '',
+      isFavorited: '',
+      activityFilter: [],
+      limit: 'all',
+    };
+    setFilters(clearedFilters);
     setFilteredCharacters(recentCharacters);
   };
 
@@ -302,10 +308,7 @@ const Home = () => {
         break;
     }
     
-    console.log(`[QUICK_FILTER] Novos filtros:`, newFilters);
-    console.log(`[QUICK_FILTER] Chamando handleFilterChange...`);
-    
-    // Forçar aplicação dos filtros
+    setFilters(newFilters); // Atualiza o estado global dos filtros
     handleFilterChange(newFilters);
   };
 

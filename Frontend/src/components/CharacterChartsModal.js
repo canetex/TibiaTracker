@@ -331,15 +331,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                       />
                     )}
                     <RechartsTooltip
-                      formatter={(value, name) => {
-                        if (name === 'experience') {
-                          return [value.toLocaleString('pt-BR'), 'Experiência'];
-                        }
-                        if (!isNaN(value)) {
-                          return [value.toLocaleString('pt-BR'), 'Level'];
-                        }
-                        return [value, 'Level'];
-                      }}
+                      formatter={(value, name) => [
+                        !isNaN(value) ? value.toLocaleString('pt-BR') : value,
+                        name
+                      ]}
                       labelFormatter={(label) => {
                         const date = new Date(label);
                         return date.toLocaleDateString('pt-BR', {
