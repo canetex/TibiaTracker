@@ -1682,17 +1682,35 @@ async def get_character_level_chart(
             }
         }
     
-    # Preparar dados para o gráfico
+    # Preparar dados para o gráfico com preenchimento de dias
     chart_data = []
     
+    # Criar um dicionário com o level mais recente para cada dia
+    daily_levels = {}
     for snapshot in snapshots:
         date_str = snapshot.scraped_at.strftime("%Y-%m-%d")
+        # Manter o level mais recente do dia
+        daily_levels[date_str] = snapshot.level
+    
+    # Preencher todos os dias do período com o level apropriado
+    current_level = snapshots[0].level if snapshots else 0
+    current_date = start_date.date()
+    end_date_only = end_date.date()
+    
+    while current_date <= end_date_only:
+        date_str = current_date.strftime("%Y-%m-%d")
+        
+        # Se temos um level para este dia, usar ele e atualizar o current_level
+        if date_str in daily_levels:
+            current_level = daily_levels[date_str]
         
         chart_data.append({
             "date": date_str,
-            "level": snapshot.level,
-            "vocation": snapshot.vocation
+            "level": current_level,
+            "vocation": snapshots[0].vocation if snapshots else "Unknown"
         })
+        
+        current_date += timedelta(days=1)
     
     level_start = snapshots[0].level if snapshots else 0
     level_end = snapshots[-1].level if snapshots else 0
