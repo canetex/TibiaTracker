@@ -200,6 +200,7 @@ const Home = () => {
         if (newFilters.minLevel) filterParams.minLevel = newFilters.minLevel;
         if (newFilters.maxLevel) filterParams.maxLevel = newFilters.maxLevel;
         if (newFilters.isFavorited !== '') filterParams.isFavorited = newFilters.isFavorited;
+        if (newFilters.activityFilter) filterParams.activity_filter = newFilters.activityFilter;
         if (newFilters.limit && newFilters.limit !== 'all') filterParams.limit = newFilters.limit;
         
         console.log('[FILTER] Parâmetros de filtro:', filterParams);

@@ -832,13 +832,14 @@ async def list_characters(
     is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
     guild: Optional[str] = Query(None, description="Filtrar por guild"),
+    activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
     db: AsyncSession = Depends(get_db)
 ):
     """Listar personagens com filtros e paginação"""
     
     query = select(CharacterModel)
     
-    # Aplicar filtros
+    # Aplicar filtros básicos
     filters = []
     if server:
         filters.append(CharacterModel.server == server)
@@ -852,6 +853,37 @@ async def list_characters(
         filters.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
         filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
+    
+    # Aplicar filtro de atividade se especificado
+    if activity_filter:
+        from datetime import datetime, timedelta
+        
+        # Calcular a data baseada no filtro
+        today = datetime.utcnow().date()
+        
+        if activity_filter == 'active_today':
+            target_date = today
+        elif activity_filter == 'active_yesterday':
+            target_date = today - timedelta(days=1)
+        elif activity_filter == 'active_2days':
+            target_date = today - timedelta(days=2)
+        elif activity_filter == 'active_3days':
+            target_date = today - timedelta(days=3)
+        else:
+            # Filtro inválido, ignorar
+            target_date = None
+        
+        if target_date:
+            # Subconsulta para encontrar personagens com experiência > 0 na data específica
+            subquery = select(CharacterSnapshotModel.character_id).where(
+                and_(
+                    CharacterSnapshotModel.scraped_at >= target_date,
+                    CharacterSnapshotModel.scraped_at < target_date + timedelta(days=1),
+                    CharacterSnapshotModel.experience > 0
+                )
+            ).distinct()
+            
+            filters.append(CharacterModel.id.in_(subquery))
     
     if filters:
         query = query.where(and_(*filters))
@@ -909,12 +941,13 @@ async def list_characters_alias(
     is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
     guild: Optional[str] = Query(None, description="Filtrar por guild"),
+    activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
     db: AsyncSession = Depends(get_db)
 ):
     """Listar personagens com filtros e paginação (alias com barra para compatibilidade)"""
     
     # Chamamos a função principal
-    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, guild, db)
+    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, guild, activity_filter, db)
 
 
 @router.post("/", response_model=CharacterSchema)
