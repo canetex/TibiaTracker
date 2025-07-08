@@ -25,37 +25,21 @@ import {
   Timeline,
 } from '@mui/icons-material';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
   Legend,
-  TimeScale,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import 'chartjs-adapter-date-fns';
-import { ptBR } from 'date-fns/locale';
+  ResponsiveContainer,
+} from 'recharts';
 
 import { apiService } from '../services/api';
 
-// Registrar componentes do Chart.js (fora do componente)
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  TimeScale
-);
-
 const CharacterChartsModal = ({ open, onClose, character }) => {
   const [loading, setLoading] = useState(false);
-  const [chartData, setChartData] = useState(null);
+  const [chartData, setChartData] = useState([]);
   const [error, setError] = useState(null);
   
   // Controles de visualização
@@ -75,7 +59,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       loadChartData();
     } else if (!open) {
       // Cleanup quando modal é fechado
-      setChartData(null);
+      setChartData([]);
       setError(null);
       setLoading(false);
     }
@@ -84,7 +68,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      setChartData(null);
+      setChartData([]);
       setError(null);
       setLoading(false);
     };
@@ -111,10 +95,37 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
 
       console.log('CharacterChartsModal: Dados recebidos:', { experienceData, levelData });
       
-      setChartData({
-        experience: experienceData,
-        level: levelData,
-      });
+      // Preparar dados para Recharts
+      const combinedData = {};
+      
+      // Processar dados de experiência
+      if (experienceData?.data) {
+        experienceData.data.forEach(item => {
+          const date = item.date;
+          if (!combinedData[date]) {
+            combinedData[date] = { date };
+          }
+          combinedData[date].experience = item.experience_gained || item.experience || 0;
+        });
+      }
+      
+      // Processar dados de level
+      if (levelData?.data) {
+        levelData.data.forEach(item => {
+          const date = item.date;
+          if (!combinedData[date]) {
+            combinedData[date] = { date };
+          }
+          combinedData[date].level = item.level;
+        });
+      }
+      
+      // Converter para array e ordenar por data
+      const chartDataArray = Object.values(combinedData).sort((a, b) => 
+        new Date(a.date) - new Date(b.date)
+      );
+      
+      setChartData(chartDataArray);
 
     } catch (err) {
       console.error('CharacterChartsModal: Erro ao carregar dados dos gráficos:', err);
@@ -157,151 +168,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
     }));
   };
 
-  const getChartConfig = () => {
-    if (!chartData) return null;
-
-    const datasets = [];
-    const colors = [
-      'rgb(53, 162, 235)', // Azul
-      'rgb(255, 99, 132)', // Vermelho  
-      'rgb(75, 192, 192)', // Verde
-      'rgb(255, 159, 64)', // Laranja
-      'rgb(153, 102, 255)', // Roxo
-      'rgb(255, 206, 86)', // Amarelo
-    ];
-    let colorIndex = 0;
-
-    if (chartOptions.experience && chartData.experience?.data) {
-      datasets.push({
-        label: 'Experiência',
-        data: chartData.experience.data.map(item => ({
-          x: new Date(item.date + 'T00:00:00'), // Converter para objeto Date
-          y: item.experience_gained || item.experience || 0
-        })),
-        borderColor: colors[colorIndex++],
-        backgroundColor: colors[colorIndex - 1] + '20',
-        tension: 0.1,
-        yAxisID: 'y',
-      });
-    }
-
-    if (chartOptions.level && chartData.level?.data) {
-      datasets.push({
-        label: 'Level',
-        data: chartData.level.data.map(item => ({
-          x: new Date(item.date + 'T00:00:00'), // Converter para objeto Date
-          y: item.level
-        })),
-        borderColor: colors[colorIndex++],
-        backgroundColor: colors[colorIndex - 1] + '20',
-        tension: 0.1,
-        yAxisID: 'y1',
-      });
-    }
-
-    return {
-      datasets,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: `Evolução de ${character?.name || 'Personagem'} (${timeRange} dias)`,
-            font: {
-              size: 16,
-              weight: 'bold'
-            }
-          },
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            callbacks: {
-              title: function(context) {
-                // O Chart.js já fornece a data formatada quando usa time scale
-                if (context[0]?.parsed?.x) {
-                  const date = new Date(context[0].parsed.x);
-                  return date.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                  });
-                }
-                return context[0]?.label || 'Data inválida';
-              },
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.dataset.label === 'Experiência') {
-                  label += context.parsed.y.toLocaleString('pt-BR');
-                } else {
-                  label += context.parsed.y;
-                }
-                return label;
-              }
-            }
-          }
-        },
-                scales: {
-          x: {
-            type: 'time',
-            time: {
-              parser: false, // Let Chart.js auto-detect the format
-              unit: 'day',
-              displayFormats: {
-                day: 'dd/MM'
-              }
-            },
-            title: {
-              display: true,
-              text: 'Data'
-            },
-            adapters: {
-              date: {
-                locale: ptBR
-              }
-            }
-          },
-          y: {
-            type: 'linear',
-            display: chartOptions.experience,
-            position: 'left',
-            title: {
-              display: true,
-              text: 'Experiência'
-            },
-            ticks: {
-              callback: function(value) {
-                return value.toLocaleString('pt-BR');
-              }
-            }
-          },
-          y1: {
-            type: 'linear',
-            display: chartOptions.level,
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Level'
-            },
-            grid: {
-              drawOnChartArea: false,
-            },
-          },
-        },
-      }
-    };
-  };
-
-  const chartConfig = getChartConfig();
-  const hasData = chartData && chartConfig && chartConfig.datasets.length > 0;
+  const hasData = chartData.length > 0 && (chartOptions.experience || chartOptions.level);
 
   return (
     <Dialog 
@@ -436,8 +303,77 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                 {error}
               </Alert>
             ) : hasData ? (
-              <Box sx={{ height: '500px', position: 'relative' }}>
-                <Line data={chartConfig} options={chartConfig.options} />
+              <Box sx={{ height: '500px', width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit'
+                        });
+                      }}
+                    />
+                    {chartOptions.experience && (
+                      <YAxis 
+                        yAxisId="left"
+                        orientation="left"
+                        tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                      />
+                    )}
+                    {chartOptions.level && (
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                      />
+                    )}
+                    <RechartsTooltip
+                      formatter={(value, name) => {
+                        if (name === 'experience') {
+                          return [value.toLocaleString('pt-BR'), 'Experiência'];
+                        }
+                        return [value, 'Level'];
+                      }}
+                      labelFormatter={(label) => {
+                        const date = new Date(label);
+                        return date.toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        });
+                      }}
+                    />
+                    <Legend />
+                    {chartOptions.experience && (
+                      <Line
+                        type="monotone"
+                        dataKey="experience"
+                        stroke="#1976d2"
+                        strokeWidth={2}
+                        dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
+                        yAxisId="left"
+                        name="Experiência"
+                      />
+                    )}
+                    {chartOptions.level && (
+                      <Line
+                        type="monotone"
+                        dataKey="level"
+                        stroke="#dc004e"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#dc004e', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
+                        yAxisId="right"
+                        name="Level"
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
               </Box>
             ) : (
               <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -452,65 +388,6 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
             )}
           </CardContent>
         </Card>
-
-        {/* Estatísticas Resumidas */}
-        {chartData && (
-          <Card sx={{ mt: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Estatísticas do Período
-              </Typography>
-              <Grid container spacing={3}>
-                {chartData.experience?.summary && (
-                  <>
-                    <Grid item xs={12} md={3}>
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Experiência Total Ganha
-                        </Typography>
-                        <Typography variant="h6">
-                          {chartData.experience.summary.total_gained?.toLocaleString('pt-BR') || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Média Diária
-                        </Typography>
-                        <Typography variant="h6">
-                          {chartData.experience.summary.average_daily?.toLocaleString('pt-BR') || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </>
-                )}
-                {chartData.level?.summary && (
-                  <Grid item xs={12} md={3}>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Levels Ganhos
-                      </Typography>
-                      <Typography variant="h6">
-                        {chartData.level.summary.levels_gained || 0}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-                <Grid item xs={12} md={3}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Dados Coletados
-                    </Typography>
-                    <Typography variant="h6">
-                      {chartData.experience?.summary?.snapshots_count || chartData.experience?.data?.length || 0} snapshots
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        )}
       </DialogContent>
 
       <DialogActions sx={{ p: 3 }}>
