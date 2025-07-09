@@ -1058,8 +1058,7 @@ async def filter_character_ids(
     character_ids = [row[0] for row in result.fetchall()]
     
     return CharacterIDsResponse(
-        character_ids=character_ids,
-        total_count=len(character_ids)
+        ids=character_ids
     )
 
 
@@ -1073,13 +1072,13 @@ async def get_characters_by_ids(
     Usado pelo frontend após obter IDs filtrados.
     """
     
-    if not req.character_ids:
+    if not req.ids:
         return []
     
     # Buscar personagens com snapshots
     query = (
         select(CharacterModel)
-        .where(CharacterModel.id.in_(req.character_ids))
+        .where(CharacterModel.id.in_(req.ids))
         .options(selectinload(CharacterModel.snapshots))
     )
     
@@ -1093,7 +1092,7 @@ async def get_characters_by_ids(
     
     # Manter ordem original dos IDs
     character_dict = {char.id: char for char in characters}
-    ordered_characters = [character_dict.get(char_id) for char_id in req.character_ids if char_id in character_dict]
+    ordered_characters = [character_dict.get(char_id) for char_id in req.ids if char_id in character_dict]
     
     return ordered_characters
 
