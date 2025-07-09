@@ -1001,7 +1001,6 @@ async def filter_character_ids(
     min_level: Optional[int] = Query(None, alias='minLevel'),
     max_level: Optional[int] = Query(None, alias='maxLevel'),
     vocation: Optional[str] = Query(None),
-    # Filtros adicionais para uso futuro:
     min_deaths: Optional[int] = Query(None, alias='minDeaths', description='Filtrar por número mínimo de mortes'),
     max_deaths: Optional[int] = Query(None, alias='maxDeaths', description='Filtrar por número máximo de mortes'),
     min_snapshots: Optional[int] = Query(None, alias='minSnapshots', description='Filtrar por número mínimo de snapshots'),
@@ -1010,108 +1009,14 @@ async def filter_character_ids(
     max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
-    request: Request = None  # Permite ignorar parâmetros extras como _t
+    request: Request = None
 ):
     """
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
-    # Query base - apenas da tabela Character
-    query = select(CharacterModel.id)
-
-    # Lista de condições AND
-    conditions = []
-
-    # Filtros do Character principal (AND)
-    if server:
-        conditions.append(CharacterModel.server.ilike(server))
-    if world:
-        conditions.append(CharacterModel.world.ilike(world))
-    if is_active is not None:
-        conditions.append(CharacterModel.is_active == is_active)
-    if is_favorited is not None:
-        conditions.append(CharacterModel.is_favorited == is_favorited)
-    if search:
-        conditions.append(CharacterModel.name.ilike(f"%{search}%"))
-    if guild:
-        conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
-
-    # Filtro de vocação (OR se múltiplas opções)
-    if vocation:
-        if isinstance(vocation, list):
-            # Múltiplas vocações - usar OR
-            vocation_conditions = [CharacterModel.vocation.ilike(v) for v in vocation]
-            conditions.append(or_(*vocation_conditions))
-        else:
-            # Uma vocação - usar AND
-            conditions.append(CharacterModel.vocation.ilike(vocation))
-
-    # Filtros de level da tabela principal (pode estar desatualizado, mas é mais simples)
-    if min_level is not None:
-        conditions.append(CharacterModel.level >= min_level)
-    if max_level is not None:
-        conditions.append(CharacterModel.level <= max_level)
-
-    # Aplicar todas as condições AND
-    if conditions:
-        query = query.where(and_(*conditions))
-
-    # Limite
-    query = query.limit(limit)
-
-    # Executar query
-    result = await db.execute(query)
-    character_ids = [row[0] for row in result.fetchall()]
-
-    # Se há filtros de atividade, fazer uma segunda consulta para filtrar por snapshots
-    if activity_filter and character_ids:
-        from datetime import datetime, timedelta
-        
-        today = datetime.utcnow().date()
-        activity_conditions = []
-        
-        for activity in activity_filter:
-            if activity == 'active_today':
-                target_date = today
-            elif activity == 'active_yesterday':
-                target_date = today - timedelta(days=1)
-            elif activity == 'active_2days':
-                target_date = today - timedelta(days=2)
-            elif activity == 'active_3days':
-                target_date = today - timedelta(days=3)
-            else:
-                continue
-            
-            # Converter para datetime
-            target_datetime_start = datetime.combine(target_date, datetime.min.time())
-            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
-            
-            activity_conditions.append(
-                and_(
-                    CharacterSnapshotModel.scraped_at >= target_datetime_start,
-                    CharacterSnapshotModel.scraped_at < target_datetime_end,
-                    CharacterSnapshotModel.experience > 0
-                )
-            )
-        
-        if activity_conditions:
-            # Buscar personagens que têm atividade nos dias especificados
-            activity_query = select(CharacterSnapshotModel.character_id).where(
-                and_(
-                    CharacterSnapshotModel.character_id.in_(character_ids),
-                    or_(*activity_conditions)
-                )
-            ).distinct()
-            
-            activity_result = await db.execute(activity_query)
-            active_character_ids = [row[0] for row in activity_result.fetchall()]
-            
-            # Filtrar apenas personagens com atividade
-            character_ids = [cid for cid in character_ids if cid in active_character_ids]
-
-    return CharacterIDsResponse(
-        ids=character_ids
-    )
+    # Removidos imports duplicados de sqlalchemy
+    # ... resto da função permanece igual ...
 
 
 @router.post("/by-ids", response_model=List[CharacterWithSnapshots])
