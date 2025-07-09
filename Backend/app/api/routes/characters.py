@@ -1016,9 +1016,7 @@ async def filter_character_ids(
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
-    from datetime import datetime, timedelta
-
-    # Query base
+    # Query base - apenas da tabela Character
     query = select(CharacterModel.id)
 
     # Lista de condições AND
@@ -1048,60 +1046,11 @@ async def filter_character_ids(
             # Uma vocação - usar AND
             conditions.append(CharacterModel.vocation.ilike(vocation))
 
-    # Filtros que dependem do snapshot mais recente
-    snapshot_conditions = []
-    
-    if min_level is not None or max_level is not None or activity_filter:
-        # Subquery para verificar se existe snapshot que atende aos critérios
-        snapshot_subquery = select(CharacterSnapshotModel.character_id).where(
-            CharacterSnapshotModel.character_id == CharacterModel.id
-        )
-        
-        # Adicionar condições de snapshot
-        if min_level is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.level >= min_level)
-        if max_level is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.level <= max_level)
-        if min_deaths is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.deaths >= min_deaths)
-        if max_deaths is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.deaths <= max_deaths)
-        if min_experience is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.experience >= min_experience)
-        if max_experience is not None:
-            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.experience <= max_experience)
-
-        # Filtro de atividade (OR entre múltiplas atividades)
-        if activity_filter:
-            today = datetime.utcnow().date()
-            activity_conditions = []
-            for activity in activity_filter:
-                if activity == 'active_today':
-                    target_date = today
-                elif activity == 'active_yesterday':
-                    target_date = today - timedelta(days=1)
-                elif activity == 'active_2days':
-                    target_date = today - timedelta(days=2)
-                elif activity == 'active_3days':
-                    target_date = today - timedelta(days=3)
-                else:
-                    continue
-                # Converter para datetime
-                target_datetime_start = datetime.combine(target_date, datetime.min.time())
-                target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
-                activity_conditions.append(
-                    and_(
-                        CharacterSnapshotModel.scraped_at >= target_datetime_start,
-                        CharacterSnapshotModel.scraped_at < target_datetime_end,
-                        CharacterSnapshotModel.experience > 0
-                    )
-                )
-            if activity_conditions:
-                # OR entre múltiplas atividades
-                snapshot_subquery = snapshot_subquery.where(or_(*activity_conditions))
-
-        # Adicionar condição EXISTS para snapshots
-        conditions.append(exists(snapshot_subquery))
+    # Filtros de level da tabela principal (pode estar desatualizado, mas é mais simples)
+    if min_level is not None:
+        conditions.append(CharacterModel.level >= min_level)
+    if max_level is not None:
+        conditions.append(CharacterModel.level <= max_level)
 
     # Aplicar todas as condições AND
     if conditions:
@@ -1113,6 +1062,52 @@ async def filter_character_ids(
     # Executar query
     result = await db.execute(query)
     character_ids = [row[0] for row in result.fetchall()]
+
+    # Se há filtros de atividade, fazer uma segunda consulta para filtrar por snapshots
+    if activity_filter and character_ids:
+        from datetime import datetime, timedelta
+        
+        today = datetime.utcnow().date()
+        activity_conditions = []
+        
+        for activity in activity_filter:
+            if activity == 'active_today':
+                target_date = today
+            elif activity == 'active_yesterday':
+                target_date = today - timedelta(days=1)
+            elif activity == 'active_2days':
+                target_date = today - timedelta(days=2)
+            elif activity == 'active_3days':
+                target_date = today - timedelta(days=3)
+            else:
+                continue
+            
+            # Converter para datetime
+            target_datetime_start = datetime.combine(target_date, datetime.min.time())
+            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
+            
+            activity_conditions.append(
+                and_(
+                    CharacterSnapshotModel.scraped_at >= target_datetime_start,
+                    CharacterSnapshotModel.scraped_at < target_datetime_end,
+                    CharacterSnapshotModel.experience > 0
+                )
+            )
+        
+        if activity_conditions:
+            # Buscar personagens que têm atividade nos dias especificados
+            activity_query = select(CharacterSnapshotModel.character_id).where(
+                and_(
+                    CharacterSnapshotModel.character_id.in_(character_ids),
+                    or_(*activity_conditions)
+                )
+            ).distinct()
+            
+            activity_result = await db.execute(activity_query)
+            active_character_ids = [row[0] for row in activity_result.fetchall()]
+            
+            # Filtrar apenas personagens com atividade
+            character_ids = [cid for cid in character_ids if cid in active_character_ids]
 
     return CharacterIDsResponse(
         ids=character_ids
