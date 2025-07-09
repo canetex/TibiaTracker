@@ -1015,8 +1015,21 @@ async def filter_character_ids(
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
-    # Log dos filtros recebidos para debug
-    logger.info(f"[FILTER-IDS] Filtros recebidos: server={server}, world={world}, guild={guild}, min_level={min_level} (tipo: {type(min_level)}), max_level={max_level} (tipo: {type(max_level)}), vocation={vocation}")
+    # Log completo dos parâmetros recebidos
+    logger.info(f"[FILTER-IDS] === INÍCIO DA FUNÇÃO ===")
+    logger.info(f"[FILTER-IDS] server: {server} (tipo: {type(server)})")
+    logger.info(f"[FILTER-IDS] world: {world} (tipo: {type(world)})")
+    logger.info(f"[FILTER-IDS] guild: {guild} (tipo: {type(guild)})")
+    logger.info(f"[FILTER-IDS] min_level: {min_level} (tipo: {type(min_level)})")
+    logger.info(f"[FILTER-IDS] max_level: {max_level} (tipo: {type(max_level)})")
+    logger.info(f"[FILTER-IDS] vocation: {vocation} (tipo: {type(vocation)})")
+    logger.info(f"[FILTER-IDS] activity_filter: {activity_filter} (tipo: {type(activity_filter)})")
+    logger.info(f"[FILTER-IDS] limit: {limit} (tipo: {type(limit)})")
+    
+    # Log da URL completa se request estiver disponível
+    if request:
+        logger.info(f"[FILTER-IDS] URL completa: {request.url}")
+        logger.info(f"[FILTER-IDS] Query params: {dict(request.query_params)}")
     
     # Converter min_level e max_level para inteiros se necessário
     if min_level is not None:
@@ -1159,6 +1172,7 @@ async def filter_character_ids(
             logger.info(f"[FILTER-IDS] IDs após filtro de atividade: {len(character_ids)}")
 
     logger.info(f"[FILTER-IDS] Retornando {len(character_ids)} IDs")
+    logger.info(f"[FILTER-IDS] === FIM DA FUNÇÃO ===")
     return CharacterIDsResponse(
         ids=character_ids
     )
