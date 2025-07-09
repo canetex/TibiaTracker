@@ -1224,16 +1224,12 @@ async def get_characters_by_ids(
             # Ordenar snapshots por data decrescente
             character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
             
-            # Calcular experiência do último dia se houver snapshots suficientes
-            if len(character.snapshots) >= 2:
-                latest_exp = character.snapshots[0].experience
-                previous_exp = character.snapshots[1].experience
-                # Usar setattr para evitar problemas de serialização
-                setattr(character, 'previous_experience', latest_exp - previous_exp)
-            elif len(character.snapshots) == 1:
-                setattr(character, 'previous_experience', 0)
-            else:
-                setattr(character, 'previous_experience', 0)
+            # Usar a experiência do snapshot mais recente (já é a experiência ganha no último dia)
+            latest_snapshot = character.snapshots[0]
+            # Usar setattr para evitar problemas de serialização
+            setattr(character, 'previous_experience', max(0, latest_snapshot.experience))
+        else:
+            setattr(character, 'previous_experience', 0)
     
     # Manter ordem original dos IDs
     character_dict = {char.id: char for char in characters}
