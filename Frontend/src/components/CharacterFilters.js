@@ -44,6 +44,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
 
   // Sincroniza o estado local com o prop filters
   useEffect(() => {
+    console.log('[CHARACTER_FILTERS] externalFilters mudou:', externalFilters);
     setFilters({
       server: externalFilters.server || '',
       world: externalFilters.world || '',

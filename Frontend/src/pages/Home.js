@@ -40,7 +40,18 @@ const Home = () => {
   const [globalStats, setGlobalStats] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({
+    server: '',
+    world: '',
+    vocation: '',
+    guild: '',
+    search: '',
+    minLevel: '',
+    maxLevel: '',
+    isFavorited: '',
+    activityFilter: [],
+    limit: 'all',
+  });
   const [filteredCharacters, setFilteredCharacters] = useState([]);
   
   // Estados para o modal de gráficos
@@ -306,6 +317,7 @@ const Home = () => {
         break;
     }
     
+    console.log(`[QUICK_FILTER] Novos filtros:`, newFilters);
     setFilters(newFilters); // Atualiza o estado global dos filtros
     handleFilterChange(newFilters);
   };
