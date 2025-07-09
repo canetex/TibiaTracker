@@ -5,7 +5,7 @@ Rotas da API para gerenciamento de personagens
 Endpoints para CRUD de personagens e seus snapshots históricos.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_, or_
 from sqlalchemy.orm import selectinload
@@ -1749,7 +1749,8 @@ async def filter_character_ids(
     min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
     max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    request: Request = None  # Permite ignorar parâmetros extras como _t
 ):
     """
     Retorna apenas os IDs dos personagens que batem com todos os filtros (AND).
