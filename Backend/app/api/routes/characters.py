@@ -1734,12 +1734,13 @@ async def filter_character_ids(
     server: Optional[str] = Query(None),
     world: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
-    is_favorited: Optional[bool] = Query(None),
+    is_favorited: Optional[bool] = Query(None, alias='isFavorited'),
     search: Optional[str] = Query(None),
     guild: Optional[str] = Query(None),
-    activity_filter: Optional[str] = Query(None),
+    activity_filter: Optional[List[str]] = Query(None),
     min_level: Optional[int] = Query(None),
     max_level: Optional[int] = Query(None),
+    vocation: Optional[str] = Query(None),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db)
 ):
@@ -1747,9 +1748,9 @@ async def filter_character_ids(
     query = select(CharacterModel.id)
     filters = []
     if server:
-        filters.append(CharacterModel.server == server)
+        filters.append(CharacterModel.server.ilike(server))
     if world:
-        filters.append(CharacterModel.world == world)
+        filters.append(CharacterModel.world.ilike(world))
     if is_active is not None:
         filters.append(CharacterModel.is_active == is_active)
     if is_favorited is not None:
@@ -1758,6 +1759,8 @@ async def filter_character_ids(
         filters.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
         filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
+    if vocation:
+        filters.append(CharacterModel.vocation.ilike(vocation))
     if min_level is not None:
         filters.append(CharacterModel.level >= min_level)
     if max_level is not None:
