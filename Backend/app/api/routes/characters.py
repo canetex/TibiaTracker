@@ -8,7 +8,7 @@ Endpoints para CRUD de personagens e seus snapshots históricos.
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, aliased
 from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
@@ -1016,82 +1016,100 @@ async def filter_character_ids(
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Usado pelo frontend para obter lista de IDs antes de buscar dados completos.
     """
-    
-    # Construir query base
-    query = select(CharacterModel.id)
-    
-    # Aplicar filtros
-    conditions = []
-    
+    from sqlalchemy.orm import aliased
+    from datetime import datetime, timedelta
+
+    # Subquery para pegar o snapshot mais recente de cada personagem
+    latest_snapshot_subquery = (
+        select(
+            CharacterSnapshotModel.character_id.label('character_id'),
+            func.max(CharacterSnapshotModel.scraped_at).label('latest_date')
+        )
+        .group_by(CharacterSnapshotModel.character_id)
+        .subquery()
+    )
+    SnapshotAlias = aliased(CharacterSnapshotModel)
+
+    # Join com Character e o snapshot mais recente
+    query = select(CharacterModel.id).join(
+        SnapshotAlias,
+        and_(
+            CharacterModel.id == latest_snapshot_subquery.c.character_id,
+            SnapshotAlias.character_id == latest_snapshot_subquery.c.character_id,
+            SnapshotAlias.scraped_at == latest_snapshot_subquery.c.latest_date
+        )
+    )
+
+    # Filtros do Character principal
     if server:
-        conditions.append(CharacterModel.server.ilike(server))
-    
+        query = query.where(CharacterModel.server.ilike(server))
     if world:
-        conditions.append(CharacterModel.world.ilike(world))
-    
+        query = query.where(CharacterModel.world.ilike(world))
     if is_active is not None:
-        conditions.append(CharacterModel.is_active == is_active)
-    
+        query = query.where(CharacterModel.is_active == is_active)
     if is_favorited is not None:
-        conditions.append(CharacterModel.is_favorited == is_favorited)
-    
+        query = query.where(CharacterModel.is_favorited == is_favorited)
     if search:
-        conditions.append(CharacterModel.name.ilike(f"%{search}%"))
-    
+        query = query.where(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
-        conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
-    
+        query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
     if vocation:
-        conditions.append(CharacterModel.vocation.ilike(vocation))
-    
-    # Filtros de level - usar o level mais recente dos snapshots
-    if min_level is not None or max_level is not None:
-        # Subquery para pegar o level mais recente de cada personagem
-        latest_snapshot_subquery = (
-            select(
-                CharacterSnapshotModel.character_id,
-                func.max(CharacterSnapshotModel.scraped_at).label('latest_date')
+        query = query.where(CharacterModel.vocation.ilike(vocation))
+
+    # Filtros do snapshot mais recente
+    if min_level is not None:
+        query = query.where(SnapshotAlias.level >= min_level)
+    if max_level is not None:
+        query = query.where(SnapshotAlias.level <= max_level)
+    if min_deaths is not None:
+        query = query.where(SnapshotAlias.deaths >= min_deaths)
+    if max_deaths is not None:
+        query = query.where(SnapshotAlias.deaths <= max_deaths)
+    if min_experience is not None:
+        query = query.where(SnapshotAlias.experience >= min_experience)
+    if max_experience is not None:
+        query = query.where(SnapshotAlias.experience <= max_experience)
+    if min_snapshots is not None:
+        # Não é possível filtrar por número de snapshots diretamente aqui, ignorar por ora
+        pass
+    if max_snapshots is not None:
+        pass
+
+    # Filtro de atividade (active_today, active_yesterday, etc)
+    if activity_filter:
+        today = datetime.utcnow().date()
+        activity_conditions = []
+        for activity in activity_filter:
+            if activity == 'active_today':
+                target_date = today
+            elif activity == 'active_yesterday':
+                target_date = today - timedelta(days=1)
+            elif activity == 'active_2days':
+                target_date = today - timedelta(days=2)
+            elif activity == 'active_3days':
+                target_date = today - timedelta(days=3)
+            else:
+                continue
+            # Converter para datetime
+            target_datetime_start = datetime.combine(target_date, datetime.min.time())
+            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
+            activity_conditions.append(
+                and_(
+                    SnapshotAlias.scraped_at >= target_datetime_start,
+                    SnapshotAlias.scraped_at < target_datetime_end,
+                    SnapshotAlias.experience > 0
+                )
             )
-            .group_by(CharacterSnapshotModel.character_id)
-            .subquery()
-        )
-        
-        # JOIN com snapshots para pegar o level mais recente
-        query = query.join(
-            CharacterSnapshotModel,
-            CharacterModel.id == CharacterSnapshotModel.character_id
-        ).join(
-            latest_snapshot_subquery,
-            and_(
-                CharacterSnapshotModel.character_id == latest_snapshot_subquery.c.character_id,
-                CharacterSnapshotModel.scraped_at == latest_snapshot_subquery.c.latest_date
-            )
-        )
-        
-        if min_level is not None:
-            conditions.append(CharacterSnapshotModel.level >= min_level)
-        
-        if max_level is not None:
-            conditions.append(CharacterSnapshotModel.level <= max_level)
-    else:
-        # Se não há filtros de level, usar o level da tabela principal
-        if min_level is not None:
-            conditions.append(CharacterModel.level >= min_level)
-        
-        if max_level is not None:
-            conditions.append(CharacterModel.level <= max_level)
-    
-    # Aplicar condições se houver filtros
-    if conditions:
-        query = query.where(and_(*conditions))
-    
-    # Aplicar limite
+        if activity_conditions:
+            query = query.where(or_(*activity_conditions))
+
+    # Limite
     query = query.limit(limit)
-    
+
     # Executar query
     result = await db.execute(query)
     character_ids = [row[0] for row in result.fetchall()]
-    
+
     return CharacterIDsResponse(
         ids=character_ids
     )
