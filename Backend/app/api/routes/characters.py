@@ -1125,8 +1125,18 @@ async def get_characters_by_ids(
             # Limitar a snapshots dos últimos 7 dias para performance
             from datetime import datetime, timedelta
             seven_days_ago = datetime.utcnow() - timedelta(days=7)
-            # Converter para timezone-aware se necessário
-            character.snapshots = [s for s in character.snapshots if s.scraped_at.replace(tzinfo=None) >= seven_days_ago]
+            # Filtrar snapshots dos últimos 7 dias, tratando timezone
+            filtered_snapshots = []
+            for s in character.snapshots:
+                try:
+                    # Remover timezone para comparação
+                    snapshot_date = s.scraped_at.replace(tzinfo=None) if s.scraped_at.tzinfo else s.scraped_at
+                    if snapshot_date >= seven_days_ago:
+                        filtered_snapshots.append(s)
+                except Exception as e:
+                    # Se houver erro na comparação, incluir o snapshot
+                    filtered_snapshots.append(s)
+            character.snapshots = filtered_snapshots
             
             # Calcular experiência do último dia se houver snapshots suficientes
             if len(character.snapshots) >= 2:
