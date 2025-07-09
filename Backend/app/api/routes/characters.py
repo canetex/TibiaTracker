@@ -1224,10 +1224,22 @@ async def get_characters_by_ids(
             # Ordenar snapshots por data decrescente
             character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
             
-            # Usar a experiência do snapshot mais recente (já é a experiência ganha no último dia)
-            latest_snapshot = character.snapshots[0]
-            # Usar setattr para evitar problemas de serialização
-            setattr(character, 'previous_experience', max(0, latest_snapshot.experience))
+            # Buscar snapshot do dia anterior
+            from datetime import datetime, timedelta
+            yesterday = datetime.utcnow().date() - timedelta(days=1)
+            
+            # Procurar snapshot do dia anterior
+            yesterday_snapshot = None
+            for snapshot in character.snapshots:
+                if snapshot.scraped_at.date() == yesterday:
+                    yesterday_snapshot = snapshot
+                    break
+            
+            # Usar experiência do dia anterior se encontrado, senão 0
+            if yesterday_snapshot:
+                setattr(character, 'previous_experience', max(0, yesterday_snapshot.experience))
+            else:
+                setattr(character, 'previous_experience', 0)
         else:
             setattr(character, 'previous_experience', 0)
     
