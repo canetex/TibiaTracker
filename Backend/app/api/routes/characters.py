@@ -1014,9 +1014,8 @@ async def filter_character_ids(
 ):
     """
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
-    Usado pelo frontend para obter lista de IDs antes de buscar dados completos.
+    Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
-    from sqlalchemy.orm import aliased
     from datetime import datetime, timedelta
 
     # Subquery para pegar o snapshot mais recente de cada personagem
@@ -1040,42 +1039,48 @@ async def filter_character_ids(
         )
     )
 
-    # Filtros do Character principal
+    # Lista de condições AND
+    conditions = []
+
+    # Filtros do Character principal (AND)
     if server:
-        query = query.where(CharacterModel.server.ilike(server))
+        conditions.append(CharacterModel.server.ilike(server))
     if world:
-        query = query.where(CharacterModel.world.ilike(world))
+        conditions.append(CharacterModel.world.ilike(world))
     if is_active is not None:
-        query = query.where(CharacterModel.is_active == is_active)
+        conditions.append(CharacterModel.is_active == is_active)
     if is_favorited is not None:
-        query = query.where(CharacterModel.is_favorited == is_favorited)
+        conditions.append(CharacterModel.is_favorited == is_favorited)
     if search:
-        query = query.where(CharacterModel.name.ilike(f"%{search}%"))
+        conditions.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
-        query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
+        conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
+
+    # Filtro de vocação (OR se múltiplas opções)
     if vocation:
-        query = query.where(CharacterModel.vocation.ilike(vocation))
+        if isinstance(vocation, list):
+            # Múltiplas vocações - usar OR
+            vocation_conditions = [CharacterModel.vocation.ilike(v) for v in vocation]
+            conditions.append(or_(*vocation_conditions))
+        else:
+            # Uma vocação - usar AND
+            conditions.append(CharacterModel.vocation.ilike(vocation))
 
-    # Filtros do snapshot mais recente
+    # Filtros do snapshot mais recente (AND)
     if min_level is not None:
-        query = query.where(SnapshotAlias.level >= min_level)
+        conditions.append(SnapshotAlias.level >= min_level)
     if max_level is not None:
-        query = query.where(SnapshotAlias.level <= max_level)
+        conditions.append(SnapshotAlias.level <= max_level)
     if min_deaths is not None:
-        query = query.where(SnapshotAlias.deaths >= min_deaths)
+        conditions.append(SnapshotAlias.deaths >= min_deaths)
     if max_deaths is not None:
-        query = query.where(SnapshotAlias.deaths <= max_deaths)
+        conditions.append(SnapshotAlias.deaths <= max_deaths)
     if min_experience is not None:
-        query = query.where(SnapshotAlias.experience >= min_experience)
+        conditions.append(SnapshotAlias.experience >= min_experience)
     if max_experience is not None:
-        query = query.where(SnapshotAlias.experience <= max_experience)
-    if min_snapshots is not None:
-        # Não é possível filtrar por número de snapshots diretamente aqui, ignorar por ora
-        pass
-    if max_snapshots is not None:
-        pass
+        conditions.append(SnapshotAlias.experience <= max_experience)
 
-    # Filtro de atividade (active_today, active_yesterday, etc)
+    # Filtro de atividade (OR entre múltiplas atividades)
     if activity_filter:
         today = datetime.utcnow().date()
         activity_conditions = []
@@ -1101,7 +1106,12 @@ async def filter_character_ids(
                 )
             )
         if activity_conditions:
-            query = query.where(or_(*activity_conditions))
+            # OR entre múltiplas atividades
+            conditions.append(or_(*activity_conditions))
+
+    # Aplicar todas as condições AND
+    if conditions:
+        query = query.where(and_(*conditions))
 
     # Limite
     query = query.limit(limit)
