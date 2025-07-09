@@ -1116,27 +1116,11 @@ async def get_characters_by_ids(
     result = await db.execute(query)
     characters = result.scalars().all()
     
-    # Processar cada personagem para limitar snapshots e calcular experiência
+    # Processar cada personagem para calcular experiência
     for character in characters:
         if character.snapshots:
             # Ordenar snapshots por data decrescente
             character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
-            
-            # Limitar a snapshots dos últimos 7 dias para performance
-            from datetime import datetime, timedelta
-            seven_days_ago = datetime.utcnow() - timedelta(days=7)
-            # Filtrar snapshots dos últimos 7 dias, tratando timezone
-            filtered_snapshots = []
-            for s in character.snapshots:
-                try:
-                    # Remover timezone para comparação
-                    snapshot_date = s.scraped_at.replace(tzinfo=None) if s.scraped_at.tzinfo else s.scraped_at
-                    if snapshot_date >= seven_days_ago:
-                        filtered_snapshots.append(s)
-                except Exception as e:
-                    # Se houver erro na comparação, incluir o snapshot
-                    filtered_snapshots.append(s)
-            character.snapshots = filtered_snapshots
             
             # Calcular experiência do último dia se houver snapshots suficientes
             if len(character.snapshots) >= 2:
