@@ -1228,20 +1228,31 @@ async def get_characters_by_ids(
             from datetime import datetime, timedelta
             yesterday = datetime.utcnow().date() - timedelta(days=1)
             
+            logger.info(f"[BY-IDS] Personagem {character.name}: buscando snapshot de {yesterday}")
+            logger.info(f"[BY-IDS] Snapshots disponíveis: {len(character.snapshots)}")
+            
+            # Log dos últimos 3 snapshots para debug
+            for i, snapshot in enumerate(character.snapshots[:3]):
+                logger.info(f"[BY-IDS] Snapshot {i+1}: {snapshot.scraped_at.date()} - exp: {snapshot.experience}")
+            
             # Procurar snapshot do dia anterior
             yesterday_snapshot = None
             for snapshot in character.snapshots:
                 if snapshot.scraped_at.date() == yesterday:
                     yesterday_snapshot = snapshot
+                    logger.info(f"[BY-IDS] ✅ Encontrado snapshot do dia anterior: {yesterday_snapshot.experience}")
                     break
             
             # Usar experiência do dia anterior se encontrado, senão 0
             if yesterday_snapshot:
                 setattr(character, 'previous_experience', max(0, yesterday_snapshot.experience))
+                logger.info(f"[BY-IDS] ✅ Experiência do dia anterior definida: {yesterday_snapshot.experience}")
             else:
                 setattr(character, 'previous_experience', 0)
+                logger.info(f"[BY-IDS] ❌ Nenhum snapshot encontrado para {yesterday}, definindo como 0")
         else:
             setattr(character, 'previous_experience', 0)
+            logger.info(f"[BY-IDS] Personagem {character.name}: sem snapshots, definindo como 0")
     
     # Manter ordem original dos IDs
     character_dict = {char.id: char for char in characters}
