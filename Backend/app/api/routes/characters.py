@@ -7,7 +7,7 @@ Endpoints para CRUD de personagens e seus snapshots históricos.
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, and_, or_
+from sqlalchemy import select, func, desc, and_, or_, exists
 from sqlalchemy.orm import selectinload, aliased
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -1018,28 +1018,8 @@ async def filter_character_ids(
     """
     from datetime import datetime, timedelta
 
-    # Subquery para pegar o snapshot mais recente de cada personagem
-    latest_snapshot_subquery = (
-        select(
-            CharacterSnapshotModel.character_id.label('character_id'),
-            func.max(CharacterSnapshotModel.scraped_at).label('latest_date')
-        )
-        .group_by(CharacterSnapshotModel.character_id)
-        .subquery()
-    )
-    SnapshotAlias = aliased(CharacterSnapshotModel)
-
-    # Join com Character e o snapshot mais recente
-    query = select(CharacterModel.id).join(
-        latest_snapshot_subquery,
-        CharacterModel.id == latest_snapshot_subquery.c.character_id
-    ).join(
-        SnapshotAlias,
-        and_(
-            SnapshotAlias.character_id == latest_snapshot_subquery.c.character_id,
-            SnapshotAlias.scraped_at == latest_snapshot_subquery.c.latest_date
-        )
-    )
+    # Query base
+    query = select(CharacterModel.id)
 
     # Lista de condições AND
     conditions = []
@@ -1068,48 +1048,60 @@ async def filter_character_ids(
             # Uma vocação - usar AND
             conditions.append(CharacterModel.vocation.ilike(vocation))
 
-    # Filtros do snapshot mais recente (AND)
-    if min_level is not None:
-        conditions.append(SnapshotAlias.level >= min_level)
-    if max_level is not None:
-        conditions.append(SnapshotAlias.level <= max_level)
-    if min_deaths is not None:
-        conditions.append(SnapshotAlias.deaths >= min_deaths)
-    if max_deaths is not None:
-        conditions.append(SnapshotAlias.deaths <= max_deaths)
-    if min_experience is not None:
-        conditions.append(SnapshotAlias.experience >= min_experience)
-    if max_experience is not None:
-        conditions.append(SnapshotAlias.experience <= max_experience)
+    # Filtros que dependem do snapshot mais recente
+    snapshot_conditions = []
+    
+    if min_level is not None or max_level is not None or activity_filter:
+        # Subquery para verificar se existe snapshot que atende aos critérios
+        snapshot_subquery = select(CharacterSnapshotModel.character_id).where(
+            CharacterSnapshotModel.character_id == CharacterModel.id
+        )
+        
+        # Adicionar condições de snapshot
+        if min_level is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.level >= min_level)
+        if max_level is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.level <= max_level)
+        if min_deaths is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.deaths >= min_deaths)
+        if max_deaths is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.deaths <= max_deaths)
+        if min_experience is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.experience >= min_experience)
+        if max_experience is not None:
+            snapshot_subquery = snapshot_subquery.where(CharacterSnapshotModel.experience <= max_experience)
 
-    # Filtro de atividade (OR entre múltiplas atividades)
-    if activity_filter:
-        today = datetime.utcnow().date()
-        activity_conditions = []
-        for activity in activity_filter:
-            if activity == 'active_today':
-                target_date = today
-            elif activity == 'active_yesterday':
-                target_date = today - timedelta(days=1)
-            elif activity == 'active_2days':
-                target_date = today - timedelta(days=2)
-            elif activity == 'active_3days':
-                target_date = today - timedelta(days=3)
-            else:
-                continue
-            # Converter para datetime
-            target_datetime_start = datetime.combine(target_date, datetime.min.time())
-            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
-            activity_conditions.append(
-                and_(
-                    SnapshotAlias.scraped_at >= target_datetime_start,
-                    SnapshotAlias.scraped_at < target_datetime_end,
-                    SnapshotAlias.experience > 0
+        # Filtro de atividade (OR entre múltiplas atividades)
+        if activity_filter:
+            today = datetime.utcnow().date()
+            activity_conditions = []
+            for activity in activity_filter:
+                if activity == 'active_today':
+                    target_date = today
+                elif activity == 'active_yesterday':
+                    target_date = today - timedelta(days=1)
+                elif activity == 'active_2days':
+                    target_date = today - timedelta(days=2)
+                elif activity == 'active_3days':
+                    target_date = today - timedelta(days=3)
+                else:
+                    continue
+                # Converter para datetime
+                target_datetime_start = datetime.combine(target_date, datetime.min.time())
+                target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
+                activity_conditions.append(
+                    and_(
+                        CharacterSnapshotModel.scraped_at >= target_datetime_start,
+                        CharacterSnapshotModel.scraped_at < target_datetime_end,
+                        CharacterSnapshotModel.experience > 0
+                    )
                 )
-            )
-        if activity_conditions:
-            # OR entre múltiplas atividades
-            conditions.append(or_(*activity_conditions))
+            if activity_conditions:
+                # OR entre múltiplas atividades
+                snapshot_subquery = snapshot_subquery.where(or_(*activity_conditions))
+
+        # Adicionar condição EXISTS para snapshots
+        conditions.append(exists(snapshot_subquery))
 
     # Aplicar todas as condições AND
     if conditions:
