@@ -1740,6 +1740,7 @@ async def filter_character_ids(
     activity_filter: Optional[str] = Query(None),
     min_level: Optional[int] = Query(None),
     max_level: Optional[int] = Query(None),
+    limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db)
 ):
     """Retorna apenas os IDs dos personagens que batem com todos os filtros (AND)."""
@@ -1764,6 +1765,8 @@ async def filter_character_ids(
     # TODO: activity_filter pode ser implementado conforme lógica já existente
     if filters:
         query = query.where(and_(*filters))
+    if limit:
+        query = query.limit(limit)
     result = await db.execute(query)
     ids = [row[0] for row in result.fetchall()]
     return {"ids": ids}
