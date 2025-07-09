@@ -1031,9 +1031,11 @@ async def filter_character_ids(
 
     # Join com Character e o snapshot mais recente
     query = select(CharacterModel.id).join(
+        latest_snapshot_subquery,
+        CharacterModel.id == latest_snapshot_subquery.c.character_id
+    ).join(
         SnapshotAlias,
         and_(
-            CharacterModel.id == latest_snapshot_subquery.c.character_id,
             SnapshotAlias.character_id == latest_snapshot_subquery.c.character_id,
             SnapshotAlias.scraped_at == latest_snapshot_subquery.c.latest_date
         )
