@@ -26,6 +26,16 @@ class WorldType(str, Enum):
     SAN = "san"
     AURA = "aura"
     GAIA = "gaia"
+    
+    @classmethod
+    def _missing_(cls, value):
+        """Permitir valores com primeira letra maiúscula"""
+        if isinstance(value, str):
+            lower_value = value.lower()
+            for member in cls:
+                if member.value == lower_value:
+                    return member
+        return None
 
 
 class VocationType(str, Enum):
@@ -46,7 +56,7 @@ class CharacterBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=255, description="Nome do personagem")
     server: ServerType = Field(..., description="Servidor onde o personagem está")
     world: WorldType = Field(..., description="World atual do personagem")
-    level: Optional[int] = Field(0, ge=0, le=1000, description="Level atual do personagem")
+    level: Optional[int] = Field(0, ge=0, le=2000, description="Level atual do personagem")
     vocation: Optional[str] = Field("None", max_length=50, description="Vocação do personagem")
     residence: Optional[str] = Field(None, max_length=255, description="Residência do personagem")
     guild: Optional[str] = None
@@ -75,7 +85,7 @@ class CharacterUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     server: Optional[ServerType] = None
     world: Optional[WorldType] = None
-    level: Optional[int] = Field(None, ge=0, le=1000)
+    level: Optional[int] = Field(None, ge=0, le=2000)
     vocation: Optional[str] = Field(None, max_length=50)
     residence: Optional[str] = Field(None, max_length=255)
     is_active: Optional[bool] = None
@@ -89,7 +99,7 @@ class CharacterUpdate(BaseModel):
 class CharacterSnapshotBase(BaseModel):
     """Schema base para snapshots de personagens"""
     # Dados básicos obrigatórios
-    level: int = Field(..., ge=0, le=1000, description="Level do personagem")
+    level: int = Field(..., ge=0, le=2000, description="Level do personagem")
     experience: int = Field(..., ge=0, description="Experiência total do personagem")
     deaths: int = Field(0, ge=0, description="Número de mortes do personagem")
     
