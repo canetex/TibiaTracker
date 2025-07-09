@@ -1738,13 +1738,28 @@ async def filter_character_ids(
     search: Optional[str] = Query(None),
     guild: Optional[str] = Query(None),
     activity_filter: Optional[List[str]] = Query(None),
-    min_level: Optional[int] = Query(None),
-    max_level: Optional[int] = Query(None),
+    min_level: Optional[int] = Query(None, alias='minLevel'),
+    max_level: Optional[int] = Query(None, alias='maxLevel'),
     vocation: Optional[str] = Query(None),
+    # Filtros adicionais para uso futuro:
+    min_deaths: Optional[int] = Query(None, alias='minDeaths', description='Filtrar por número mínimo de mortes'),
+    max_deaths: Optional[int] = Query(None, alias='maxDeaths', description='Filtrar por número máximo de mortes'),
+    min_snapshots: Optional[int] = Query(None, alias='minSnapshots', description='Filtrar por número mínimo de snapshots'),
+    max_snapshots: Optional[int] = Query(None, alias='maxSnapshots', description='Filtrar por número máximo de snapshots'),
+    min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
+    max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db)
 ):
-    """Retorna apenas os IDs dos personagens que batem com todos os filtros (AND)."""
+    """
+    Retorna apenas os IDs dos personagens que batem com todos os filtros (AND).
+    Parâmetros aceitos:
+    - server, world, is_active, is_favorited, search, guild, activity_filter, min_level, max_level, vocation
+    - min_deaths, max_deaths: número mínimo/máximo de mortes (futuro)
+    - min_snapshots, max_snapshots: número mínimo/máximo de snapshots (futuro)
+    - min_experience, max_experience: experiência mínima/máxima (futuro)
+    - limit: máximo de IDs retornados
+    """
     query = select(CharacterModel.id)
     filters = []
     if server:
