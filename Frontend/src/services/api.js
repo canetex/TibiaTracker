@@ -284,6 +284,30 @@ export const apiService = {
     }
   },
 
+  /**
+   * Buscar IDs dos personagens filtrados
+   */
+  async filterCharacterIds(params = {}) {
+    try {
+      const response = await api.get('/api/v1/characters/filter-ids', { params });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar dados completos dos personagens por IDs
+   */
+  async getCharactersByIds(ids = []) {
+    try {
+      const response = await api.post('/api/v1/characters/by-ids', { ids });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // ============================================================================
   // UTILS
   // ============================================================================

@@ -370,3 +370,9 @@ def validate_server_world_combination(server: str, world: str) -> bool:
         raise ValueError(f"Mundo '{world}' não é válido para o servidor '{server}'")
     
     return True 
+
+class CharacterIDsResponse(BaseModel):
+    ids: List[int]
+
+class CharacterIDsRequest(BaseModel):
+    ids: List[int] 

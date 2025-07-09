@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -27,7 +27,7 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 
-const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
+const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
   const [expanded, setExpanded] = useState(false);
   const [filters, setFilters] = useState({
     server: '',
@@ -41,6 +41,22 @@ const CharacterFilters = ({ onFilterChange, onClearFilters, onShowChart, filtere
     activityFilter: [],
     limit: 'all',
   });
+
+  // Sincroniza o estado local com o prop filters
+  useEffect(() => {
+    setFilters({
+      server: externalFilters.server || '',
+      world: externalFilters.world || '',
+      vocation: externalFilters.vocation || '',
+      guild: externalFilters.guild || '',
+      search: externalFilters.search || '',
+      minLevel: externalFilters.minLevel || '',
+      maxLevel: externalFilters.maxLevel || '',
+      isFavorited: externalFilters.isFavorited || '',
+      activityFilter: externalFilters.activityFilter || [],
+      limit: externalFilters.limit || 'all',
+    });
+  }, [externalFilters]);
 
   const handleFieldChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };

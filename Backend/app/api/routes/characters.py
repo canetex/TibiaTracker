@@ -20,7 +20,7 @@ from app.schemas.character import (
     CharacterWithSnapshots, CharacterSummary, CharacterListResponse,
     CharacterSnapshotCreate, CharacterSnapshot as CharacterSnapshotSchema,
     CharacterEvolution, CharacterEvolutionResponse, CharacterStats,
-    SnapshotListResponse
+    SnapshotListResponse, CharacterIDsResponse, CharacterIDsRequest
 )
 from app.services.character import CharacterService
 from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
@@ -1728,3 +1728,52 @@ async def get_character_level_chart(
             "snapshots_count": len(snapshots)
         }
     } 
+
+@router.get("/filter-ids", response_model=CharacterIDsResponse)
+async def filter_character_ids(
+    server: Optional[str] = Query(None),
+    world: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    is_favorited: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    guild: Optional[str] = Query(None),
+    activity_filter: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retorna apenas os IDs dos personagens que batem com todos os filtros (AND)."""
+    query = select(CharacterModel.id)
+    filters = []
+    if server:
+        filters.append(CharacterModel.server == server)
+    if world:
+        filters.append(CharacterModel.world == world)
+    if is_active is not None:
+        filters.append(CharacterModel.is_active == is_active)
+    if is_favorited is not None:
+        filters.append(CharacterModel.is_favorited == is_favorited)
+    if search:
+        filters.append(CharacterModel.name.ilike(f"%{search}%"))
+    if guild:
+        filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
+    # TODO: activity_filter pode ser implementado conforme lógica já existente
+    if filters:
+        query = query.where(and_(*filters))
+    result = await db.execute(query)
+    ids = [row[0] for row in result.fetchall()]
+    return {"ids": ids}
+
+@router.post("/by-ids", response_model=List[CharacterWithSnapshots])
+async def get_characters_by_ids(
+    req: CharacterIDsRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Retorna os dados completos dos personagens pelos IDs fornecidos."""
+    if not req.ids:
+        return []
+    query = select(CharacterModel).where(CharacterModel.id.in_(req.ids)).options(selectinload(CharacterModel.snapshots))
+    result = await db.execute(query)
+    chars = result.scalars().all()
+    # Ordenar conforme a ordem dos IDs recebidos
+    id_to_char = {c.id: c for c in chars}
+    ordered = [id_to_char[i] for i in req.ids if i in id_to_char]
+    return ordered 

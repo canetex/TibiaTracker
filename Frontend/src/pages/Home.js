@@ -210,7 +210,9 @@ const Home = () => {
   const handleFilterChange = async (newFilters) => {
     console.log('[FILTER] handleFilterChange chamado com:', newFilters);
     setFilters(newFilters);
-    
+    setLoadingRecent(true);
+    setError(null);
+
     // Verificar se há filtros ativos
     const hasActiveFilters = Object.values(newFilters).some(value => {
       if (Array.isArray(value)) {
@@ -218,18 +220,11 @@ const Home = () => {
       }
       return value !== '' && value !== 'all';
     });
-    
-    console.log(`[FILTER] Filtros ativos: ${hasActiveFilters}`);
-    console.log(`[FILTER] activityFilter value: "${newFilters.activityFilter}"`);
-    console.log(`[FILTER] activityFilter type: ${typeof newFilters.activityFilter}`);
-    
+
     if (hasActiveFilters) {
-      // Se há filtros ativos, fazer requisição para o servidor com os filtros
-      console.log('[FILTER] Fazendo requisição para o servidor com filtros...');
       try {
+        // Montar parâmetros para a API de filtro de IDs
         const filterParams = {};
-        
-        // Adicionar apenas filtros não vazios
         if (newFilters.search) filterParams.search = newFilters.search;
         if (newFilters.server) filterParams.server = newFilters.server;
         if (newFilters.world) filterParams.world = newFilters.world;
@@ -244,25 +239,28 @@ const Home = () => {
         if (newFilters.limit && newFilters.limit !== 'all') {
           filterParams.limit = newFilters.limit;
         } else {
-          filterParams.limit = 1000; // Limite alto para filtros
+          filterParams.limit = 1000;
         }
-        
-        console.log('[FILTER] Parâmetros de filtro:', filterParams);
-        
-        const result = await apiService.listCharacters(filterParams);
-        console.log(`[FILTER] Resultado da API: ${result.characters?.length || 0} personagens`);
-        
-        setFilteredCharacters(result.characters || []);
-        
+
+        // 1. Buscar IDs filtrados
+        const idsResult = await apiService.filterCharacterIds(filterParams);
+        const ids = idsResult.ids || [];
+        // 2. Buscar dados completos por IDs
+        let chars = [];
+        if (ids.length > 0) {
+          chars = await apiService.getCharactersByIds(ids);
+        }
+        setFilteredCharacters(chars);
       } catch (err) {
         console.error('Erro ao aplicar filtros:', err);
         setError('Erro ao aplicar filtros. Tente novamente.');
+      } finally {
+        setLoadingRecent(false);
       }
     } else {
-      // Se não há filtros ativos, usar os personagens carregados localmente
-      console.log('[FILTER] Usando filtros locais...');
-      const filtered = applyFilters(recentCharacters, newFilters);
-      setFilteredCharacters(filtered);
+      // Se não há filtros ativos, mostrar personagens recentes
+      setFilteredCharacters(recentCharacters);
+      setLoadingRecent(false);
     }
   };
 
@@ -430,6 +428,14 @@ const Home = () => {
     setSelectedCharacterForCharts(null);
   };
 
+  // Função utilitária para saber se há filtros ativos
+  const hasActiveFilters = Object.values(filters).some(value => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== '' && value !== 'all';
+  });
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -503,6 +509,7 @@ const Home = () => {
 
       {/* Filters Section */}
       <CharacterFilters 
+        filters={filters}
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
         onShowChart={handleShowFilteredChart}
@@ -531,7 +538,7 @@ const Home = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center' }}>
             <TrendingUp sx={{ mr: 1 }} />
-            {searchResult ? 'Outros Personagens Recentes' : 'Personagens Adicionados Recentemente'}
+            {hasActiveFilters ? 'Personagens Filtrados' : (searchResult ? 'Outros Personagens Recentes' : 'Personagens Adicionados Recentemente')}
             {Object.keys(filters).length > 0 && (
               <Chip 
                 label={`${filteredCharacters.length.toLocaleString('pt-BR')} de ${recentCharacters.length.toLocaleString('pt-BR')}`}
