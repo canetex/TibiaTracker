@@ -253,41 +253,18 @@ const CharacterCard = ({
               <Tooltip title={(!character.snapshots || character.snapshots.length === 0) ? 'Dados de experiência detalhados não disponíveis para este personagem filtrado.' : ''}>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
                   {(() => {
-                    // 1. Tenta previous_experience
-                    if (character.previous_experience) {
+                    // 1. Usa previous_experience calculado no backend (prioridade)
+                    if (character.previous_experience !== undefined && character.previous_experience !== null) {
                       return character.previous_experience.toLocaleString('pt-BR');
                     }
-                    // 2. Tenta calcular diferença entre snapshots do dia anterior
-                    if (character.snapshots && Array.isArray(character.snapshots)) {
-                      let expOntem = null;
-                      let expAntes = null;
-                      // Ordena snapshots por data decrescente
-                      const sorted = [...character.snapshots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                      const hoje = new Date();
-                      const ontem = new Date();
-                      ontem.setDate(hoje.getDate() - 1);
-                      // Busca snapshot de ontem
-                      for (let snap of sorted) {
-                        const snapDate = new Date(snap.created_at);
-                        if (
-                          snapDate.getDate() === ontem.getDate() &&
-                          snapDate.getMonth() === ontem.getMonth() &&
-                          snapDate.getFullYear() === ontem.getFullYear()
-                        ) {
-                          expOntem = snap.experience;
-                          // Busca snapshot anterior a ontem
-                          const idx = sorted.indexOf(snap);
-                          if (idx + 1 < sorted.length) {
-                            expAntes = sorted[idx + 1].experience;
-                          }
-                          break;
-                        }
-                      }
-                      if (expOntem !== null && expAntes !== null) {
-                        return (expOntem - expAntes).toLocaleString('pt-BR');
-                      }
+                    // 2. Fallback: tenta calcular localmente se houver snapshots
+                    if (character.snapshots && Array.isArray(character.snapshots) && character.snapshots.length >= 2) {
+                      const sorted = [...character.snapshots].sort((a, b) => new Date(b.scraped_at) - new Date(a.scraped_at));
+                      const latest_exp = sorted[0].experience;
+                      const previous_exp = sorted[1].experience;
+                      return (latest_exp - previous_exp).toLocaleString('pt-BR');
                     }
-                    // 3. Tenta latest ou character.experience
+                    // 3. Fallback: mostra experiência total se não conseguir calcular diferença
                     const exp = latest?.experience || character.experience;
                     return exp ? exp.toLocaleString('pt-BR') : 'N/A';
                   })()}

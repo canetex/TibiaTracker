@@ -1040,11 +1040,42 @@ async def filter_character_ids(
     if vocation:
         conditions.append(CharacterModel.vocation.ilike(vocation))
     
-    if min_level is not None:
-        conditions.append(CharacterModel.level >= min_level)
-    
-    if max_level is not None:
-        conditions.append(CharacterModel.level <= max_level)
+    # Filtros de level - usar o level mais recente dos snapshots
+    if min_level is not None or max_level is not None:
+        # Subquery para pegar o level mais recente de cada personagem
+        latest_snapshot_subquery = (
+            select(
+                CharacterSnapshotModel.character_id,
+                func.max(CharacterSnapshotModel.scraped_at).label('latest_date')
+            )
+            .group_by(CharacterSnapshotModel.character_id)
+            .subquery()
+        )
+        
+        # JOIN com snapshots para pegar o level mais recente
+        query = query.join(
+            CharacterSnapshotModel,
+            CharacterModel.id == CharacterSnapshotModel.character_id
+        ).join(
+            latest_snapshot_subquery,
+            and_(
+                CharacterSnapshotModel.character_id == latest_snapshot_subquery.c.character_id,
+                CharacterSnapshotModel.scraped_at == latest_snapshot_subquery.c.latest_date
+            )
+        )
+        
+        if min_level is not None:
+            conditions.append(CharacterSnapshotModel.level >= min_level)
+        
+        if max_level is not None:
+            conditions.append(CharacterSnapshotModel.level <= max_level)
+    else:
+        # Se não há filtros de level, usar o level da tabela principal
+        if min_level is not None:
+            conditions.append(CharacterModel.level >= min_level)
+        
+        if max_level is not None:
+            conditions.append(CharacterModel.level <= max_level)
     
     # Aplicar condições se houver filtros
     if conditions:
@@ -1075,7 +1106,7 @@ async def get_characters_by_ids(
     if not req.ids:
         return []
     
-    # Buscar personagens com snapshots
+    # Buscar personagens com snapshots limitados (últimos 7 dias)
     query = (
         select(CharacterModel)
         .where(CharacterModel.id.in_(req.ids))
@@ -1085,10 +1116,26 @@ async def get_characters_by_ids(
     result = await db.execute(query)
     characters = result.scalars().all()
     
-    # Ordenar snapshots de cada personagem (mais recente primeiro)
+    # Processar cada personagem para limitar snapshots e calcular experiência
     for character in characters:
         if character.snapshots:
+            # Ordenar snapshots por data decrescente
             character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
+            
+            # Limitar a snapshots dos últimos 7 dias para performance
+            from datetime import datetime, timedelta
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            character.snapshots = [s for s in character.snapshots if s.scraped_at >= seven_days_ago]
+            
+            # Calcular experiência do último dia se houver snapshots suficientes
+            if len(character.snapshots) >= 2:
+                latest_exp = character.snapshots[0].experience
+                previous_exp = character.snapshots[1].experience
+                character.previous_experience = latest_exp - previous_exp
+            elif len(character.snapshots) == 1:
+                character.previous_experience = 0
+            else:
+                character.previous_experience = 0
     
     # Manter ordem original dos IDs
     character_dict = {char.id: char for char in characters}
