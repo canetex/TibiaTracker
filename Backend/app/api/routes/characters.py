@@ -1030,6 +1030,23 @@ async def filter_character_ids(
     if request:
         logger.info(f"[FILTER-IDS] URL completa: {request.url}")
         logger.info(f"[FILTER-IDS] Query params: {dict(request.query_params)}")
+        
+        # Pegar min_level e max_level diretamente dos query_params
+        if 'min_level' in request.query_params:
+            try:
+                min_level = int(request.query_params['min_level'])
+                logger.info(f"[FILTER-IDS] min_level extraído dos query_params: {min_level}")
+            except ValueError:
+                logger.warning(f"[FILTER-IDS] min_level inválido nos query_params: {request.query_params['min_level']}")
+                min_level = None
+        
+        if 'max_level' in request.query_params:
+            try:
+                max_level = int(request.query_params['max_level'])
+                logger.info(f"[FILTER-IDS] max_level extraído dos query_params: {max_level}")
+            except ValueError:
+                logger.warning(f"[FILTER-IDS] max_level inválido nos query_params: {request.query_params['max_level']}")
+                max_level = None
     
     # Converter min_level e max_level para inteiros se necessário
     if min_level is not None:
