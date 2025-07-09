@@ -1,44 +1,26 @@
 -- =============================================================================
--- TIBIA TRACKER - INICIALIZAÇÃO DO BANCO DE DADOS
+-- SCRIPT DE INICIALIZAÇÃO DO BANCO DE DADOS - TIBIA TRACKER
+-- Versão: 2.0 - Estrutura Reestruturada
 -- =============================================================================
--- Script para criar as tabelas iniciais do banco PostgreSQL
--- Executado automaticamente durante o primeiro startup do container
 
--- Criar extensão UUID se não existir
+-- ⚠️ IMPORTANTE: Este script cria a estrutura completa do banco de dados
+-- ⚠️ IMPORTANTE: Para migração de bancos existentes, use os scripts de migração
+
+-- =============================================================================
+-- EXTENSÕES NECESSÁRIAS
+-- =============================================================================
+
+-- UUID para identificadores únicos
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Configurar timezone padrão
-SET timezone = 'America/Sao_Paulo';
-
--- Configurações de performance básicas
-ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';
-ALTER SYSTEM SET log_statement = 'all';
-ALTER SYSTEM SET log_duration = on;
-ALTER SYSTEM SET log_min_duration_statement = 1000;
-
--- Configurações de conexão
-ALTER SYSTEM SET max_connections = 100;
-ALTER SYSTEM SET shared_buffers = '128MB';
-ALTER SYSTEM SET effective_cache_size = '512MB';
-ALTER SYSTEM SET work_mem = '4MB';
-ALTER SYSTEM SET maintenance_work_mem = '64MB';
-
--- Configurações de checkpoint
-ALTER SYSTEM SET checkpoint_completion_target = 0.9;
-ALTER SYSTEM SET wal_buffers = '16MB';
-ALTER SYSTEM SET default_statistics_target = 100;
-
--- Recarregar configurações
-SELECT pg_reload_conf();
-
--- Comentário informativo
--- As tabelas serão criadas automaticamente pelo Alembic/SQLAlchemy
--- através das migrations do backend FastAPI 
+-- Estatísticas de queries (opcional)
+-- ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';
 
 -- =============================================================================
 -- TABELA PRINCIPAL DE PERSONAGENS
 -- =============================================================================
--- Armazena informações básicas e estado atual do personagem
+-- Armazena informações básicas e estado atual dos personagens
+-- O histórico completo fica em character_snapshots
 CREATE TABLE IF NOT EXISTS characters (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -49,11 +31,11 @@ CREATE TABLE IF NOT EXISTS characters (
     level INTEGER DEFAULT 0,
     vocation VARCHAR(50) DEFAULT 'None',
     residence VARCHAR(255),
+    guild VARCHAR(255),
     
     -- Status e configurações
     is_active BOOLEAN DEFAULT TRUE,
     is_public BOOLEAN DEFAULT TRUE,
-    is_favorited BOOLEAN DEFAULT FALSE,
     
     -- URLs e identificadores
     profile_url VARCHAR(500),
@@ -76,13 +58,14 @@ CREATE TABLE IF NOT EXISTS characters (
 -- TABELA DE SNAPSHOTS DIÁRIOS DOS PERSONAGENS
 -- =============================================================================
 -- Armazena histórico completo dia-a-dia de todos os dados dos personagens
+-- IMPORTANTE: exp_date = data da experiência, scraped_at = data do scraping
 CREATE TABLE IF NOT EXISTS character_snapshots (
     id SERIAL PRIMARY KEY,
     character_id INTEGER REFERENCES characters(id) ON DELETE CASCADE,
     
     -- ===== DADOS BÁSICOS DO PERSONAGEM =====
     level INTEGER NOT NULL DEFAULT 0,
-    experience BIGINT NOT NULL DEFAULT 0,  -- BigInt para experiências altas
+    experience BIGINT NOT NULL DEFAULT 0,  -- Experiência ganha naquele dia específico
     deaths INTEGER NOT NULL DEFAULT 0,
     
     -- ===== PONTOS ESPECIAIS (podem ser null se não disponíveis) =====
@@ -106,11 +89,30 @@ CREATE TABLE IF NOT EXISTS character_snapshots (
     outfit_image_url VARCHAR(500),  -- URL da imagem do outfit
     outfit_image_path VARCHAR(500),  -- Caminho local da imagem do outfit
     outfit_data TEXT,  -- JSON string com dados detalhados do outfit
+    profile_url VARCHAR(500),
+    
+    -- ===== DATAS IMPORTANTES =====
+    exp_date DATE NOT NULL,                    -- Data da experiência (chave única)
+    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,  -- Data do scraping
     
     -- ===== METADADOS DO SCRAPING =====
-    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     scrape_source VARCHAR(100) DEFAULT 'manual',  -- manual, scheduled, retry
     scrape_duration INTEGER  -- duração em milissegundos
+);
+
+-- =============================================================================
+-- TABELA DE FAVORITOS DOS USUÁRIOS
+-- =============================================================================
+-- Armazena relação entre usuários e personagens favoritos
+-- Preparado para futura implementação de sistema de usuários
+CREATE TABLE IF NOT EXISTS character_favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL DEFAULT 1,  -- user_id = 1 para compatibilidade atual
+    character_id INTEGER REFERENCES characters(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Constraint único para evitar duplicatas
+    UNIQUE(user_id, character_id)
 );
 
 -- =============================================================================
@@ -122,12 +124,10 @@ CREATE INDEX IF NOT EXISTS idx_character_name ON characters(name);
 CREATE INDEX IF NOT EXISTS idx_character_server ON characters(server);
 CREATE INDEX IF NOT EXISTS idx_character_world ON characters(world);
 CREATE INDEX IF NOT EXISTS idx_character_active ON characters(is_active);
-CREATE INDEX IF NOT EXISTS idx_character_favorited ON characters(is_favorited);
 
 -- Índices compostos para characters
 CREATE INDEX IF NOT EXISTS idx_character_server_world ON characters(server, world);
 CREATE INDEX IF NOT EXISTS idx_character_name_server_world ON characters(name, server, world);
-CREATE INDEX IF NOT EXISTS idx_character_active_favorited ON characters(is_active, is_favorited);
 CREATE INDEX IF NOT EXISTS idx_character_next_scrape ON characters(next_scrape_at, is_active);
 
 -- Índices para a tabela character_snapshots
@@ -135,14 +135,23 @@ CREATE INDEX IF NOT EXISTS idx_snapshot_character_id ON character_snapshots(char
 CREATE INDEX IF NOT EXISTS idx_snapshot_scraped_at ON character_snapshots(scraped_at);
 CREATE INDEX IF NOT EXISTS idx_snapshot_world ON character_snapshots(world);
 
+-- Índice único para evitar duplicatas de (character_id, exp_date)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshot_character_exp_date 
+ON character_snapshots(character_id, exp_date);
+
 -- Índices compostos para character_snapshots (consultas históricas)
 CREATE INDEX IF NOT EXISTS idx_snapshot_character_scraped ON character_snapshots(character_id, scraped_at);
 CREATE INDEX IF NOT EXISTS idx_snapshot_character_world ON character_snapshots(character_id, world);
 CREATE INDEX IF NOT EXISTS idx_snapshot_level_experience ON character_snapshots(level, experience);
 CREATE INDEX IF NOT EXISTS idx_snapshot_points ON character_snapshots(charm_points, bosstiary_points, achievement_points);
+CREATE INDEX IF NOT EXISTS idx_snapshot_exp_date ON character_snapshots(exp_date);
 
 -- Índice para consultas de evolução temporal
-CREATE INDEX IF NOT EXISTS idx_snapshot_temporal ON character_snapshots(character_id, scraped_at DESC);
+CREATE INDEX IF NOT EXISTS idx_snapshot_temporal ON character_snapshots(character_id, exp_date DESC);
+
+-- Índices para a tabela character_favorites
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON character_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_character ON character_favorites(character_id);
 
 -- =============================================================================
 -- FUNÇÃO PARA ATUALIZAR updated_at AUTOMATICAMENTE
@@ -189,22 +198,38 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO tibia_user;
 
 COMMENT ON TABLE characters IS 'Tabela principal para armazenar informações básicas e estado atual dos personagens';
 COMMENT ON TABLE character_snapshots IS 'Tabela para armazenar snapshots históricos diários dos personagens, permitindo rastrear evolução ao longo do tempo';
+COMMENT ON TABLE character_favorites IS 'Tabela para armazenar relação entre usuários e personagens favoritos';
 
 COMMENT ON COLUMN characters.world IS 'World atual do personagem (pode mudar ao longo do tempo)';
 COMMENT ON COLUMN character_snapshots.world IS 'World do personagem no momento do snapshot (rastreia mudanças de world)';
-COMMENT ON COLUMN character_snapshots.experience IS 'Experiência total do personagem (BigInt para suportar valores altos)';
+COMMENT ON COLUMN character_snapshots.experience IS 'Experiência ganha naquele dia específico (não experiência total)';
+COMMENT ON COLUMN character_snapshots.exp_date IS 'Data a qual se refere a experiência (chave única com character_id)';
+COMMENT ON COLUMN character_snapshots.scraped_at IS 'Data/hora em que o scraping foi realizado';
 COMMENT ON COLUMN character_snapshots.outfit_image_url IS 'URL da imagem do outfit do personagem';
 COMMENT ON COLUMN character_snapshots.outfit_data IS 'Dados detalhados do outfit em formato JSON';
 
 -- =============================================================================
--- STATUS
+-- VERIFICAÇÕES DE INTEGRIDADE
 -- =============================================================================
 
--- Exibir informações sobre as tabelas criadas
+-- Verificar se as tabelas foram criadas corretamente
 DO $$ 
+DECLARE
+    char_count INTEGER;
+    snapshot_count INTEGER;
+    favorite_count INTEGER;
 BEGIN
+    SELECT COUNT(*) INTO char_count FROM information_schema.tables WHERE table_name = 'characters';
+    SELECT COUNT(*) INTO snapshot_count FROM information_schema.tables WHERE table_name = 'character_snapshots';
+    SELECT COUNT(*) INTO favorite_count FROM information_schema.tables WHERE table_name = 'character_favorites';
+    
+    IF char_count = 0 OR snapshot_count = 0 OR favorite_count = 0 THEN
+        RAISE EXCEPTION 'Erro: Nem todas as tabelas foram criadas corretamente';
+    END IF;
+    
     RAISE NOTICE 'Tibia Tracker Database Initialized Successfully!';
-    RAISE NOTICE 'Tables created: characters, character_snapshots';
+    RAISE NOTICE 'Tables created: characters, character_snapshots, character_favorites';
     RAISE NOTICE 'Indexes created for optimal performance';
     RAISE NOTICE 'Ready for character tracking and daily snapshots';
+    RAISE NOTICE 'Structure version: 2.0 - Reestruturada';
 END $$; 
