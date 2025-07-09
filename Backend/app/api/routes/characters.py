@@ -170,10 +170,10 @@ async def search_character(
                 latest_snapshot = sorted(existing_character.snapshots, key=lambda x: x.scraped_at, reverse=True)[0]
             
             # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow().replace(tzinfo=None) - timedelta(days=30)
+            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
             recent_snapshots = [
                 snap for snap in existing_character.snapshots 
-                if snap.scraped_at.replace(tzinfo=None) >= thirty_days_ago
+                if snap.scraped_at >= thirty_days_ago
             ]
             
             # Calcular estatísticas
@@ -711,7 +711,7 @@ async def get_recent_characters(
             total_snapshots = count_result.scalar()
             
             # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow().replace(tzinfo=None) - timedelta(days=30)
+            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
             exp_stats_result = await db.execute(
                 select(CharacterSnapshotModel)
                 .where(
@@ -875,10 +875,14 @@ async def list_characters(
         
         if target_date:
             # Subconsulta para encontrar personagens com experiência > 0 na data específica
+            # Converter target_date para datetime com timezone para comparação correta
+            target_datetime_start = datetime.combine(target_date, datetime.min.time())
+            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
+            
             subquery = select(CharacterSnapshotModel.character_id).where(
                 and_(
-                    CharacterSnapshotModel.scraped_at >= target_date,
-                    CharacterSnapshotModel.scraped_at < target_date + timedelta(days=1),
+                    CharacterSnapshotModel.scraped_at >= target_datetime_start,
+                    CharacterSnapshotModel.scraped_at < target_datetime_end,
                     CharacterSnapshotModel.experience > 0
                 )
             ).distinct()
@@ -1126,11 +1130,12 @@ async def get_characters_by_ids(
             if len(character.snapshots) >= 2:
                 latest_exp = character.snapshots[0].experience
                 previous_exp = character.snapshots[1].experience
-                character.previous_experience = latest_exp - previous_exp
+                # Usar setattr para evitar problemas de serialização
+                setattr(character, 'previous_experience', latest_exp - previous_exp)
             elif len(character.snapshots) == 1:
-                character.previous_experience = 0
+                setattr(character, 'previous_experience', 0)
             else:
-                character.previous_experience = 0
+                setattr(character, 'previous_experience', 0)
     
     # Manter ordem original dos IDs
     character_dict = {char.id: char for char in characters}
