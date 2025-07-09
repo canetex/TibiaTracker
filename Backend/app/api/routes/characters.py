@@ -1738,6 +1738,8 @@ async def filter_character_ids(
     search: Optional[str] = Query(None),
     guild: Optional[str] = Query(None),
     activity_filter: Optional[str] = Query(None),
+    min_level: Optional[int] = Query(None),
+    max_level: Optional[int] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     """Retorna apenas os IDs dos personagens que batem com todos os filtros (AND)."""
@@ -1755,6 +1757,10 @@ async def filter_character_ids(
         filters.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
         filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
+    if min_level is not None:
+        filters.append(CharacterModel.level >= min_level)
+    if max_level is not None:
+        filters.append(CharacterModel.level <= max_level)
     # TODO: activity_filter pode ser implementado conforme lógica já existente
     if filters:
         query = query.where(and_(*filters))
