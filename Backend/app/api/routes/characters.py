@@ -983,6 +983,123 @@ async def create_character(
     return character
 
 
+# ===== ENDPOINTS DE FILTRAGEM =====
+
+@router.get("/filter-ids", response_model=CharacterIDsResponse)
+async def filter_character_ids(
+    server: Optional[str] = Query(None),
+    world: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    is_favorited: Optional[bool] = Query(None, alias='isFavorited'),
+    search: Optional[str] = Query(None),
+    guild: Optional[str] = Query(None),
+    activity_filter: Optional[List[str]] = Query(None),
+    min_level: Optional[int] = Query(None, alias='minLevel'),
+    max_level: Optional[int] = Query(None, alias='maxLevel'),
+    vocation: Optional[str] = Query(None),
+    # Filtros adicionais para uso futuro:
+    min_deaths: Optional[int] = Query(None, alias='minDeaths', description='Filtrar por número mínimo de mortes'),
+    max_deaths: Optional[int] = Query(None, alias='maxDeaths', description='Filtrar por número máximo de mortes'),
+    min_snapshots: Optional[int] = Query(None, alias='minSnapshots', description='Filtrar por número mínimo de snapshots'),
+    max_snapshots: Optional[int] = Query(None, alias='maxSnapshots', description='Filtrar por número máximo de snapshots'),
+    min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
+    max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
+    limit: Optional[int] = Query(1000, ge=1, le=10000),
+    db: AsyncSession = Depends(get_db),
+    request: Request = None  # Permite ignorar parâmetros extras como _t
+):
+    """
+    Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
+    Usado pelo frontend para obter lista de IDs antes de buscar dados completos.
+    """
+    
+    # Construir query base
+    query = select(CharacterModel.id)
+    
+    # Aplicar filtros
+    conditions = []
+    
+    if server:
+        conditions.append(CharacterModel.server.ilike(server))
+    
+    if world:
+        conditions.append(CharacterModel.world.ilike(world))
+    
+    if is_active is not None:
+        conditions.append(CharacterModel.is_active == is_active)
+    
+    if is_favorited is not None:
+        conditions.append(CharacterModel.is_favorited == is_favorited)
+    
+    if search:
+        conditions.append(CharacterModel.name.ilike(f"%{search}%"))
+    
+    if guild:
+        conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
+    
+    if vocation:
+        conditions.append(CharacterModel.vocation.ilike(vocation))
+    
+    if min_level is not None:
+        conditions.append(CharacterModel.level >= min_level)
+    
+    if max_level is not None:
+        conditions.append(CharacterModel.level <= max_level)
+    
+    # Aplicar condições se houver filtros
+    if conditions:
+        query = query.where(and_(*conditions))
+    
+    # Aplicar limite
+    query = query.limit(limit)
+    
+    # Executar query
+    result = await db.execute(query)
+    character_ids = [row[0] for row in result.fetchall()]
+    
+    return CharacterIDsResponse(
+        character_ids=character_ids,
+        total_count=len(character_ids)
+    )
+
+
+@router.post("/by-ids", response_model=List[CharacterWithSnapshots])
+async def get_characters_by_ids(
+    req: CharacterIDsRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Buscar personagens completos por lista de IDs.
+    Usado pelo frontend após obter IDs filtrados.
+    """
+    
+    if not req.character_ids:
+        return []
+    
+    # Buscar personagens com snapshots
+    query = (
+        select(CharacterModel)
+        .where(CharacterModel.id.in_(req.character_ids))
+        .options(selectinload(CharacterModel.snapshots))
+    )
+    
+    result = await db.execute(query)
+    characters = result.scalars().all()
+    
+    # Ordenar snapshots de cada personagem (mais recente primeiro)
+    for character in characters:
+        if character.snapshots:
+            character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
+    
+    # Manter ordem original dos IDs
+    character_dict = {char.id: char for char in characters}
+    ordered_characters = [character_dict.get(char_id) for char_id in req.character_ids if char_id in character_dict]
+    
+    return ordered_characters
+
+
+# ===== ENDPOINTS DE PERSONAGEM ESPECÍFICO =====
+
 @router.get("/{character_id}", response_model=CharacterWithSnapshots)
 async def get_character(
     character_id: int,
@@ -1728,80 +1845,3 @@ async def get_character_level_chart(
             "snapshots_count": len(snapshots)
         }
     } 
-
-@router.get("/filter-ids", response_model=CharacterIDsResponse)
-async def filter_character_ids(
-    server: Optional[str] = Query(None),
-    world: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
-    is_favorited: Optional[bool] = Query(None, alias='isFavorited'),
-    search: Optional[str] = Query(None),
-    guild: Optional[str] = Query(None),
-    activity_filter: Optional[List[str]] = Query(None),
-    min_level: Optional[int] = Query(None, alias='minLevel'),
-    max_level: Optional[int] = Query(None, alias='maxLevel'),
-    vocation: Optional[str] = Query(None),
-    # Filtros adicionais para uso futuro:
-    min_deaths: Optional[int] = Query(None, alias='minDeaths', description='Filtrar por número mínimo de mortes'),
-    max_deaths: Optional[int] = Query(None, alias='maxDeaths', description='Filtrar por número máximo de mortes'),
-    min_snapshots: Optional[int] = Query(None, alias='minSnapshots', description='Filtrar por número mínimo de snapshots'),
-    max_snapshots: Optional[int] = Query(None, alias='maxSnapshots', description='Filtrar por número máximo de snapshots'),
-    min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
-    max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
-    limit: Optional[int] = Query(1000, ge=1, le=10000),
-    db: AsyncSession = Depends(get_db),
-    request: Request = None  # Permite ignorar parâmetros extras como _t
-):
-    """
-    Retorna apenas os IDs dos personagens que batem com todos os filtros (AND).
-    Parâmetros aceitos:
-    - server, world, is_active, is_favorited, search, guild, activity_filter, min_level, max_level, vocation
-    - min_deaths, max_deaths: número mínimo/máximo de mortes (futuro)
-    - min_snapshots, max_snapshots: número mínimo/máximo de snapshots (futuro)
-    - min_experience, max_experience: experiência mínima/máxima (futuro)
-    - limit: máximo de IDs retornados
-    """
-    query = select(CharacterModel.id)
-    filters = []
-    if server:
-        filters.append(CharacterModel.server.ilike(server))
-    if world:
-        filters.append(CharacterModel.world.ilike(world))
-    if is_active is not None:
-        filters.append(CharacterModel.is_active == is_active)
-    if is_favorited is not None:
-        filters.append(CharacterModel.is_favorited == is_favorited)
-    if search:
-        filters.append(CharacterModel.name.ilike(f"%{search}%"))
-    if guild:
-        filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
-    if vocation:
-        filters.append(CharacterModel.vocation.ilike(vocation))
-    if min_level is not None:
-        filters.append(CharacterModel.level >= min_level)
-    if max_level is not None:
-        filters.append(CharacterModel.level <= max_level)
-    # TODO: activity_filter pode ser implementado conforme lógica já existente
-    if filters:
-        query = query.where(and_(*filters))
-    if limit:
-        query = query.limit(limit)
-    result = await db.execute(query)
-    ids = [row[0] for row in result.fetchall()]
-    return {"ids": ids}
-
-@router.post("/by-ids", response_model=List[CharacterWithSnapshots])
-async def get_characters_by_ids(
-    req: CharacterIDsRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """Retorna os dados completos dos personagens pelos IDs fornecidos."""
-    if not req.ids:
-        return []
-    query = select(CharacterModel).where(CharacterModel.id.in_(req.ids)).options(selectinload(CharacterModel.snapshots))
-    result = await db.execute(query)
-    chars = result.scalars().all()
-    # Ordenar conforme a ordem dos IDs recebidos
-    id_to_char = {c.id: c for c in chars}
-    ordered = [id_to_char[i] for i in req.ids if i in id_to_char]
-    return ordered 
