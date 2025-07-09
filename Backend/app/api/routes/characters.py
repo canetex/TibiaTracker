@@ -1015,6 +1015,32 @@ async def filter_character_ids(
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
+    # Log dos filtros recebidos para debug
+    logger.info(f"[FILTER-IDS] Filtros recebidos: server={server}, world={world}, guild={guild}, min_level={min_level} (tipo: {type(min_level)}), max_level={max_level} (tipo: {type(max_level)}), vocation={vocation}")
+    
+    # Converter min_level e max_level para inteiros se necessário
+    if min_level is not None:
+        if isinstance(min_level, str) and min_level.strip():
+            try:
+                min_level = int(min_level)
+                logger.info(f"[FILTER-IDS] min_level convertido para: {min_level}")
+            except ValueError:
+                logger.warning(f"[FILTER-IDS] min_level inválido: {min_level}")
+                min_level = None
+        elif not isinstance(min_level, int):
+            min_level = None
+    
+    if max_level is not None:
+        if isinstance(max_level, str) and max_level.strip():
+            try:
+                max_level = int(max_level)
+                logger.info(f"[FILTER-IDS] max_level convertido para: {max_level}")
+            except ValueError:
+                logger.warning(f"[FILTER-IDS] max_level inválido: {max_level}")
+                max_level = None
+        elif not isinstance(max_level, int):
+            max_level = None
+    
     # Query base - apenas da tabela Character
     query = select(CharacterModel.id)
     conditions = []
@@ -1043,8 +1069,10 @@ async def filter_character_ids(
 
     # Filtros de level da tabela principal
     if min_level is not None:
+        logger.info(f"[FILTER-IDS] Aplicando filtro min_level >= {min_level}")
         conditions.append(CharacterModel.level >= min_level)
     if max_level is not None:
+        logger.info(f"[FILTER-IDS] Aplicando filtro max_level <= {max_level}")
         conditions.append(CharacterModel.level <= max_level)
 
     # Filtros que dependem do snapshot mais recente
@@ -1090,6 +1118,8 @@ async def filter_character_ids(
     # Executar query
     result = await db.execute(query)
     character_ids = [row[0] for row in result.fetchall()]
+    
+    logger.info(f"[FILTER-IDS] IDs encontrados após filtros básicos: {len(character_ids)}")
 
     # Se há filtros de atividade, fazer uma segunda consulta para filtrar por snapshots
     if activity_filter and character_ids:
@@ -1126,7 +1156,9 @@ async def filter_character_ids(
             activity_result = await db.execute(activity_query)
             active_character_ids = [row[0] for row in activity_result.fetchall()]
             character_ids = [cid for cid in character_ids if cid in active_character_ids]
+            logger.info(f"[FILTER-IDS] IDs após filtro de atividade: {len(character_ids)}")
 
+    logger.info(f"[FILTER-IDS] Retornando {len(character_ids)} IDs")
     return CharacterIDsResponse(
         ids=character_ids
     )
