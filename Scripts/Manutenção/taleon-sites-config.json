@@ -1,0 +1,179 @@
+{
+  "taleon_sites": {
+    "description": "Configuração dos sites do Taleon para scraping automático de personagens",
+    "version": "1.1",
+    "last_updated": "2025-01-27",
+    "sites": [
+      {
+        "id": "deaths_san",
+        "name": "Latest Deaths San",
+        "world": "san",
+        "base_url": "https://san.taleon.online",
+        "character_list_url": "https://san.taleon.online/deaths.php",
+        "description": "Últimas mortes do mundo San - lista personagens que morreram recentemente",
+        "enabled": true,
+        "delay_seconds": 3.0,
+        "timeout_seconds": 30,
+        "max_characters": 100,
+        "scraping_method": "deaths",
+        "priority": 1
+      },
+      {
+        "id": "deaths_aura",
+        "name": "Latest Deaths Aura", 
+        "world": "aura",
+        "base_url": "https://aura.taleon.online",
+        "character_list_url": "https://aura.taleon.online/deaths.php",
+        "description": "Últimas mortes do mundo Aura - lista personagens que morreram recentemente",
+        "enabled": true,
+        "delay_seconds": 3.0,
+        "timeout_seconds": 30,
+        "max_characters": 100,
+        "scraping_method": "deaths",
+        "priority": 1
+      },
+      {
+        "id": "deaths_gaia",
+        "name": "Latest Deaths Gaia",
+        "world": "gaia",
+        "base_url": "https://gaia.taleon.online", 
+        "character_list_url": "https://gaia.taleon.online/deaths.php",
+        "description": "Últimas mortes do mundo Gaia - lista personagens que morreram recentemente",
+        "enabled": true,
+        "delay_seconds": 3.0,
+        "timeout_seconds": 30,
+        "max_characters": 100,
+        "scraping_method": "deaths",
+        "priority": 1
+      },
+      {
+        "id": "powergamers_san",
+        "name": "Powergamers San",
+        "world": "san",
+        "base_url": "https://san.taleon.online",
+        "character_list_url": "https://san.taleon.online/powergamers.php",
+        "description": "Powergamers do mundo San - lista personagens que ganharam mais experiência",
+        "enabled": true,
+        "delay_seconds": 3.5,
+        "timeout_seconds": 35,
+        "max_characters": 150,
+        "scraping_method": "powergamers",
+        "priority": 2
+      },
+      {
+        "id": "powergamers_aura",
+        "name": "Powergamers Aura",
+        "world": "aura", 
+        "base_url": "https://aura.taleon.online",
+        "character_list_url": "https://aura.taleon.online/powergamers.php",
+        "description": "Powergamers do mundo Aura - lista personagens que ganharam mais experiência",
+        "enabled": true,
+        "delay_seconds": 3.5,
+        "timeout_seconds": 35,
+        "max_characters": 150,
+        "scraping_method": "powergamers",
+        "priority": 2
+      },
+      {
+        "id": "powergamers_gaia",
+        "name": "Powergamers Gaia",
+        "world": "gaia",
+        "base_url": "https://gaia.taleon.online",
+        "character_list_url": "https://gaia.taleon.online/powergamers.php", 
+        "description": "Powergamers do mundo Gaia - lista personagens que ganharam mais experiência",
+        "enabled": true,
+        "delay_seconds": 3.5,
+        "timeout_seconds": 35,
+        "max_characters": 150,
+        "scraping_method": "powergamers",
+        "priority": 2
+      },
+      {
+        "id": "onlinelist_san",
+        "name": "Online List San",
+        "world": "san",
+        "base_url": "https://san.taleon.online",
+        "character_list_url": "https://san.taleon.online/onlinelist.php",
+        "description": "Lista de jogadores online do mundo San - captura personagens ativos",
+        "enabled": true,
+        "delay_seconds": 2.5,
+        "timeout_seconds": 25,
+        "max_characters": 200,
+        "scraping_method": "onlinelist",
+        "priority": 3
+      },
+      {
+        "id": "onlinelist_aura",
+        "name": "Online List Aura",
+        "world": "aura",
+        "base_url": "https://aura.taleon.online",
+        "character_list_url": "https://aura.taleon.online/onlinelist.php",
+        "description": "Lista de jogadores online do mundo Aura - captura personagens ativos",
+        "enabled": true,
+        "delay_seconds": 2.5,
+        "timeout_seconds": 25,
+        "max_characters": 200,
+        "scraping_method": "onlinelist",
+        "priority": 3
+      },
+      {
+        "id": "onlinelist_gaia",
+        "name": "Online List Gaia",
+        "world": "gaia",
+        "base_url": "https://gaia.taleon.online",
+        "character_list_url": "https://gaia.taleon.online/onlinelist.php",
+        "description": "Lista de jogadores online do mundo Gaia - captura personagens ativos",
+        "enabled": true,
+        "delay_seconds": 2.5,
+        "timeout_seconds": 25,
+        "max_characters": 200,
+        "scraping_method": "onlinelist",
+        "priority": 3
+      }
+    ],
+    "scraping_methods": {
+      "deaths": {
+        "description": "Extrai personagens da página de últimas mortes",
+        "selectors": {
+          "table": "table",
+          "character_link": "a[href*='characterprofile.php?name=']",
+          "victim_column": "td:first-child",
+          "death_info": "td:nth-child(2)"
+        }
+      },
+      "powergamers": {
+        "description": "Extrai personagens da página de powergamers",
+        "selectors": {
+          "table": "table",
+          "character_link": "a[href*='characterprofile.php?name=']",
+          "experience_gained": "td:nth-child(2)",
+          "level_info": "td:nth-child(3)"
+        }
+      },
+      "onlinelist": {
+        "description": "Extrai personagens da lista de jogadores online",
+        "selectors": {
+          "table": "table",
+          "character_link": "a[href*='characterprofile.php?name=']",
+          "name_column": "td:first-child",
+          "vip_status": "td:nth-child(2)",
+          "level_column": "td:nth-child(3)",
+          "vocation_column": "td:nth-child(4)",
+          "guild_column": "td:nth-child(5)"
+        }
+      }
+    },
+    "api_config": {
+      "base_url": "http://localhost:8000",
+      "endpoint": "/api/v1/characters/search",
+      "delay_between_requests": 1.0,
+      "timeout_seconds": 30,
+      "max_retries": 3
+    },
+    "cron_config": {
+      "schedule": "0 2 */3 * *",
+      "description": "Executar às 2:00 da manhã a cada 3 dias",
+      "log_file": "auto-load-cron.log"
+    }
+  }
+} 
