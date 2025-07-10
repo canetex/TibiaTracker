@@ -19,6 +19,7 @@ from urllib.parse import quote
 from bs4 import BeautifulSoup
 import logging
 from dataclasses import dataclass
+from app.core.utils import normalize_datetime
 
 from .base import BaseCharacterScraper
 
@@ -479,7 +480,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             # Se tem login recente, pode estar online
                             if data['last_login']:
                                 # Considerar online se último login foi nas últimas 2 horas
-                                time_diff = datetime.now() - data['last_login']
+                                time_diff = normalize_datetime(datetime.now()) - normalize_datetime(data['last_login'])
                                 data['is_online'] = time_diff.total_seconds() < 7200
                         
                         elif 'residence' in label:
