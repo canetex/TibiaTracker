@@ -184,13 +184,11 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
     if (min === Infinity || max === -Infinity) {
       return [0, 100]; // fallback
     }
-    if (min === max) {
-      const yMin = roundDown100(min * 0.9);
-      const yMax = roundUp100(max * 1.05);
-      return [yMin, yMax === yMin ? yMin + 100 : yMax];
+    let yMin = roundDown100(min * 0.9);
+    let yMax = roundUp100(max * 1.05);
+    if (yMax - yMin < 100) {
+      yMax = yMin + 100;
     }
-    const yMin = roundDown100(min * 0.9);
-    const yMax = roundUp100(max * 1.05);
     return [yMin, yMax];
   };
 
@@ -354,6 +352,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         orientation="right"
                         type="number"
                         domain={getLevelDomain()}
+                        allowDataOverflow={true}
                       />
                     )}
                     <RechartsTooltip
