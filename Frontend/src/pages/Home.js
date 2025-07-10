@@ -70,14 +70,19 @@ const Home = () => {
 
   const loadInitialData = async () => {
     try {
+      console.log('[LOAD] Iniciando carregamento de dados iniciais...');
       setLoadingRecent(true);
       setError(null);
       
       // Carregar personagens recentes (limitado) e estatísticas globais em paralelo
+      console.log('[LOAD] Carregando personagens recentes e estatísticas globais...');
       const [recent, stats] = await Promise.all([
         apiService.getRecentCharacters(10), // Carregar apenas 10 recentes
         apiService.getGlobalStats(),
       ]);
+      
+      console.log('[LOAD] Personagens recentes recebidos:', recent);
+      console.log('[LOAD] Estatísticas globais recebidas:', stats);
       
       setRecentCharacters(recent);
       setFilteredCharacters(recent);
@@ -254,12 +259,17 @@ const Home = () => {
         }
 
         // 1. Buscar IDs filtrados
+        console.log('[FILTER] Buscando IDs filtrados com parâmetros:', filterParams);
         const idsResult = await apiService.filterCharacterIds(filterParams);
         const ids = idsResult.ids || [];
+        console.log('[FILTER] IDs encontrados:', ids);
+        
         // 2. Buscar dados completos por IDs
         let chars = [];
         if (ids.length > 0) {
+          console.log('[FILTER] Buscando dados completos para', ids.length, 'personagens');
           chars = await apiService.getCharactersByIds(ids);
+          console.log('[FILTER] Dados completos recebidos:', chars);
         }
         setFilteredCharacters(chars);
       } catch (err) {

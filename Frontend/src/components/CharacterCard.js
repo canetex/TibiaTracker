@@ -41,6 +41,21 @@ const CharacterCard = ({
   const [refreshing, setRefreshing] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
 
+  // Log dos dados do personagem para debug
+  console.log(`[CHARACTER_CARD] Renderizando card para ${character.name}:`, {
+    id: character.id,
+    name: character.name,
+    last_experience: character.last_experience,
+    last_experience_date: character.last_experience_date,
+    previous_experience: character.previous_experience,
+    latest_snapshot: character.latest_snapshot ? {
+      experience: character.latest_snapshot.experience,
+      level: character.latest_snapshot.level
+    } : null,
+    total_exp_gained: character.total_exp_gained,
+    exp_gained: character.exp_gained
+  });
+
   const handleRefresh = async () => {
     if (onRefresh && !refreshing) {
       setRefreshing(true);

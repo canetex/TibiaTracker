@@ -146,11 +146,32 @@ export const apiService = {
    */
   async getRecentCharacters(limit = 10) {
     try {
+      console.log(`[API] getRecentCharacters chamado com limite: ${limit}`);
       const response = await api.get('/api/v1/characters/recent', {
         params: { limit }
       });
+      console.log('[API] getRecentCharacters resposta:', response.data);
+      
+      // Log detalhado dos campos de experiência para cada personagem
+      if (response.data && Array.isArray(response.data)) {
+        response.data.forEach((char, index) => {
+          console.log(`[API] Personagem recente ${index + 1} (${char.name}):`, {
+            id: char.id,
+            name: char.name,
+            last_experience: char.last_experience,
+            last_experience_date: char.last_experience_date,
+            previous_experience: char.previous_experience,
+            latest_snapshot: char.latest_snapshot ? {
+              experience: char.latest_snapshot.experience,
+              level: char.latest_snapshot.level
+            } : null
+          });
+        });
+      }
+      
       return response.data;
     } catch (error) {
+      console.error('[API] Erro em getRecentCharacters:', error);
       throw error;
     }
   },
@@ -301,9 +322,30 @@ export const apiService = {
    */
   async getCharactersByIds(ids = []) {
     try {
+      console.log('[API] getCharactersByIds chamado com IDs:', ids);
       const response = await api.post('/api/v1/characters/by-ids', { ids });
+      console.log('[API] getCharactersByIds resposta completa:', response.data);
+      
+      // Log detalhado dos campos de experiência para cada personagem
+      if (response.data && Array.isArray(response.data)) {
+        response.data.forEach((char, index) => {
+          console.log(`[API] Personagem ${index + 1} (${char.name}):`, {
+            id: char.id,
+            name: char.name,
+            last_experience: char.last_experience,
+            last_experience_date: char.last_experience_date,
+            previous_experience: char.previous_experience,
+            latest_snapshot: char.latest_snapshot ? {
+              experience: char.latest_snapshot.experience,
+              level: char.latest_snapshot.level
+            } : null
+          });
+        });
+      }
+      
       return response.data;
     } catch (error) {
+      console.error('[API] Erro em getCharactersByIds:', error);
       throw error;
     }
   },
