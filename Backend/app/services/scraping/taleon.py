@@ -14,7 +14,7 @@ Estrutura de URLs por mundo:
 import re
 import json
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import quote
 from bs4 import BeautifulSoup
 import logging
@@ -257,7 +257,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         snapshot_date = datetime.now().date()
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Data 'today' convertida para {snapshot_date}")
                     elif date_text.lower() == 'yesterday':
-                        from datetime import timedelta
                         snapshot_date = (datetime.now() - timedelta(days=1)).date()
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Data 'yesterday' convertida para {snapshot_date}")
                     else:
