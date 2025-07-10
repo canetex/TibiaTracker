@@ -244,7 +244,6 @@ async def search_character(
             outfit_image_url=scraped_data.get('outfit_image_url'),
             is_active=True,
             is_public=True,
-            is_favorited=False,
             last_scraped_at=datetime.utcnow()
         )
         
@@ -252,6 +251,7 @@ async def search_character(
         await db.flush()  # Para obter o ID
         
         # Criar primeiro snapshot
+        today = datetime.now().date()
         snapshot = CharacterSnapshotModel(
             character_id=character.id,
             level=scraped_data['level'],
@@ -269,7 +269,8 @@ async def search_character(
             is_online=scraped_data.get('is_online', False),
             last_login=scraped_data.get('last_login'),
             outfit_image_url=scraped_data.get('outfit_image_url'),
-            scraped_at=datetime.utcnow(),
+            exp_date=today,  # Data da experiência (hoje)
+            scraped_at=datetime.utcnow(),  # Data do scraping
             scrape_source="search",
             scrape_duration=scrape_result.duration_ms
         )
@@ -398,7 +399,6 @@ async def scrape_and_create_character(
             outfit_image_url=scraped_data.get('outfit_image_url'),
             is_active=True,
             is_public=True,
-            is_favorited=False,
             last_scraped_at=datetime.utcnow()
         )
         
@@ -406,6 +406,7 @@ async def scrape_and_create_character(
         await db.flush()  # Para obter o ID
         
         # Criar primeiro snapshot
+        today = datetime.now().date()
         snapshot = CharacterSnapshotModel(
             character_id=character.id,
             level=scraped_data['level'],
@@ -423,7 +424,8 @@ async def scrape_and_create_character(
             is_online=scraped_data.get('is_online', False),
             last_login=scraped_data.get('last_login'),
             outfit_image_url=scraped_data.get('outfit_image_url'),
-            scraped_at=datetime.utcnow(),
+            exp_date=today,  # Data da experiência (hoje)
+            scraped_at=datetime.utcnow(),  # Data do scraping
             scrape_source="manual",
             scrape_duration=scrape_result.duration_ms
         )
@@ -543,11 +545,11 @@ async def scrape_character_with_history(
             for i, entry in enumerate(history_data):
                 logger.info(f"[SCRAPE-WITH-HISTORY] Processando entrada {i+1}/{len(history_data)}: {entry}")
                 
-                # Verificar se já existe snapshot para esta data (pegar o mais recente)
+                # Verificar se já existe snapshot para esta data usando exp_date
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
                         CharacterSnapshotModel.character_id == character.id,
-                        func.date(CharacterSnapshotModel.scraped_at) == entry['date']
+                        CharacterSnapshotModel.exp_date == entry['date']
                     )
                 ).order_by(desc(CharacterSnapshotModel.scraped_at)).limit(1)
                 snapshot_result = await db.execute(existing_snapshot_query)
@@ -589,6 +591,7 @@ async def scrape_character_with_history(
                         character_id=character.id,
                         level=scraped_data['level'],  # Usar level atual para todos
                         experience=max(0, entry['experience_gained']),  # Experiência específica do dia, garantindo que não seja negativa
+                        exp_date=entry['date'],  # Data da experiência (da entrada do histórico)
                         deaths=scraped_data.get('deaths', 0),
                         charm_points=scraped_data.get('charm_points'),
                         bosstiary_points=scraped_data.get('bosstiary_points'),
@@ -1616,11 +1619,11 @@ async def refresh_character_data(
             for i, entry in enumerate(history_data, 1):
                 logger.debug(f"[REFRESH] Processando entrada {i}/{len(history_data)}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
                 
-                # Verificar se já existe snapshot para esta data (pegar só o primeiro, nunca lançar erro)
+                # Verificar se já existe snapshot para esta data usando exp_date
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
                         CharacterSnapshotModel.character_id == character.id,
-                        func.date(CharacterSnapshotModel.scraped_at) == entry['date']
+                        CharacterSnapshotModel.exp_date == entry['date']
                     )
                 ).limit(1)
                 snapshot_result = await db.execute(existing_snapshot_query)
@@ -1663,7 +1666,8 @@ async def refresh_character_data(
                         is_online=scraped_data.get('is_online', False),
                         last_login=scraped_data.get('last_login'),
                         outfit_image_url=scraped_data.get('outfit_image_url'),
-                        scraped_at=snapshot_date,
+                        exp_date=entry['date'],  # Data da experiência (da entrada do histórico)
+                        scraped_at=snapshot_date,  # Data do scraping
                         scrape_source="refresh",
                         scrape_duration=scrape_result.duration_ms
                     )
@@ -1675,7 +1679,7 @@ async def refresh_character_data(
             existing_snapshot_query = select(CharacterSnapshotModel).where(
                 and_(
                     CharacterSnapshotModel.character_id == character.id,
-                    func.date(CharacterSnapshotModel.scraped_at) == today
+                    CharacterSnapshotModel.exp_date == today
                 )
             ).limit(1)
             snapshot_result = await db.execute(existing_snapshot_query)
@@ -1708,7 +1712,8 @@ async def refresh_character_data(
                     is_online=scraped_data.get('is_online', False),
                     last_login=scraped_data.get('last_login'),
                     outfit_image_url=scraped_data.get('outfit_image_url'),
-                    scraped_at=datetime.utcnow(),
+                    exp_date=today,  # Data da experiência (hoje)
+                    scraped_at=datetime.utcnow(),  # Data do scraping
                     scrape_source="refresh",
                     scrape_duration=scrape_result.duration_ms
                 )
