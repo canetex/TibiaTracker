@@ -1206,7 +1206,7 @@ async def filter_character_ids(
     )
 
 
-@router.post("/by-ids", response_model=List[CharacterWithSnapshots])
+@router.post("/by-ids")
 async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Depends(get_db)):
     """Buscar personagens com dados de card"""
     
