@@ -248,26 +248,17 @@ const CharacterCard = ({
           <Grid item xs={6}>
             <Box>
               <Typography variant="body2" color="text.secondary">
-                Experiência (último dia)
+                {character.last_experience_date 
+                  ? `Experiência (último dia - ${character.last_experience_date})`
+                  : 'Experiência (último dia)'
+                }
               </Typography>
               <Tooltip title={(!character.snapshots || character.snapshots.length === 0) ? 'Dados de experiência detalhados não disponíveis para este personagem filtrado.' : ''}>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {(() => {
-                    // 1. Usa previous_experience calculado no backend (prioridade)
-                    if (character.previous_experience !== undefined && character.previous_experience !== null) {
-                      return character.previous_experience.toLocaleString('pt-BR');
-                    }
-                    // 2. Fallback: tenta calcular localmente se houver snapshots
-                    if (character.snapshots && Array.isArray(character.snapshots) && character.snapshots.length >= 2) {
-                      const sorted = [...character.snapshots].sort((a, b) => new Date(b.scraped_at) - new Date(a.scraped_at));
-                      const latest_exp = sorted[0].experience;
-                      const previous_exp = sorted[1].experience;
-                      return (latest_exp - previous_exp).toLocaleString('pt-BR');
-                    }
-                    // 3. Fallback: mostra experiência total se não conseguir calcular diferença
-                    const exp = latest?.experience || character.experience;
-                    return exp ? exp.toLocaleString('pt-BR') : 'N/A';
-                  })()}
+                  {character.last_experience 
+                    ? character.last_experience.toLocaleString('pt-BR')
+                    : 'N/A'
+                  }
                 </Typography>
               </Tooltip>
             </Box>

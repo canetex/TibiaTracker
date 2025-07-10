@@ -147,10 +147,10 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
   ];
 
   const activityFilters = [
-    { value: 'active_today', label: 'Ativos Hoje' },
-    { value: 'active_yesterday', label: 'Ativos D-1 (ontem)' },
-    { value: 'active_2days', label: 'Ativos D-2' },
-    { value: 'active_3days', label: 'Ativos D-3' },
+    { value: 'active_today', label: `Ativos Hoje (${new Date().toLocaleDateString('pt-BR')})` },
+    { value: 'active_yesterday', label: `Ativos D-1 (Ontem ${new Date(Date.now() - 24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_2days', label: `Ativos D-2 (${new Date(Date.now() - 2*24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_3days', label: `Ativos D-3 (${new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('pt-BR')})` },
   ];
 
   return (

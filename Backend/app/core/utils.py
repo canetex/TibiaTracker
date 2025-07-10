@@ -5,8 +5,8 @@ Utilitários da aplicação
 Funções utilitárias para padronizar operações comuns.
 """
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Tuple
 
 
 def get_utc_now() -> datetime:
@@ -107,4 +107,62 @@ def days_between(date1: datetime, date2: datetime) -> int:
     
     # Calcular diferença
     diff = abs(norm_date1 - norm_date2)
-    return diff.days 
+    return diff.days
+
+
+def format_date_pt_br(date) -> str:
+    """
+    Formatar data no padrão brasileiro DD/MM/AAAA
+    
+    Args:
+        date: Data para formatar (datetime ou date)
+        
+    Returns:
+        str: Data formatada como DD/MM/AAAA
+    """
+    return date.strftime("%d/%m/%Y")
+
+
+def get_activity_filter_labels() -> dict:
+    """
+    Obter labels dos filtros de atividade com datas formatadas
+    
+    Returns:
+        dict: Dicionário com labels formatados
+    """
+    today = get_utc_now().date()
+    yesterday = today - timedelta(days=1)
+    two_days_ago = today - timedelta(days=2)
+    three_days_ago = today - timedelta(days=3)
+    
+    return {
+        'active_today': f"Ativos Hoje ({format_date_pt_br(today)})",
+        'active_yesterday': f"Ativos D-1 (Ontem {format_date_pt_br(yesterday)})",
+        'active_2days': f"Ativos D-2 ({format_date_pt_br(two_days_ago)})",
+        'active_3days': f"Ativos D-3 ({format_date_pt_br(three_days_ago)})"
+    }
+
+
+def calculate_last_experience_data(snapshots: list) -> Tuple[Optional[int], Optional[str]]:
+    """
+    Calcular a última experiência válida (> 0) e sua data
+    
+    Args:
+        snapshots: Lista de snapshots do personagem
+        
+    Returns:
+        Tuple[Optional[int], Optional[str]]: (experiência, data_formatada) ou (None, None)
+    """
+    if not snapshots:
+        return None, None
+    
+    # Ordenar snapshots por data (mais recente primeiro)
+    sorted_snapshots = sorted(snapshots, key=lambda x: x.scraped_at, reverse=True)
+    
+    # Procurar o primeiro snapshot com experiência > 0
+    for snapshot in sorted_snapshots:
+        if snapshot.experience and snapshot.experience > 0:
+            return snapshot.experience, format_date_pt_br(snapshot.scraped_at)
+    
+    # Se não encontrou nenhuma experiência > 0
+    return None, None 

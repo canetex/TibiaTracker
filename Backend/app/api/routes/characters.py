@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import logging
 
 from app.db.database import get_db
-from app.core.utils import get_utc_now, normalize_datetime, days_between
+from app.core.utils import get_utc_now, normalize_datetime, days_between, calculate_last_experience_data, format_date_pt_br
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
     CharacterBase, CharacterCreate, CharacterUpdate, Character,
@@ -188,6 +188,9 @@ async def search_character(
             elif len(recent_snapshots) == 1:
                 average_daily_exp = total_exp_gained
             
+            # Calcular última experiência válida
+            last_experience, last_experience_date = calculate_last_experience_data(existing_character.snapshots)
+            
             return {
                 "success": True,
                 "message": f"Personagem '{existing_character.name}' encontrado no banco de dados",
@@ -205,6 +208,8 @@ async def search_character(
                     "total_snapshots": len(existing_character.snapshots),
                     "total_exp_gained": total_exp_gained,
                     "average_daily_exp": average_daily_exp,
+                    "last_experience": last_experience,
+                    "last_experience_date": last_experience_date,
                     "latest_snapshot": {
                         "level": latest_snapshot.level if latest_snapshot else existing_character.level,
                         "experience": latest_snapshot.experience if latest_snapshot else 0,
@@ -917,7 +922,23 @@ async def list_characters(
         snapshot_result = await db.execute(snapshot_count_query)
         snapshots_count = snapshot_result.scalar()
         
-        character_summaries.append(char)
+        # Buscar snapshots para calcular última experiência
+        snapshots_query = select(CharacterSnapshotModel).where(CharacterSnapshotModel.character_id == char.id)
+        snapshots_result = await db.execute(snapshots_query)
+        snapshots = snapshots_result.scalars().all()
+        
+        # Calcular última experiência válida
+        last_experience, last_experience_date = calculate_last_experience_data(snapshots)
+        
+        # Adicionar dados calculados ao character
+        char_dict = {
+            **char.__dict__,
+            'snapshots_count': snapshots_count,
+            'last_experience': last_experience,
+            'last_experience_date': last_experience_date
+        }
+        
+        character_summaries.append(char_dict)
     
     return {
         "characters": character_summaries,
