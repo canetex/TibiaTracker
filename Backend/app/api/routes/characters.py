@@ -1196,19 +1196,13 @@ async def filter_character_ids(
 
 
 @router.post("/by-ids", response_model=List[CharacterWithSnapshots])
-async def get_characters_by_ids(
-    req: CharacterIDsRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Buscar personagens completos por lista de IDs.
-    Usado pelo frontend após obter IDs filtrados.
-    """
+async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Depends(get_db)):
+    """Buscar personagens com dados de card"""
     
     if not req.ids:
         return []
     
-    # Buscar personagens com snapshots limitados (últimos 7 dias)
+    # Buscar personagens com snapshots
     query = (
         select(CharacterModel)
         .where(CharacterModel.id.in_(req.ids))
@@ -1221,44 +1215,29 @@ async def get_characters_by_ids(
     # Processar cada personagem para calcular experiência
     for character in characters:
         if character.snapshots:
-            # Ordenar snapshots por data decrescente
-            character.snapshots.sort(key=lambda x: x.scraped_at, reverse=True)
+            # Ordenar snapshots por exp_date (não scraped_at)
+            character.snapshots.sort(key=lambda x: x.exp_date, reverse=True)
             
-            # Buscar snapshot do dia anterior
+            # Buscar experiência do dia anterior
             from datetime import datetime, timedelta
             yesterday = datetime.utcnow().date() - timedelta(days=1)
-            
-            logger.info(f"[BY-IDS] Personagem {character.name}: buscando snapshot de {yesterday}")
-            logger.info(f"[BY-IDS] Snapshots disponíveis: {len(character.snapshots)}")
-            
-            # Log dos últimos 3 snapshots para debug
-            for i, snapshot in enumerate(character.snapshots[:3]):
-                logger.info(f"[BY-IDS] Snapshot {i+1}: {snapshot.scraped_at.date()} - exp: {snapshot.experience}")
             
             # Procurar snapshot do dia anterior
             yesterday_snapshot = None
             for snapshot in character.snapshots:
-                if snapshot.scraped_at.date() == yesterday:
+                if snapshot.exp_date == yesterday:
                     yesterday_snapshot = snapshot
-                    logger.info(f"[BY-IDS] ✅ Encontrado snapshot do dia anterior: {yesterday_snapshot.experience}")
                     break
             
-            # Usar experiência do dia anterior se encontrado, senão 0
+            # Definir experiência do dia anterior
             if yesterday_snapshot:
                 setattr(character, 'previous_experience', max(0, yesterday_snapshot.experience))
-                logger.info(f"[BY-IDS] ✅ Experiência do dia anterior definida: {yesterday_snapshot.experience}")
             else:
                 setattr(character, 'previous_experience', 0)
-                logger.info(f"[BY-IDS] ❌ Nenhum snapshot encontrado para {yesterday}, definindo como 0")
         else:
             setattr(character, 'previous_experience', 0)
-            logger.info(f"[BY-IDS] Personagem {character.name}: sem snapshots, definindo como 0")
     
-    # Manter ordem original dos IDs
-    character_dict = {char.id: char for char in characters}
-    ordered_characters = [character_dict.get(char_id) for char_id in req.ids if char_id in character_dict]
-    
-    return ordered_characters
+    return characters
 
 
 # ===== ENDPOINTS DE PERSONAGEM ESPECÍFICO =====
