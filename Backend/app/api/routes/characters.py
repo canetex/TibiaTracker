@@ -747,7 +747,7 @@ async def get_recent_characters(
                     average_daily_exp = total_exp_gained / days_diff
             elif len(recent_snapshots) == 1:
                 average_daily_exp = total_exp_gained
-            
+
             char_data = {
                 "id": char.id,
                 "name": char.name,
@@ -758,13 +758,11 @@ async def get_recent_characters(
                 "guild": char.guild,
                 "outfit_image_url": char.outfit_image_url,
                 "last_scraped_at": char.last_scraped_at,
-        
                 "total_snapshots": total_snapshots,
                 "total_exp_gained": total_exp_gained,
                 "average_daily_exp": average_daily_exp,
                 "latest_snapshot": None
             }
-            
             if latest_snapshot:
                 char_data["latest_snapshot"] = {
                     "level": latest_snapshot.level,
@@ -775,7 +773,17 @@ async def get_recent_characters(
                     "achievement_points": latest_snapshot.achievement_points,
                     "scraped_at": latest_snapshot.scraped_at
                 }
-            
+
+            # NOVO BLOCO: calcular e adicionar os campos de experiência
+            all_snapshots_result = await db.execute(
+                select(CharacterSnapshotModel)
+                .where(CharacterSnapshotModel.character_id == char.id)
+            )
+            all_snapshots = all_snapshots_result.scalars().all()
+            last_experience, last_experience_date = calculate_last_experience_data(all_snapshots)
+            char_data["last_experience"] = last_experience
+            char_data["last_experience_date"] = last_experience_date
+
             response_data.append(char_data)
         
         return response_data
