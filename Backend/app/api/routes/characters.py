@@ -1282,6 +1282,15 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
         
         character_list.append(char_dict)
     
+    # Debug: verificar se os campos estão no dicionário
+    import logging
+    logger = logging.getLogger(__name__)
+    if character_list:
+        first_char = character_list[0]
+        logger.debug(f"DEBUG: Campos do primeiro personagem: {list(first_char.keys())}")
+        logger.debug(f"DEBUG: last_experience = {first_char.get('last_experience')}")
+        logger.debug(f"DEBUG: last_experience_date = {first_char.get('last_experience_date')}")
+    
     return character_list
     
     return characters
