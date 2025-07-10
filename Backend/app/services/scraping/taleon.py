@@ -548,6 +548,16 @@ class TaleonCharacterScraper(BaseCharacterScraper):
             # Extrair histórico completo de experiência
             data['experience_history'] = self._extract_experience_history_data(soup)
             
+            # Definir exp_date baseado no histórico de experiência
+            if data['experience_history']:
+                # Usar a data mais recente do histórico
+                latest_entry = data['experience_history'][0]  # Primeiro item é o mais recente
+                data['exp_date'] = latest_entry['date']
+            else:
+                # Se não tem histórico, usar data atual
+                from datetime import datetime
+                data['exp_date'] = datetime.now().date()
+            
             # Contar mortes da death list
             data['deaths'] = self._count_deaths_from_list(soup)
             
