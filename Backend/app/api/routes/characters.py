@@ -545,6 +545,11 @@ async def scrape_character_with_history(
             for i, entry in enumerate(history_data):
                 logger.info(f"[SCRAPE-WITH-HISTORY] Processando entrada {i+1}/{len(history_data)}: {entry}")
                 
+                # Verificar se entry['date'] é válido
+                if not entry.get('date'):
+                    logger.warning(f"[SCRAPE-WITH-HISTORY] Entrada sem data válida: {entry}")
+                    continue
+                
                 # Verificar se já existe snapshot para esta data usando exp_date
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
                     and_(
@@ -1618,6 +1623,11 @@ async def refresh_character_data(
             logger.info(f"[REFRESH] Processando {len(history_data)} entradas de histórico...")
             for i, entry in enumerate(history_data, 1):
                 logger.debug(f"[REFRESH] Processando entrada {i}/{len(history_data)}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
+                
+                # Verificar se entry['date'] é válido
+                if not entry.get('date'):
+                    logger.warning(f"[REFRESH] Entrada sem data válida: {entry}")
+                    continue
                 
                 # Verificar se já existe snapshot para esta data usando exp_date
                 existing_snapshot_query = select(CharacterSnapshotModel).where(
