@@ -1259,41 +1259,14 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
             char_dict["last_experience"] = last_experience
             char_dict["last_experience_date"] = last_experience_date
             
-            # Manter compatibilidade com previous_experience (lógica antiga)
-            from datetime import datetime, timedelta
-            yesterday = datetime.utcnow().date() - timedelta(days=1)
-            
-            # Procurar snapshot do dia anterior
-            yesterday_snapshot = None
-            for snapshot in character.snapshots:
-                if snapshot.exp_date == yesterday:
-                    yesterday_snapshot = snapshot
-                    break
-            
-            # Definir experiência do dia anterior
-            if yesterday_snapshot:
-                char_dict["previous_experience"] = max(0, yesterday_snapshot.experience)
-            else:
-                char_dict["previous_experience"] = 0
+
         else:
             char_dict["last_experience"] = None
             char_dict["last_experience_date"] = None
-            char_dict["previous_experience"] = 0
         
         character_list.append(char_dict)
     
-        # Debug: verificar se os campos estão no dicionário
-    import logging
-    logger = logging.getLogger(__name__)
-    if character_list:
-        first_char = character_list[0]
-        logger.debug(f"DEBUG: Campos do primeiro personagem: {list(first_char.keys())}")
-        logger.debug(f"DEBUG: last_experience = {first_char.get('last_experience')}")
-        logger.debug(f"DEBUG: last_experience_date = {first_char.get('last_experience_date')}")
-        logger.debug(f"DEBUG: Tipo do objeto retornado: {type(character_list)}")
-        logger.debug(f"DEBUG: Primeiro item é dict? {isinstance(first_char, dict)}")
-
-    return character_list
+        return character_list
     
     return characters
 

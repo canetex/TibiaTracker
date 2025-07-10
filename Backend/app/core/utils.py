@@ -153,26 +153,16 @@ def calculate_last_experience_data(snapshots: list) -> Tuple[Optional[int], Opti
     Returns:
         Tuple[Optional[int], Optional[str]]: (experiência, data_formatada) ou (None, None)
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
     if not snapshots:
-        logger.debug("calculate_last_experience_data: Nenhum snapshot fornecido")
         return None, None
-    
-    logger.debug(f"calculate_last_experience_data: Processando {len(snapshots)} snapshots")
     
     # Ordenar snapshots por data (mais recente primeiro)
     sorted_snapshots = sorted(snapshots, key=lambda x: x.scraped_at, reverse=True)
     
     # Procurar o primeiro snapshot com experiência > 0
-    for i, snapshot in enumerate(sorted_snapshots):
-        logger.debug(f"Snapshot {i}: experience={snapshot.experience}, scraped_at={snapshot.scraped_at}")
+    for snapshot in sorted_snapshots:
         if snapshot.experience and snapshot.experience > 0:
-            result = (snapshot.experience, format_date_pt_br(snapshot.scraped_at))
-            logger.debug(f"Encontrou experiência válida: {result}")
-            return result
+            return snapshot.experience, format_date_pt_br(snapshot.scraped_at)
     
     # Se não encontrou nenhuma experiência > 0
-    logger.debug("calculate_last_experience_data: Nenhuma experiência > 0 encontrada")
     return None, None 
