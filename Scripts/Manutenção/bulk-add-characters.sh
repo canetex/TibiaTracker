@@ -35,7 +35,7 @@ warning() {
 }
 
 info() {
-    echo -e "${BLUE}[INFO $(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${BLUEhttps://www.netflix.com/watch/81666190?trackId=155573560}[INFO $(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 # Função para adicionar um personagem

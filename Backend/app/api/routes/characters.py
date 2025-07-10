@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import logging
 
 from app.db.database import get_db
+from app.core.utils import get_utc_now, normalize_datetime, days_between
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
     CharacterBase, CharacterCreate, CharacterUpdate, Character,
@@ -169,7 +170,7 @@ async def search_character(
                 latest_snapshot = sorted(existing_character.snapshots, key=lambda x: x.scraped_at, reverse=True)[0]
             
             # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            thirty_days_ago = get_utc_now() - timedelta(days=30)
             recent_snapshots = [
                 snap for snap in existing_character.snapshots 
                 if snap.scraped_at >= thirty_days_ago
@@ -180,7 +181,8 @@ async def search_character(
             average_daily_exp = 0
             
             if len(recent_snapshots) > 1:
-                days_diff = (recent_snapshots[-1].scraped_at - recent_snapshots[0].scraped_at).days
+                # Usar função utilitária para calcular diferença de dias
+                days_diff = days_between(recent_snapshots[0].scraped_at, recent_snapshots[-1].scraped_at)
                 if days_diff > 0:
                     average_daily_exp = total_exp_gained / days_diff
             elif len(recent_snapshots) == 1:
