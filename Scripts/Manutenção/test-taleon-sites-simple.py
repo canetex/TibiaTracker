@@ -39,7 +39,7 @@ class SiteTestResult:
     status_code: Optional[int] = None
     response_time_ms: Optional[int] = None
     characters_found: int = 0
-    sample_characters: List[str] = None
+    sample_characters: Optional[List[str]] = None
     error_message: Optional[str] = None
     html_structure: Optional[Dict] = None
 
@@ -111,7 +111,11 @@ class TaleonSiteTester:
                 
                 # Extrair personagens de teste
                 characters = self._extract_test_characters(html, site_config)
-                
+
+                # DEBUG: Mostrar quantidade e exemplos de personagens extraídos
+                print(f"[DEBUG] {site_name}: personagens extraídos = {len(characters)}")
+                print(f"[DEBUG] Exemplos: {characters[:5]}")
+
                 return SiteTestResult(
                     site_id=site_id,
                     site_name=site_name,
@@ -213,8 +217,11 @@ class TaleonSiteTester:
     def _extract_character_name_from_url_test(self, href: str) -> Optional[str]:
         """Extrair nome do personagem de uma URL"""
         try:
+            # Se já for o nome, retorna direto
+            if not href.startswith('href='):
+                return href.strip()
             # Buscar parâmetro name= na URL
-            match = re.search(r'name=([^&]+)', href)
+            match = re.search(r"name=([^&]+)", href)
             if match:
                 name = urllib.parse.unquote(match.group(1))
                 return name.strip()
@@ -225,61 +232,46 @@ class TaleonSiteTester:
     def _extract_from_deaths_test(self, html: str) -> List[str]:
         """Extrair personagens da página de mortes"""
         characters = []
-        
         # Buscar links que contenham characterprofile.php?name=
-        pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+        pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
-        
         for match in matches:
             name = self._extract_character_name_from_url_test(match)
             if name:
                 characters.append(name)
-        
         return characters
     
     def _extract_from_powergamers_test(self, html: str) -> List[str]:
         """Extrair personagens da página de powergamers"""
         characters = []
-        
-        # Buscar links que contenham characterprofile.php?name=
-        pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+        pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
-        
         for match in matches:
             name = self._extract_character_name_from_url_test(match)
             if name:
                 characters.append(name)
-        
         return characters
     
     def _extract_from_onlinelist_test(self, html: str) -> List[str]:
         """Extrair personagens da lista online"""
         characters = []
-        
-        # Buscar links que contenham characterprofile.php?name=
-        pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+        pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
-        
         for match in matches:
             name = self._extract_character_name_from_url_test(match)
             if name:
                 characters.append(name)
-        
         return characters
     
     def _extract_generic_test(self, html: str) -> List[str]:
         """Extração genérica de personagens"""
         characters = []
-        
-        # Buscar links que contenham characterprofile.php?name=
-        pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+        pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
-        
         for match in matches:
             name = self._extract_character_name_from_url_test(match)
             if name:
                 characters.append(name)
-        
         return characters
     
     def test_all_sites(self) -> List[SiteTestResult]:
