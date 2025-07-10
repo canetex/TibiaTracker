@@ -1226,10 +1226,14 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
     # Processar cada personagem para calcular experiência
     for character in characters:
         if character.snapshots:
-            # Ordenar snapshots por exp_date (não scraped_at)
-            character.snapshots.sort(key=lambda x: x.exp_date, reverse=True)
+            # Calcular última experiência válida
+            last_experience, last_experience_date = calculate_last_experience_data(character.snapshots)
             
-            # Buscar experiência do dia anterior
+            # Adicionar campos calculados ao character
+            setattr(character, 'last_experience', last_experience)
+            setattr(character, 'last_experience_date', last_experience_date)
+            
+            # Manter compatibilidade com previous_experience (lógica antiga)
             from datetime import datetime, timedelta
             yesterday = datetime.utcnow().date() - timedelta(days=1)
             
@@ -1246,6 +1250,8 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
             else:
                 setattr(character, 'previous_experience', 0)
         else:
+            setattr(character, 'last_experience', None)
+            setattr(character, 'last_experience_date', None)
             setattr(character, 'previous_experience', 0)
     
     return characters
