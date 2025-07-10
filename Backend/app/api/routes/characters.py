@@ -1224,14 +1224,40 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
     characters = result.scalars().all()
     
     # Processar cada personagem para calcular experiência
+    character_list = []
     for character in characters:
+        # Converter para dicionário
+        char_dict = {
+            "id": character.id,
+            "name": character.name,
+            "server": character.server,
+            "world": character.world,
+            "level": character.level,
+            "vocation": character.vocation,
+            "residence": character.residence,
+            "guild": character.guild,
+            "is_active": character.is_active,
+            "is_public": character.is_public,
+            "profile_url": character.profile_url,
+            "character_url": character.character_url,
+            "outfit_image_url": character.outfit_image_url,
+            "outfit_image_path": character.outfit_image_path,
+            "last_scraped_at": character.last_scraped_at,
+            "scrape_error_count": character.scrape_error_count,
+            "last_scrape_error": character.last_scrape_error,
+            "next_scrape_at": character.next_scrape_at,
+            "created_at": character.created_at,
+            "updated_at": character.updated_at,
+            "snapshots": character.snapshots
+        }
+        
         if character.snapshots:
             # Calcular última experiência válida
             last_experience, last_experience_date = calculate_last_experience_data(character.snapshots)
             
-            # Adicionar campos calculados ao character
-            setattr(character, 'last_experience', last_experience)
-            setattr(character, 'last_experience_date', last_experience_date)
+            # Adicionar campos calculados
+            char_dict["last_experience"] = last_experience
+            char_dict["last_experience_date"] = last_experience_date
             
             # Manter compatibilidade com previous_experience (lógica antiga)
             from datetime import datetime, timedelta
@@ -1246,13 +1272,17 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
             
             # Definir experiência do dia anterior
             if yesterday_snapshot:
-                setattr(character, 'previous_experience', max(0, yesterday_snapshot.experience))
+                char_dict["previous_experience"] = max(0, yesterday_snapshot.experience)
             else:
-                setattr(character, 'previous_experience', 0)
+                char_dict["previous_experience"] = 0
         else:
-            setattr(character, 'last_experience', None)
-            setattr(character, 'last_experience_date', None)
-            setattr(character, 'previous_experience', 0)
+            char_dict["last_experience"] = None
+            char_dict["last_experience_date"] = None
+            char_dict["previous_experience"] = 0
+        
+        character_list.append(char_dict)
+    
+    return character_list
     
     return characters
 
