@@ -155,7 +155,8 @@ const ComparisonChart = ({
     return colors[index % colors.length];
   };
 
-  // Calcular limites do eixo Y do level
+  const roundDown100 = (value) => Math.floor(value / 100) * 100;
+  const roundUp100 = (value) => Math.ceil(value / 100) * 100;
   const getLevelDomain = () => {
     let min = Infinity;
     let max = -Infinity;
@@ -170,8 +171,13 @@ const ComparisonChart = ({
     if (min === Infinity || max === -Infinity) {
       return [0, 100]; // fallback
     }
-    const yMin = Math.floor(min * 0.9);
-    const yMax = Math.ceil(max * 1.05);
+    if (min === max) {
+      const yMin = roundDown100(min * 0.9);
+      const yMax = roundUp100(max * 1.05);
+      return [yMin, yMax === yMin ? yMin + 100 : yMax];
+    }
+    const yMin = roundDown100(min * 0.9);
+    const yMax = roundUp100(max * 1.05);
     return [yMin, yMax];
   };
 
