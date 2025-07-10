@@ -254,17 +254,15 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                     
                     # Converter data
                     if date_text.lower() == 'today':
-                        from datetime import datetime
                         snapshot_date = datetime.now().date()
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Data 'today' convertida para {snapshot_date}")
                     elif date_text.lower() == 'yesterday':
-                        from datetime import datetime, timedelta
+                        from datetime import timedelta
                         snapshot_date = (datetime.now() - timedelta(days=1)).date()
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Data 'yesterday' convertida para {snapshot_date}")
                     else:
                         # Tentar parsear data no formato DD/MM/YYYY
                         try:
-                            from datetime import datetime
                             snapshot_date = datetime.strptime(date_text, '%d/%m/%Y').date()
                             logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Data '{date_text}' convertida para {snapshot_date}")
                         except ValueError:
@@ -555,7 +553,6 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                 data['exp_date'] = latest_entry['date']
             else:
                 # Se não tem histórico, usar data atual
-                from datetime import datetime
                 data['exp_date'] = datetime.now().date()
             
             # Contar mortes da death list
