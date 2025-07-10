@@ -114,7 +114,7 @@ class FullRescrapeService:
                 profile_url=data['profile_url'],
                 scrape_source='full_rescrape',
                 scrape_duration=scraped_data['duration_ms'],
-                exp_date=data.get('exp_date') or datetime.utcnow().date()
+                exp_date=data.get('exp_date') or datetime.now().date()
             )
             
             async with get_db_session() as session:
