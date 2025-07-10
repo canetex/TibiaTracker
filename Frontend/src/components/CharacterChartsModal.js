@@ -339,20 +339,37 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         });
                       }}
                     />
-                    {chartOptions.experience && (
-                      <YAxis 
-                        yAxisId="left"
-                        orientation="left"
-                        tickFormatter={(value) => value.toLocaleString('pt-BR')}
-                      />
+                    {/* Renderização condicional dos eixos Y */}
+                    {chartOptions.experience && chartOptions.level && (
+                      <>
+                        <YAxis 
+                          yAxisId="left"
+                          orientation="left"
+                          tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                        />
+                        <YAxis 
+                          yAxisId="right"
+                          orientation="right"
+                          type="number"
+                          domain={getLevelDomain()}
+                          allowDataOverflow={true}
+                        />
+                      </>
                     )}
-                    {chartOptions.level && (
+                    {chartOptions.level && !chartOptions.experience && (
                       <YAxis 
                         yAxisId="right"
                         orientation="right"
                         type="number"
                         domain={getLevelDomain()}
                         allowDataOverflow={true}
+                      />
+                    )}
+                    {chartOptions.experience && !chartOptions.level && (
+                      <YAxis 
+                        yAxisId="left"
+                        orientation="left"
+                        tickFormatter={(value) => value.toLocaleString('pt-BR')}
                       />
                     )}
                     <RechartsTooltip
