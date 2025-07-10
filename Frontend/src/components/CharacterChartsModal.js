@@ -170,6 +170,24 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
 
   const hasData = chartData.length > 0 && (chartOptions.experience || chartOptions.level);
 
+  // Calcular limites do eixo Y do level
+  const getLevelDomain = () => {
+    let min = Infinity;
+    let max = -Infinity;
+    chartData.forEach(row => {
+      if (typeof row.level === 'number') {
+        if (row.level < min) min = row.level;
+        if (row.level > max) max = row.level;
+      }
+    });
+    if (min === Infinity || max === -Infinity) {
+      return [0, 100]; // fallback
+    }
+    const yMin = Math.floor(min * 0.9);
+    const yMax = Math.ceil(max * 1.05);
+    return [yMin, yMax];
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -328,6 +346,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                       <YAxis 
                         yAxisId="right"
                         orientation="right"
+                        domain={getLevelDomain()}
                       />
                     )}
                     <RechartsTooltip

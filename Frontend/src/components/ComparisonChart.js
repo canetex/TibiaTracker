@@ -155,6 +155,26 @@ const ComparisonChart = ({
     return colors[index % colors.length];
   };
 
+  // Calcular limites do eixo Y do level
+  const getLevelDomain = () => {
+    let min = Infinity;
+    let max = -Infinity;
+    chartData.forEach(row => {
+      Object.keys(row).forEach(key => {
+        if (key.endsWith('_level') && typeof row[key] === 'number') {
+          if (row[key] < min) min = row[key];
+          if (row[key] > max) max = row[key];
+        }
+      });
+    });
+    if (min === Infinity || max === -Infinity) {
+      return [0, 100]; // fallback
+    }
+    const yMin = Math.floor(min * 0.9);
+    const yMax = Math.ceil(max * 1.05);
+    return [yMin, yMax];
+  };
+
   if (!open || characters.length === 0) {
     return null;
   }
@@ -290,6 +310,7 @@ const ComparisonChart = ({
                   label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666' }}
                   tick={{ fontSize: 12, fill: '#666666' }}
                   tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                  domain={getLevelDomain()}
                 />
                 <YAxis 
                   yAxisId="experience" 
