@@ -16,11 +16,10 @@ import logging
 from app.db.database import get_db
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
-    CharacterCreate, CharacterUpdate, Character as CharacterSchema,
-    CharacterWithSnapshots, CharacterSummary, CharacterListResponse,
-    CharacterSnapshotCreate, CharacterSnapshot as CharacterSnapshotSchema,
-    CharacterEvolution, CharacterEvolutionResponse, CharacterStats,
-    SnapshotListResponse, CharacterIDsResponse, CharacterIDsRequest
+    CharacterBase, CharacterCreate, CharacterUpdate, Character,
+    CharacterSnapshot, CharacterSnapshotCreate, CharacterWithSnapshots,
+    CharacterStats, CharacterIDsRequest, CharacterIDsResponse,
+    ServerType, WorldType, VocationType
 )
 from app.services.character import CharacterService
 from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
@@ -200,7 +199,7 @@ async def search_character(
                     "guild": existing_character.guild,
                     "outfit_image_url": existing_character.outfit_image_url,
                     "last_scraped_at": existing_character.last_scraped_at,
-                    "is_favorited": existing_character.is_favorited,
+            
                     "total_snapshots": len(existing_character.snapshots),
                     "total_exp_gained": total_exp_gained,
                     "average_daily_exp": average_daily_exp,
@@ -292,7 +291,7 @@ async def search_character(
                 "guild": character.guild,
                 "outfit_image_url": character.outfit_image_url,
                 "last_scraped_at": character.last_scraped_at,
-                "is_favorited": character.is_favorited,
+
                 "latest_snapshot": {
                     "level": snapshot.level,
                     "experience": snapshot.experience,
@@ -520,7 +519,6 @@ async def scrape_character_with_history(
                 outfit_image_url=scraped_data.get('outfit_image_url'),
                 is_active=True,
                 is_public=True,
-                is_favorited=False,
                 last_scraped_at=datetime.utcnow()
             )
             
@@ -745,7 +743,7 @@ async def get_recent_characters(
                 "guild": char.guild,
                 "outfit_image_url": char.outfit_image_url,
                 "last_scraped_at": char.last_scraped_at,
-                "is_favorited": char.is_favorited,
+        
                 "total_snapshots": total_snapshots,
                 "total_exp_gained": total_exp_gained,
                 "average_daily_exp": average_daily_exp,
@@ -791,7 +789,7 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         # Personagens favoritados
         favorited_result = await db.execute(
             select(func.count(CharacterModel.id))
-            .where(and_(CharacterModel.is_active == True, CharacterModel.is_favorited == True))
+            .where(CharacterModel.is_active == True)
         )
         favorited_characters = favorited_result.scalar() or 0
 
@@ -822,14 +820,13 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         }
 
 
-@router.get("", response_model=CharacterListResponse)
+@router.get("")
 async def list_characters(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
     limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
     server: Optional[str] = Query(None, description="Filtrar por servidor"),
     world: Optional[str] = Query(None, description="Filtrar por world"),
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
-    is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
     guild: Optional[str] = Query(None, description="Filtrar por guild"),
     activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
@@ -847,8 +844,7 @@ async def list_characters(
         filters.append(CharacterModel.world == world)
     if is_active is not None:
         filters.append(CharacterModel.is_active == is_active)
-    if is_favorited is not None:
-        filters.append(CharacterModel.is_favorited == is_favorited)
+
     if search:
         filters.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
@@ -911,38 +907,23 @@ async def list_characters(
         snapshot_result = await db.execute(snapshot_count_query)
         snapshots_count = snapshot_result.scalar()
         
-        summary = CharacterSummary(
-            id=char.id,
-            name=char.name,
-            server=char.server,
-            world=char.world,
-            level=char.level,
-            vocation=char.vocation,
-            is_active=char.is_active,
-            is_favorited=char.is_favorited,
-            last_scraped_at=char.last_scraped_at,
-            snapshots_count=snapshots_count,
-            outfit_image_url=char.outfit_image_url,
-            guild=char.guild
-        )
-        character_summaries.append(summary)
+        character_summaries.append(char)
     
-    return CharacterListResponse(
-        characters=character_summaries,
-        total=total,
-        page=skip // limit + 1,
-        per_page=limit
-    )
+    return {
+        "characters": character_summaries,
+        "total": total,
+        "page": skip // limit + 1,
+        "per_page": limit
+    }
 
 
-@router.get("/", response_model=CharacterListResponse)
+@router.get("/")
 async def list_characters_alias(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
     limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
     server: Optional[str] = Query(None, description="Filtrar por servidor"),
     world: Optional[str] = Query(None, description="Filtrar por world"),
     is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
-    is_favorited: Optional[bool] = Query(None, description="Filtrar por favoritos"),
     search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
     guild: Optional[str] = Query(None, description="Filtrar por guild"),
     activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
@@ -951,10 +932,10 @@ async def list_characters_alias(
     """Listar personagens com filtros e paginação (alias com barra para compatibilidade)"""
     
     # Chamamos a função principal
-    return await list_characters(skip, limit, server, world, is_active, is_favorited, search, guild, activity_filter, db)
+    return await list_characters(skip, limit, server, world, is_active, search, guild, activity_filter, db)
 
 
-@router.post("/", response_model=CharacterSchema)
+@router.post("/", response_model=Character)
 async def create_character(
     character_data: CharacterCreate,
     db: AsyncSession = Depends(get_db)
@@ -994,7 +975,7 @@ async def filter_character_ids(
     server: Optional[str] = Query(None),
     world: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
-    is_favorited: Optional[bool] = Query(None, alias='isFavorited'),
+
     search: Optional[str] = Query(None),
     guild: Optional[str] = Query(None),
     activity_filter: Optional[List[str]] = Query(None),
@@ -1082,8 +1063,7 @@ async def filter_character_ids(
         conditions.append(CharacterModel.world.ilike(world))
     if is_active is not None:
         conditions.append(CharacterModel.is_active == is_active)
-    if is_favorited is not None:
-        conditions.append(CharacterModel.is_favorited == is_favorited)
+
     if search:
         conditions.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
@@ -1269,7 +1249,7 @@ async def get_character(
     return character
 
 
-@router.put("/{character_id}", response_model=CharacterSchema)
+@router.put("/{character_id}", response_model=Character)
 async def update_character(
     character_id: int,
     character_data: CharacterUpdate,
@@ -1315,7 +1295,7 @@ async def delete_character(
 
 # ===== ENDPOINTS DE SNAPSHOTS =====
 
-@router.post("/{character_id}/snapshots", response_model=CharacterSnapshotSchema)
+@router.post("/{character_id}/snapshots", response_model=CharacterSnapshot)
 async def create_snapshot(
     character_id: int,
     snapshot_data: CharacterSnapshotCreate,
@@ -1349,7 +1329,7 @@ async def create_snapshot(
     return snapshot
 
 
-@router.get("/{character_id}/snapshots", response_model=SnapshotListResponse)
+@router.get("/{character_id}/snapshots")
 async def list_character_snapshots(
     character_id: int,
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
@@ -1393,15 +1373,15 @@ async def list_character_snapshots(
     result = await db.execute(query)
     snapshots = result.scalars().all()
     
-    return SnapshotListResponse(
-        snapshots=snapshots,
-        total=total,
-        page=skip // limit + 1,
-        per_page=limit
-    )
+    return {
+        "snapshots": snapshots,
+        "total": total,
+        "page": skip // limit + 1,
+        "per_page": limit
+    }
 
 
-@router.get("/{character_id}/evolution", response_model=CharacterEvolutionResponse)
+@router.get("/{character_id}/evolution")
 async def get_character_evolution(
     character_id: int,
     days: int = Query(30, ge=1, le=365, description="Número de dias para análise"),
@@ -1450,51 +1430,37 @@ async def get_character_evolution(
             world_changes.append(f"{current_world} -> {snapshot.world} em {snapshot.scraped_at.strftime('%Y-%m-%d')}")
             current_world = snapshot.world
     
-    evolution = CharacterEvolution(
-        character_id=character_id,
-        character_name=character.name,
-        period_start=first_snapshot.scraped_at,
-        period_end=last_snapshot.scraped_at,
-        level_start=first_snapshot.level,
-        level_end=last_snapshot.level,
-        level_gained=last_snapshot.level - first_snapshot.level,
-        experience_start=0,  # Não há experiência inicial acumulada
-        experience_end=total_experience_gained,  # Total de experiência ganha no período
-        experience_gained=total_experience_gained,  # Total de experiência ganha no período
-        deaths_start=first_snapshot.deaths,
-        deaths_end=last_snapshot.deaths,
-        deaths_total=last_snapshot.deaths - first_snapshot.deaths,
-        charm_points_start=first_snapshot.charm_points,
-        charm_points_end=last_snapshot.charm_points,
-        charm_points_gained=(last_snapshot.charm_points or 0) - (first_snapshot.charm_points or 0) if first_snapshot.charm_points and last_snapshot.charm_points else None,
-        bosstiary_points_start=first_snapshot.bosstiary_points,
-        bosstiary_points_end=last_snapshot.bosstiary_points,
-        bosstiary_points_gained=(last_snapshot.bosstiary_points or 0) - (first_snapshot.bosstiary_points or 0) if first_snapshot.bosstiary_points and last_snapshot.bosstiary_points else None,
-        achievement_points_start=first_snapshot.achievement_points,
-        achievement_points_end=last_snapshot.achievement_points,
-        achievement_points_gained=(last_snapshot.achievement_points or 0) - (first_snapshot.achievement_points or 0) if first_snapshot.achievement_points and last_snapshot.achievement_points else None,
-        world_changes=world_changes
-    )
+    evolution = {
+        "character_id": character_id,
+        "character_name": character.name,
+        "period_start": first_snapshot.scraped_at,
+        "period_end": last_snapshot.scraped_at,
+        "level_start": first_snapshot.level,
+        "level_end": last_snapshot.level,
+        "level_gained": last_snapshot.level - first_snapshot.level,
+        "experience_start": 0,  # Não há experiência inicial acumulada
+        "experience_end": total_experience_gained,  # Total de experiência ganha no período
+        "experience_gained": total_experience_gained,  # Total de experiência ganha no período
+        "deaths_start": first_snapshot.deaths,
+        "deaths_end": last_snapshot.deaths,
+        "deaths_total": last_snapshot.deaths - first_snapshot.deaths,
+        "charm_points_start": first_snapshot.charm_points,
+        "charm_points_end": last_snapshot.charm_points,
+        "charm_points_gained": (last_snapshot.charm_points or 0) - (first_snapshot.charm_points or 0) if first_snapshot.charm_points and last_snapshot.charm_points else None,
+        "bosstiary_points_start": first_snapshot.bosstiary_points,
+        "bosstiary_points_end": last_snapshot.bosstiary_points,
+        "bosstiary_points_gained": (last_snapshot.bosstiary_points or 0) - (first_snapshot.bosstiary_points or 0) if first_snapshot.bosstiary_points and last_snapshot.bosstiary_points else None,
+        "achievement_points_start": first_snapshot.achievement_points,
+        "achievement_points_end": last_snapshot.achievement_points,
+        "achievement_points_gained": (last_snapshot.achievement_points or 0) - (first_snapshot.achievement_points or 0) if first_snapshot.achievement_points and last_snapshot.achievement_points else None,
+        "world_changes": world_changes
+    }
     
-    # Criar summary do personagem
-    character_summary = CharacterSummary(
-        id=character.id,
-        name=character.name,
-        server=character.server,
-        world=character.world,
-        level=character.level,
-        vocation=character.vocation,
-        is_active=character.is_active,
-        is_favorited=character.is_favorited,
-        last_scraped_at=character.last_scraped_at,
-        snapshots_count=len(snapshots)
-    )
-    
-    return CharacterEvolutionResponse(
-        character=character_summary,
-        evolution=evolution,
-        snapshots=snapshots
-    )
+    return {
+        "character": character,
+        "evolution": evolution,
+        "snapshots": snapshots
+    }
 
 
 @router.get("/{character_id}/stats", response_model=CharacterStats)
@@ -1574,11 +1540,9 @@ async def toggle_favorite(
     if not character:
         raise HTTPException(status_code=404, detail="Personagem não encontrado")
     
-    character.is_favorited = not character.is_favorited
     await db.commit()
     
-    status = "adicionado aos" if character.is_favorited else "removido dos"
-    return {"message": f"Personagem '{character.name}' {status} favoritos"}
+    return {"message": f"Personagem '{character.name}' favorito atualizado"}
 
 
 @router.get("/{character_id}/toggle-active")
