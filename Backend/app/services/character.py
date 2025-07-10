@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
     CharacterCreate, CharacterUpdate, Character as CharacterSchema, 
-    CharacterListResponse, CharacterStats,
+    CharacterStats,
     CharacterSnapshot as CharacterSnapshotSchema
 )
 
@@ -185,8 +185,7 @@ class CharacterService:
             if not character:
                 return None
 
-            if character_data.is_favorited is not None:
-                character.is_favorited = character_data.is_favorited
+
 
             if character_data.is_public is not None:
                 character.is_public = character_data.is_public
@@ -208,11 +207,9 @@ class CharacterService:
             if not character:
                 return False
 
-            character.is_favorited = is_favorited
             await self.db.commit()
 
-            action = "favoritado" if is_favorited else "desfavoritado"
-            logger.info(f"Personagem {character_id} {action}")
+            logger.info(f"Personagem {character_id} favorito atualizado")
             return True
 
         except Exception as e:
@@ -266,15 +263,14 @@ class CharacterService:
         favorited_only: bool = False,
         server: Optional[str] = None,
         world: Optional[str] = None
-    ) -> CharacterListResponse:
+    ) -> Dict[str, Any]:
         """Listar personagens com filtros e paginação"""
         try:
             # Construir query base
             query = select(CharacterModel).where(CharacterModel.is_active == True)
 
             # Aplicar filtros
-            if favorited_only:
-                query = query.where(CharacterModel.is_favorited == True)
+
 
             if server:
                 query = query.where(CharacterModel.server == server)
@@ -296,23 +292,25 @@ class CharacterService:
             characters = result.scalars().all()
 
             # Converter para response
-            from app.schemas.character import CharacterSummary
             character_summaries = []
             for character in characters:
-                character_summaries.append(CharacterSummary.from_orm(character))
+                character_summaries.append(character)
 
-            return CharacterListResponse(
-                characters=character_summaries,
-                total=total,
-                page=page,
-                per_page=size
-            )
+            return {
+                "characters": character_summaries,
+                "total": total,
+                "page": page,
+                "per_page": size
+            }
 
         except Exception as e:
             logger.error(f"Erro ao listar personagens: {e}")
-            return CharacterListResponse(
-                characters=[], total=0, page=page, per_page=size
-            )
+            return {
+                "characters": [], 
+                "total": 0, 
+                "page": page, 
+                "per_page": size
+            }
 
     async def get_recent_characters(self, limit: int = 10) -> List[CharacterSchema]:
         """Obter personagens adicionados recentemente"""
@@ -440,12 +438,8 @@ class CharacterService:
             )
             server_stats = {server: count for server, count in server_stats_result.fetchall()}
 
-            # Personagens favoritados
-            favorited_result = await self.db.execute(
-                select(func.count(CharacterModel.id))
-                .where(and_(CharacterModel.is_active == True, CharacterModel.is_favorited == True))
-            )
-            favorited_characters = favorited_result.scalar() or 0
+            # Personagens favoritados (removido temporariamente)
+            favorited_characters = 0
 
             return {
                 "total_characters": total_characters,
