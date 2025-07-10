@@ -307,6 +307,7 @@ const ComparisonChart = ({
                 <YAxis 
                   yAxisId="level" 
                   orientation="left"
+                  type="number"
                   label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666' }}
                   tick={{ fontSize: 12, fill: '#666666' }}
                   tickFormatter={(value) => value.toLocaleString('pt-BR')}

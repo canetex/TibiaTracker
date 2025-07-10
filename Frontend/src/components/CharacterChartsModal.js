@@ -346,6 +346,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                       <YAxis 
                         yAxisId="right"
                         orientation="right"
+                        type="number"
                         domain={getLevelDomain()}
                       />
                     )}
