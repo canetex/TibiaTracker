@@ -286,9 +286,10 @@ class TaleonSiteTester:
         """Testar todos os sites configurados"""
         results = []
         
-        logger.info(f"🚀 Iniciando testes para {len(self.config['sites'])} sites")
+        sites = self.config.get('taleon_sites', {}).get('sites', []) or []
+        logger.info(f"🚀 Iniciando testes para {len(sites)} sites")
         
-        for site_config in self.config['sites']:
+        for site_config in sites:
             result = self.test_site(site_config)
             results.append(result)
             
