@@ -106,6 +106,11 @@ class TaleonSiteTester:
                 # Ler HTML
                 html = response.read().decode('utf-8', errors='ignore')
                 
+                # DEBUG: Salvar HTML para análise
+                with open(f'debug-{site_id}.html', 'w', encoding='utf-8') as f:
+                    f.write(html)
+                print(f"[DEBUG] HTML salvo em debug-{site_id}.html")
+                
                 # Analisar estrutura
                 html_structure = self._analyze_html_structure(html, site_config)
                 
