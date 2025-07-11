@@ -3,12 +3,31 @@
 # =============================================================================
 # Proxy reverso com SSL automático e headers de segurança
 
-localhost {
-    # Redirecionar API para backend
-    reverse_proxy /api/* backend:8000
+{
+    admin off
+    auto_https off
+}
+
+:8080 {
+    # API - redirecionar para backend
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
     
-    # Servir frontend para todas as outras rotas
-    reverse_proxy /* frontend:80
+    # Health check
+    handle /health {
+        reverse_proxy backend:8000
+    }
+    
+    # Metrics
+    handle /metrics {
+        reverse_proxy backend:8000
+    }
+    
+    # Frontend - todas as outras rotas
+    handle /* {
+        reverse_proxy frontend:80
+    }
     
     # Headers de segurança
     header {
@@ -36,7 +55,4 @@ localhost {
         output file /var/log/caddy/access.log
         format json
     }
-    
-    # SSL interno para desenvolvimento
-    tls internal
 } 

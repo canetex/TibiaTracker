@@ -159,6 +159,10 @@ class Settings(BaseSettings):
             # Adicionar IPs comuns de rede local
             "http://192.168.1.227:3000",  # IP do servidor atual
             "http://192.168.1.227:8000",
+            # IP do servidor de produção
+            "http://217.196.63.249:3000",
+            "http://217.196.63.249:8000",
+            "http://217.196.63.249:8080",
             # Outros IPs de rede local comuns
             "http://192.168.1.1:3000", "http://192.168.1.1:8000",
             "http://192.168.0.1:3000", "http://192.168.0.1:8000", 

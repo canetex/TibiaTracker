@@ -152,7 +152,7 @@ configure_environment() {
     sed -i "s/your-redis-production-password/$REDIS_PASSWORD/g" .env
     
     # Configurar URLs da API
-    sed -i "s|http://YOUR_SERVER_IP:8000|http://$SERVER_IP:8000|g" .env
+    sed -i "s|http://YOUR_SERVER_IP:8000|http://$SERVER_IP:8080|g" .env
     sed -i "s|http://YOUR_SERVER_IP|http://$SERVER_IP:$SERVER_PORT|g" .env
     
     echo "Variáveis de ambiente configuradas"
