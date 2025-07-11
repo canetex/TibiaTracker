@@ -15,6 +15,7 @@ SERVER_IP="217.196.63.249"
 SERVER_PORT="8080"
 PROJECT_NAME="tibia-tracker"
 GIT_REPO="https://github.com/canetex/TibiaTracker.git"
+GIT_BRANCH="auto-load-new-chars"
 
 # Cores para output
 RED='\033[0;31m'
@@ -113,12 +114,15 @@ clone_project() {
     git clone $GIT_REPO $PROJECT_NAME
     cd $PROJECT_NAME
     
+    # Mudar para a branch especificada
+    git checkout $GIT_BRANCH
+    
     # Verificar se clonou corretamente
     if [ ! -f "docker-compose.yml" ]; then
         error "Projeto não foi clonado corretamente"
     fi
     
-    echo "Projeto clonado em /opt/$PROJECT_NAME"
+    echo "Projeto clonado em /opt/$PROJECT_NAME (branch: $GIT_BRANCH)"
     log "Projeto clonado"
 }
 
