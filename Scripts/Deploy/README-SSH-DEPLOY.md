@@ -1,12 +1,12 @@
-# 🚀 DEPLOY COMPLETO - TIBIA TRACKER - SERVIDOR SSH
+# 🚀 DEPLOY COMPLETO - TIBIA TRACKER - SERVIDOR LOCAL
 
 ## 📋 Visão Geral
 
-Este guia descreve como fazer o deploy completo da aplicação Tibia Tracker no servidor SSH `217.196.63.249` com acesso via IP direto na porta `8080`.
+Este guia descreve como fazer o deploy completo da aplicação Tibia Tracker no servidor `217.196.63.249` com acesso via IP direto na porta `8080`.
 
 ## 🎯 Objetivo
 
-- Deploy automatizado via SSH
+- Deploy automatizado executado diretamente no servidor
 - Acesso via IP direto na porta 8080
 - Configuração completa de todos os serviços
 - Scripts de gerenciamento automáticos
@@ -45,59 +45,56 @@ Este guia descreve como fazer o deploy completo da aplicação Tibia Tracker no 
 
 ### Pré-requisitos
 
-1. **Acesso SSH configurado**
+1. **Acesso root ao servidor**
    ```bash
-   # Testar conexão
+   # Conectar ao servidor
    ssh root@217.196.63.249
    ```
 
-2. **Chave SSH configurada** (recomendado)
+2. **Download dos scripts**
    ```bash
-   # Gerar chave SSH (se necessário)
-   ssh-keygen -t rsa -b 4096
+   # Baixar scripts de deploy
+   wget -O /tmp/deploy-complete-ssh.sh https://raw.githubusercontent.com/canetex/TibiaTracker/auto-load-new-chars/Scripts/Deploy/deploy-complete-ssh.sh
+   wget -O /tmp/verify-deployment.sh https://raw.githubusercontent.com/canetex/TibiaTracker/auto-load-new-chars/Scripts/Deploy/verify-deployment.sh
    
-   # Copiar para servidor
-   ssh-copy-id root@217.196.63.249
+   # Tornar executáveis
+   chmod +x /tmp/deploy-complete-ssh.sh /tmp/verify-deployment.sh
    ```
 
 ### Executar Deploy
 
 ```bash
-# 1. Tornar script executável
-chmod +x Scripts/Deploy/deploy-complete-ssh.sh
-
-# 2. Executar deploy completo
-./Scripts/Deploy/deploy-complete-ssh.sh
+# Executar deploy completo
+/tmp/deploy-complete-ssh.sh
 ```
 
 ### O que o script faz
 
-1. ✅ **Verifica conexão SSH**
-2. ✅ **Instala dependências do sistema**
+1. ✅ **Instala dependências do sistema**
    - Docker e Docker Compose
    - Ferramentas de sistema
-3. ✅ **Configura firewall**
+2. ✅ **Configura firewall**
    - Porta 8080 (aplicação)
    - Porta 22 (SSH)
    - Portas Docker internas
-4. ✅ **Clona o projeto**
+3. ✅ **Clona o projeto**
    - Remove versão anterior
    - Clona do repositório
-5. ✅ **Configura ambiente**
+4. ✅ **Configura ambiente**
    - Copia template de produção
    - Substitui IP do servidor
    - Gera chaves secretas
-6. ✅ **Cria Caddyfile customizado**
+5. ✅ **Cria Caddyfile customizado**
    - Configura proxy na porta 8080
    - Roteia frontend e API
-7. ✅ **Build e deploy**
+6. ✅ **Build e deploy**
    - Para containers existentes
    - Build das imagens
    - Deploy dos serviços
-8. ✅ **Verifica deployment**
+7. ✅ **Verifica deployment**
    - Status dos containers
    - Testes de conectividade
-9. ✅ **Cria scripts de gerenciamento**
+8. ✅ **Cria scripts de gerenciamento**
    - `status.sh` - Status da aplicação
    - `logs.sh` - Visualizar logs
    - `restart.sh` - Reiniciar serviços
@@ -106,13 +103,11 @@ chmod +x Scripts/Deploy/deploy-complete-ssh.sh
 
 ```bash
 # Executar verificação completa
-chmod +x Scripts/Deploy/verify-deployment.sh
-./Scripts/Deploy/verify-deployment.sh
+/tmp/verify-deployment.sh
 ```
 
 ### Verificações realizadas
 
-- ✅ **Conexão SSH**
 - ✅ **Status dos containers**
 - ✅ **Conectividade dos serviços**
 - ✅ **Banco de dados**
@@ -135,35 +130,35 @@ Após o deploy bem-sucedido:
 
 ```bash
 # Status da aplicação
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && ./status.sh'
+cd /opt/tibia-tracker && ./status.sh
 
 # Visualizar logs
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && ./logs.sh'
+cd /opt/tibia-tracker && ./logs.sh
 
 # Reiniciar serviços
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && ./restart.sh'
+cd /opt/tibia-tracker && ./restart.sh
 
 # Ver containers
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose ps'
+cd /opt/tibia-tracker && docker-compose ps
 
 # Ver logs específicos
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose logs backend'
+cd /opt/tibia-tracker && docker-compose logs backend
 ```
 
 ### Troubleshooting
 
 ```bash
 # Rebuild completo
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose down && docker-compose up -d --build'
+cd /opt/tibia-tracker && docker-compose down && docker-compose up -d --build
 
 # Ver logs de erro
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose logs | grep -i error'
+cd /opt/tibia-tracker && docker-compose logs | grep -i error
 
 # Verificar recursos
-ssh root@217.196.63.249 'htop'
+htop
 
 # Verificar portas
-ssh root@217.196.63.249 'netstat -tlnp | grep -E ":(22|8080|8000|3000)"'
+netstat -tlnp | grep -E ":(22|8080|8000|3000)"
 ```
 
 ## 🔧 Configurações Específicas
@@ -252,10 +247,10 @@ BASE_URL="http://217.196.63.249:8080"
 
 ```bash
 # Alterar senha root
-ssh root@217.196.63.249 'passwd'
+passwd
 
 # Configurar fail2ban (opcional)
-ssh root@217.196.63.249 'apt install -y fail2ban'
+apt install -y fail2ban
 
 # Configurar backup automático (recomendado)
 # Criar script de backup do banco de dados
@@ -267,39 +262,39 @@ ssh root@217.196.63.249 'apt install -y fail2ban'
 
 ```bash
 # Verificar logs detalhados
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose logs'
+cd /opt/tibia-tracker && docker-compose logs
 
 # Verificar recursos do sistema
-ssh root@217.196.63.249 'free -h && df -h'
+free -h && df -h
 
 # Rebuild forçado
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose down && docker system prune -f && docker-compose up -d --build'
+cd /opt/tibia-tracker && docker-compose down && docker system prune -f && docker-compose up -d --build
 ```
 
 ### Problema: API não responde
 
 ```bash
 # Verificar backend
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose logs backend'
+cd /opt/tibia-tracker && docker-compose logs backend
 
 # Testar conectividade interna
-ssh root@217.196.63.249 'curl -f http://localhost:8000/health'
+curl -f http://localhost:8000/health
 
 # Verificar banco de dados
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose exec postgres pg_isready -U tibia_user'
+cd /opt/tibia-tracker && docker-compose exec postgres pg_isready -U tibia_user
 ```
 
 ### Problema: Frontend não carrega
 
 ```bash
 # Verificar frontend
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose logs frontend'
+cd /opt/tibia-tracker && docker-compose logs frontend
 
 # Testar conectividade interna
-ssh root@217.196.63.249 'curl -f http://localhost:3000'
+curl -f http://localhost:3000
 
 # Verificar nginx
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose exec frontend nginx -t'
+cd /opt/tibia-tracker && docker-compose exec frontend nginx -t
 ```
 
 ## 📞 Suporte
@@ -308,13 +303,13 @@ ssh root@217.196.63.249 'cd /opt/tibia-tracker && docker-compose exec frontend n
 
 ```bash
 # Status completo
-ssh root@217.196.63.249 'cd /opt/tibia-tracker && ./status.sh'
+cd /opt/tibia-tracker && ./status.sh
 
 # Informações do sistema
-ssh root@217.196.63.249 'uname -a && cat /etc/os-release'
+uname -a && cat /etc/os-release
 
 # Versões dos componentes
-ssh root@217.196.63.249 'docker --version && docker-compose --version'
+docker --version && docker-compose --version
 ```
 
 ### Logs Importantes
@@ -341,4 +336,4 @@ Após seguir este guia, você terá:
 
 ---
 
-*📝 Deploy automatizado para servidor SSH - Tibia Tracker* 
+*📝 Deploy automatizado para servidor local - Tibia Tracker* 
