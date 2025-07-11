@@ -15,7 +15,7 @@ SERVER_IP="217.196.63.249"
 SERVER_PORT="8080"
 PROJECT_NAME="tibia-tracker"
 GIT_REPO="https://github.com/canetex/TibiaTracker.git"
-GIT_BRANCH="auto-load-new-chars"
+GIT_BRANCH="main"
 
 # Cores para output
 RED='\033[0;31m'
@@ -122,7 +122,7 @@ clone_project() {
         error "Projeto não foi clonado corretamente"
     fi
     
-    echo "Projeto clonado em /opt/$PROJECT_NAME (branch: $GIT_BRANCH)"
+    echo "Projeto clonado em /opt/$PROJECT_NAME (branch: $GIT_BRANCH - inclui database-structure-migration)"
     log "Projeto clonado"
 }
 
