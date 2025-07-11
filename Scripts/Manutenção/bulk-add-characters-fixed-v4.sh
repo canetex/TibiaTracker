@@ -84,10 +84,10 @@ test_api_connectivity() {
         return 1
     fi
     
-    # Testar endpoint específico de scrape-and-create com prefixo correto e parâmetros na query string
-    log "🔍 Testando endpoint scrape-and-create..."
-    if ! test_endpoint "$API_URL/api/v1/characters/scrape-and-create?server=taleon&world=san&character_name=test" "POST"; then
-        warning "⚠️ Endpoint scrape-and-create retornou erro, mas pode ser normal para personagem de teste"
+    # Testar endpoint específico de scrape-with-history com prefixo correto e parâmetros na query string
+    log "🔍 Testando endpoint scrape-with-history..."
+    if ! test_endpoint "$API_URL/api/v1/characters/scrape-with-history?server=taleon&world=san&character_name=test" "POST"; then
+        warning "⚠️ Endpoint scrape-with-history retornou erro, mas pode ser normal para personagem de teste"
         # Não falhar aqui, pois pode ser que o personagem 'test' não exista
     fi
     
@@ -111,8 +111,8 @@ add_character() {
     
     log "🔄 Adicionando: $name ($server/$world)"
     
-    # Montar query string
-    local url="$API_URL/api/v1/characters/scrape-and-create?server=$(printf '%s' "$server" | jq -sRr @uri)&world=$(printf '%s' "$world" | jq -sRr @uri)&character_name=$(printf '%s' "$name" | jq -sRr @uri)"
+    # Montar query string - USAR ENDPOINT COM HISTÓRICO
+    local url="$API_URL/api/v1/characters/scrape-with-history?server=$(printf '%s' "$server" | jq -sRr @uri)&world=$(printf '%s' "$world" | jq -sRr @uri)&character_name=$(printf '%s' "$name" | jq -sRr @uri)"
     
     # Fazer a requisição para a API usando o prefixo correto e parâmetros na query string
     response=$(curl -s -w "%{http_code}" -o /tmp/response.json \
