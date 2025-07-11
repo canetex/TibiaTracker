@@ -210,29 +210,13 @@ class TaleonSiteTester:
             logger.warning(f"⚠️ Erro ao extrair personagens de teste: {e}")
         return characters
     
-    def _extract_character_name_from_url_test(self, href: str) -> Optional[str]:
-        """Extrair nome do personagem de uma URL"""
-        try:
-            # Se já for o nome, retorna direto
-            if not href.startswith('href='):
-                return href.strip()
-            # Buscar parâmetro name= na URL
-            match = re.search(r"name=([^&]+)", href)
-            if match:
-                name = urllib.parse.unquote(match.group(1))
-                return name.strip()
-        except Exception:
-            pass
-        return None
-    
     def _extract_from_deaths_test(self, html: str) -> List[str]:
         """Extrair personagens da página de mortes"""
         characters = []
-        # Buscar links que contenham characterprofile.php?name=
         pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
         for match in matches:
-            name = self._extract_character_name_from_url_test(match)
+            name = match.strip()
             if name:
                 characters.append(name)
         return characters
@@ -243,7 +227,7 @@ class TaleonSiteTester:
         pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
         for match in matches:
-            name = self._extract_character_name_from_url_test(match)
+            name = match.strip()
             if name:
                 characters.append(name)
         return characters
@@ -254,7 +238,7 @@ class TaleonSiteTester:
         pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
         for match in matches:
-            name = self._extract_character_name_from_url_test(match)
+            name = match.strip()
             if name:
                 characters.append(name)
         return characters
@@ -265,7 +249,7 @@ class TaleonSiteTester:
         pattern = r"href='characterprofile\.php\?name=([^']*)'"
         matches = re.findall(pattern, html, re.IGNORECASE)
         for match in matches:
-            name = self._extract_character_name_from_url_test(match)
+            name = match.strip()
             if name:
                 characters.append(name)
         return characters
