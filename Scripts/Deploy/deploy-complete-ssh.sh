@@ -194,8 +194,8 @@ create_custom_caddyfile() {
 }
 EOF
 
-    # Atualizar docker-compose para usar o Caddyfile customizado
-    sed -i 's|./Scripts/Deploy/Caddyfile:/etc/caddy/Caddyfile|custom-caddyfile:/etc/caddy/Caddyfile|g' docker-compose.yml
+    # Copiar o Caddyfile customizado para o local correto
+    cp custom-caddyfile Scripts/Deploy/Caddyfile
     
     echo "Caddyfile customizado criado"
     log "Caddyfile customizado criado"
