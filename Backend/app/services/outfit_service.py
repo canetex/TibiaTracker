@@ -192,35 +192,31 @@ class OutfitService:
             logger.error(f"Erro ao processar outfit para {character_name}: {e}")
             return None
     
-    def cleanup_old_outfits(self, days_old: int = 30) -> int:
+    def get_local_url_from_filename(self, filename: str) -> str:
         """
-        Limpar outfits antigos
+        Gerar URL local para um arquivo de outfit
         
         Args:
-            days_old: Idade em dias para considerar como antigo
+            filename: Nome do arquivo
             
         Returns:
-            Número de arquivos removidos
+            URL local para acessar o arquivo
         """
-        try:
-            import time
-            current_time = time.time()
-            cutoff_time = current_time - (days_old * 24 * 60 * 60)
+        return f"/outfits/{filename}"
+    
+    def get_local_url_from_path(self, filepath: str) -> Optional[str]:
+        """
+        Gerar URL local a partir do caminho do arquivo
+        
+        Args:
+            filepath: Caminho completo do arquivo
             
-            removed_count = 0
-            
-            for filename in os.listdir(self.storage_path):
-                filepath = os.path.join(self.storage_path, filename)
-                if os.path.isfile(filepath):
-                    file_time = os.path.getmtime(filepath)
-                    if file_time < cutoff_time:
-                        os.remove(filepath)
-                        removed_count += 1
-                        logger.info(f"Outfit antigo removido: {filename}")
-            
-            logger.info(f"Limpeza concluída: {removed_count} outfits removidos")
-            return removed_count
-            
-        except Exception as e:
-            logger.error(f"Erro na limpeza de outfits: {e}")
-            return 0 
+        Returns:
+            URL local para acessar o arquivo ou None se filepath for None
+        """
+        if not filepath:
+            return None
+        
+        # Extrair apenas o nome do arquivo do caminho
+        filename = os.path.basename(filepath)
+        return self.get_local_url_from_filename(filename) 

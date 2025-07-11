@@ -165,4 +165,57 @@ def calculate_last_experience_data(snapshots: list) -> Tuple[Optional[int], Opti
             return snapshot.experience, format_date_pt_br(snapshot.scraped_at)
     
     # Se não encontrou nenhuma experiência > 0
-    return None, None 
+    return None, None
+
+
+def calculate_experience_stats(snapshots: list, days: int = 30) -> dict:
+    """
+    Calcular estatísticas de experiência para um período específico
+    
+    Args:
+        snapshots: Lista de snapshots do personagem
+        days: Número de dias para análise (padrão: 30)
+        
+    Returns:
+        dict: Dicionário com estatísticas de experiência
+    """
+    if not snapshots:
+        return {
+            'total_exp_gained': 0,
+            'average_daily_exp': 0,
+            'last_experience': None,
+            'last_experience_date': None,
+            'exp_gained': 0
+        }
+    
+    # Calcular data limite
+    cutoff_date = get_utc_now() - timedelta(days=days)
+    
+    # Filtrar snapshots do período
+    recent_snapshots = [
+        snap for snap in snapshots 
+        if snap.scraped_at >= cutoff_date
+    ]
+    
+    # Calcular experiência total ganha no período
+    total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
+    
+    # Calcular média diária
+    average_daily_exp = 0
+    if len(recent_snapshots) > 1:
+        days_diff = days_between(recent_snapshots[0].scraped_at, recent_snapshots[-1].scraped_at)
+        if days_diff > 0:
+            average_daily_exp = total_exp_gained / days_diff
+    elif len(recent_snapshots) == 1:
+        average_daily_exp = total_exp_gained
+    
+    # Calcular última experiência válida
+    last_experience, last_experience_date = calculate_last_experience_data(snapshots)
+    
+    return {
+        'total_exp_gained': total_exp_gained,
+        'average_daily_exp': average_daily_exp,
+        'last_experience': last_experience,
+        'last_experience_date': last_experience_date,
+        'exp_gained': total_exp_gained  # Alias para compatibilidade
+    } 

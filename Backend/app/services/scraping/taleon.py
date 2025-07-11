@@ -422,11 +422,17 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                     )
                     if outfit_data:
                         data['outfit_data'] = json.dumps(outfit_data)
-                        # Usar URL local se disponível
+                        # SEMPRE usar URL local se disponível
                         if 'local_url' in outfit_data:
                             data['outfit_image_url'] = outfit_data['local_url']
+                            data['outfit_image_path'] = outfit_data['filepath']
+                            logger.info(f"[TALEON] Outfit processado - URL local: {outfit_data['local_url']}")
+                        else:
+                            logger.warning(f"[TALEON] Outfit processado mas sem URL local")
                 except Exception as e:
                     logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Erro ao processar outfit: {e}")
+                    # Em caso de erro, manter a URL original
+                    data['outfit_image_url'] = outfit_url
             
             # Procurar pela tabela principal com informações do personagem
             # A estrutura do Taleon usa tabelas com duas colunas: label | valor

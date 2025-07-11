@@ -235,6 +235,42 @@ class CharacterService:
             logger.error(f"Erro ao deletar personagem {character_id}: {e}")
             return False
 
+    def _process_outfit_url(self, character: CharacterModel) -> Optional[str]:
+        """
+        Processar URL do outfit para garantir que seja local
+        
+        Args:
+            character: Modelo do personagem
+            
+        Returns:
+            URL local do outfit ou URL original se não houver local
+        """
+        try:
+            # Se tem caminho local, usar URL local
+            if character.outfit_image_path:
+                from app.services.outfit_service import OutfitService
+                outfit_service = OutfitService()
+                local_url = outfit_service.get_local_url_from_path(character.outfit_image_path)
+                if local_url:
+                    logger.debug(f"Usando URL local para outfit: {local_url}")
+                    return local_url
+            
+            # Se tem URL mas não tem caminho local, verificar se é URL externa
+            if character.outfit_image_url and character.outfit_image_url.startswith('http'):
+                logger.warning(f"Personagem {character.name} tem URL externa: {character.outfit_image_url}")
+                # Manter URL externa como fallback
+                return character.outfit_image_url
+            
+            # Se tem URL local, usar diretamente
+            if character.outfit_image_url and character.outfit_image_url.startswith('/'):
+                return character.outfit_image_url
+            
+            return character.outfit_image_url or None
+            
+        except Exception as e:
+            logger.error(f"Erro ao processar URL do outfit: {e}")
+            return character.outfit_image_url or None
+
     async def get_character_with_stats(self, character_id: int) -> Optional[CharacterSchema]:
         """Obter personagem com último snapshot e estatísticas"""
         try:
@@ -248,6 +284,10 @@ class CharacterService:
 
             if not character:
                 return None
+
+            # Processar URL do outfit para garantir que seja local
+            if character.outfit_image_url:
+                character.outfit_image_url = self._process_outfit_url(character)
 
             # Converter para response
             return CharacterSchema.from_orm(character)
@@ -291,9 +331,12 @@ class CharacterService:
             result = await self.db.execute(query)
             characters = result.scalars().all()
 
-            # Converter para response
+            # Converter para response e processar URLs de outfit
             character_summaries = []
             for character in characters:
+                # Processar URL do outfit para garantir que seja local
+                if character.outfit_image_url:
+                    character.outfit_image_url = self._process_outfit_url(character)
                 character_summaries.append(character)
 
             return {

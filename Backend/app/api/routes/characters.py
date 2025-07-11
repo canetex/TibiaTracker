@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import logging
 
 from app.db.database import get_db
-from app.core.utils import get_utc_now, normalize_datetime, days_between, calculate_last_experience_data, format_date_pt_br
+from app.core.utils import get_utc_now, normalize_datetime, days_between, calculate_last_experience_data, calculate_experience_stats, format_date_pt_br
 from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
 from app.schemas.character import (
     CharacterBase, CharacterCreate, CharacterUpdate, Character,
@@ -723,30 +723,15 @@ async def get_recent_characters(
             )
             total_snapshots = count_result.scalar()
             
-            # Calcular estatísticas de experiência dos últimos 30 dias
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-            exp_stats_result = await db.execute(
+            # Calcular estatísticas de experiência usando a nova função
+            all_snapshots_result = await db.execute(
                 select(CharacterSnapshotModel)
-                .where(
-                    and_(
-                        CharacterSnapshotModel.character_id == char.id,
-                        CharacterSnapshotModel.scraped_at >= thirty_days_ago
-                    )
-                )
-                .order_by(CharacterSnapshotModel.scraped_at)
+                .where(CharacterSnapshotModel.character_id == char.id)
             )
-            recent_snapshots = exp_stats_result.scalars().all()
+            all_snapshots = all_snapshots_result.scalars().all()
             
-            # Calcular estatísticas
-            total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
-            average_daily_exp = 0
-            
-            if len(recent_snapshots) > 1:
-                days_diff = (recent_snapshots[-1].scraped_at - recent_snapshots[0].scraped_at).days
-                if days_diff > 0:
-                    average_daily_exp = total_exp_gained / days_diff
-            elif len(recent_snapshots) == 1:
-                average_daily_exp = total_exp_gained
+            # Calcular estatísticas de experiência
+            exp_stats = calculate_experience_stats(all_snapshots, days=30)
 
             char_data = {
                 "id": char.id,
@@ -759,8 +744,11 @@ async def get_recent_characters(
                 "outfit_image_url": char.outfit_image_url,
                 "last_scraped_at": char.last_scraped_at,
                 "total_snapshots": total_snapshots,
-                "total_exp_gained": total_exp_gained,
-                "average_daily_exp": average_daily_exp,
+                "total_exp_gained": exp_stats['total_exp_gained'],
+                "average_daily_exp": exp_stats['average_daily_exp'],
+                "last_experience": exp_stats['last_experience'],
+                "last_experience_date": exp_stats['last_experience_date'],
+                "exp_gained": exp_stats['exp_gained'],
                 "latest_snapshot": None
             }
             if latest_snapshot:
@@ -773,16 +761,6 @@ async def get_recent_characters(
                     "achievement_points": latest_snapshot.achievement_points,
                     "scraped_at": latest_snapshot.scraped_at
                 }
-
-            # NOVO BLOCO: calcular e adicionar os campos de experiência
-            all_snapshots_result = await db.execute(
-                select(CharacterSnapshotModel)
-                .where(CharacterSnapshotModel.character_id == char.id)
-            )
-            all_snapshots = all_snapshots_result.scalars().all()
-            last_experience, last_experience_date = calculate_last_experience_data(all_snapshots)
-            char_data["last_experience"] = last_experience
-            char_data["last_experience_date"] = last_experience_date
 
             response_data.append(char_data)
         
