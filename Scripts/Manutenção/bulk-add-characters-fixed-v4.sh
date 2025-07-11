@@ -154,19 +154,19 @@ main() {
     
     # Verificar se os arquivos existem
     log "📁 Verificando arquivos de entrada..."
-    if [[ ! -f "$PROJECT_DIR/InitialLoad/san.txt" ]]; then
-        error "❌ Arquivo san.txt não encontrado em $PROJECT_DIR/InitialLoad/"
+    if [[ ! -f "$PROJECT_DIR/Scripts/InitialLoad/san.txt" ]]; then
+        error "❌ Arquivo san.txt não encontrado em $PROJECT_DIR/Scripts/InitialLoad/"
         exit 1
     fi
     
-    if [[ ! -f "$PROJECT_DIR/InitialLoad/aura.txt" ]]; then
-        error "❌ Arquivo aura.txt não encontrado em $PROJECT_DIR/InitialLoad/"
+    if [[ ! -f "$PROJECT_DIR/Scripts/InitialLoad/aura.txt" ]]; then
+        error "❌ Arquivo aura.txt não encontrado em $PROJECT_DIR/Scripts/InitialLoad/"
         exit 1
     fi
     
     # Contar linhas nos arquivos
-    san_count=$(wc -l < "$PROJECT_DIR/InitialLoad/san.txt")
-    aura_count=$(wc -l < "$PROJECT_DIR/InitialLoad/aura.txt")
+    san_count=$(wc -l < "$PROJECT_DIR/Scripts/InitialLoad/san.txt")
+    aura_count=$(wc -l < "$PROJECT_DIR/Scripts/InitialLoad/aura.txt")
     
     log "✅ Arquivos encontrados:"
     log "   - san.txt: $san_count linhas"
@@ -206,7 +206,7 @@ main() {
         # Delay para não sobrecarregar a API
         sleep 2
         
-    done < "$PROJECT_DIR/InitialLoad/san.txt"
+    done < "$PROJECT_DIR/Scripts/InitialLoad/san.txt"
     
     # Processar personagens do AURA
     log "📋 Processando personagens do AURA..."
@@ -234,7 +234,7 @@ main() {
         # Delay para não sobrecarregar a API
         sleep 2
         
-    done < "$PROJECT_DIR/InitialLoad/aura.txt"
+    done < "$PROJECT_DIR/Scripts/InitialLoad/aura.txt"
     
     # Resumo final
     log "=== RESUMO FINAL ==="
