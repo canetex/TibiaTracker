@@ -191,11 +191,10 @@ class TaleonSiteTester:
         return structure
     
     def _extract_test_characters(self, html: str, site_config: Dict) -> List[str]:
-        """Extrair personagens de teste baseado no método de scraping"""
-        
-        characters = []
+        print(f"[DEBUG] site_config: {site_config}")
         scraping_method = site_config.get('scraping_method', 'generic')
-        
+        print(f"[DEBUG] scraping_method: {scraping_method}")
+        characters = []
         try:
             if scraping_method == 'deaths':
                 characters = self._extract_from_deaths_test(html)
@@ -205,13 +204,10 @@ class TaleonSiteTester:
                 characters = self._extract_from_onlinelist_test(html)
             else:
                 characters = self._extract_generic_test(html)
-            
             # Remover duplicatas e limpar
             characters = list(set([c.strip() for c in characters if c.strip() and len(c.strip()) > 2]))
-            
         except Exception as e:
             logger.warning(f"⚠️ Erro ao extrair personagens de teste: {e}")
-        
         return characters
     
     def _extract_character_name_from_url_test(self, href: str) -> Optional[str]:
