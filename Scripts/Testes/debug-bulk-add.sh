@@ -21,9 +21,9 @@ test_character() {
     echo "World (hex): $(echo -n "$world" | xxd -p)"
     
     # URL encode manual
-    encoded_name=$(echo "$name" | jq -sRr @uri)
-    encoded_server=$(echo "$server" | jq -sRr @uri)
-    encoded_world=$(echo "$world" | jq -sRr @uri)
+    encoded_name=$(printf '%s' "$name" | jq -sRr @uri)
+    encoded_server=$(printf '%s' "$server" | jq -sRr @uri)
+    encoded_world=$(printf '%s' "$world" | jq -sRr @uri)
     
     echo "Nome (encoded): '$encoded_name'"
     echo "Servidor (encoded): '$encoded_server'"
