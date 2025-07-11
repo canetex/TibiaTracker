@@ -221,7 +221,7 @@ class TaleonAutoLoaderAPI:
         """Extrair nome do personagem do parâmetro 'name' da URL"""
         try:
             # Procurar por characterprofile.php?name=Nome
-            match = re.search(r'characterprofile\.php\?name=([^&]+)', href)
+            match = re.search(r'characterprofile\.php\?name=([^&\'\"]+)', href)
             if match:
                 # Decodificar caracteres especiais (ex: %20 -> espaço)
                 from urllib.parse import unquote
@@ -322,7 +322,7 @@ class TaleonAutoLoaderAPI:
         
         try:
             # Procurar por links que contenham characterprofile.php?name=
-            pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+            pattern = r'href=[\'"]([^\'"]*characterprofile\.php\?name=[^\'"]*)[\'"]'
             matches = re.findall(pattern, html, re.IGNORECASE)
             
             for match in matches:
@@ -343,7 +343,7 @@ class TaleonAutoLoaderAPI:
         
         try:
             # Procurar por links que contenham characterprofile.php?name=
-            pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+            pattern = r'href=[\'"]([^\'"]*characterprofile\.php\?name=[^\'"]*)[\'"]'
             matches = re.findall(pattern, html, re.IGNORECASE)
             
             for match in matches:
@@ -364,7 +364,7 @@ class TaleonAutoLoaderAPI:
         
         try:
             # Procurar por links que contenham characterprofile.php?name=
-            pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+            pattern = r'href=[\'"]([^\'"]*characterprofile\.php\?name=[^\'"]*)[\'"]'
             matches = re.findall(pattern, html, re.IGNORECASE)
             
             for match in matches:
@@ -385,7 +385,7 @@ class TaleonAutoLoaderAPI:
         
         try:
             # Procurar por links que contenham characterprofile.php?name=
-            pattern = r'href=["\']([^"\']*characterprofile\.php\?name=[^"\']*)["\']'
+            pattern = r'href=[\'"]([^\'"]*characterprofile\.php\?name=[^\'"]*)[\'"]'
             matches = re.findall(pattern, html, re.IGNORECASE)
             
             for match in matches:
