@@ -116,6 +116,17 @@ class CharacterService:
     ) -> CharacterSnapshotModel:
         """Criar novo snapshot para um personagem"""
         try:
+            # Obter personagem para pegar o world atual
+            character = await self.get_character(character_id)
+            if not character:
+                raise ValueError(f"Personagem {character_id} não encontrado")
+            
+            # Definir exp_date - usar do snapshot_data se disponível, senão usar data atual
+            from datetime import datetime
+            exp_date = snapshot_data.get('exp_date')
+            if not exp_date:
+                exp_date = datetime.now().date()
+            
             snapshot = CharacterSnapshotModel(
                 character_id=character_id,
                 level=snapshot_data.get('level', 0),
@@ -125,6 +136,7 @@ class CharacterService:
                 bosstiary_points=snapshot_data.get('bosstiary_points'),
                 achievement_points=snapshot_data.get('achievement_points'),
                 vocation=snapshot_data.get('vocation', 'None'),
+                world=snapshot_data.get('world', character.world),  # Usar world do scraping ou do personagem
                 residence=snapshot_data.get('residence', ''),
                 house=snapshot_data.get('house'),
                 guild=snapshot_data.get('guild'),
@@ -134,6 +146,7 @@ class CharacterService:
                 outfit_image_url=snapshot_data.get('outfit_image_url'),
                 outfit_data=snapshot_data.get('outfit_data'),
                 profile_url=snapshot_data.get('profile_url'),
+                exp_date=exp_date,  # Data da experiência
                 scrape_source=source
             )
 
