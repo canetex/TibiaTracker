@@ -145,7 +145,7 @@ def get_activity_filter_labels() -> dict:
 
 def calculate_last_experience_data(snapshots: list) -> Tuple[Optional[int], Optional[str]]:
     """
-    Calcular a última experiência válida (> 0) e sua data
+    Calcular a última experiência válida (diferente de None) e sua data
     
     Args:
         snapshots: Lista de snapshots do personagem
@@ -159,12 +159,12 @@ def calculate_last_experience_data(snapshots: list) -> Tuple[Optional[int], Opti
     # Ordenar snapshots por data (mais recente primeiro)
     sorted_snapshots = sorted(snapshots, key=lambda x: x.scraped_at, reverse=True)
     
-    # Procurar o primeiro snapshot com experiência > 0
+    # Procurar o primeiro snapshot com experiência válida (diferente de None)
     for snapshot in sorted_snapshots:
-        if snapshot.experience and snapshot.experience > 0:
+        if snapshot.experience is not None:
             return snapshot.experience, format_date_pt_br(snapshot.scraped_at)
     
-    # Se não encontrou nenhuma experiência > 0
+    # Se não encontrou nenhuma experiência válida
     return None, None
 
 

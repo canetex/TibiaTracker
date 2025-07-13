@@ -185,42 +185,53 @@ async def update_character_data(character_id: int, source: str = "scheduled"):
     """
     try:
         async with get_db_session() as db:
-            service = CharacterService(db)
-            character = await service.get_character(character_id)
-            
-            if not character:
-                logger.warning(f"⚠️ Personagem {character_id} não encontrado")
-                return
-            
-            logger.info(f"🔄 Atualizando personagem {character.name}")
-            
-            # Fazer scraping
-            scrape_result = await scrape_character_data(
-                character.server, character.world, character.name
-            )
-            
-            if scrape_result.success:
-                # Criar novo snapshot
-                await service.create_snapshot(character.id, scrape_result.data, source)
+            try:
+                service = CharacterService(db)
+                character = await service.get_character(character_id)
                 
-                # Agendar próxima atualização
-                await service.schedule_next_update(character.id)
+                if not character:
+                    logger.warning(f"⚠️ Personagem {character_id} não encontrado")
+                    return
                 
-                logger.info(f"✅ Personagem {character.name} atualizado com sucesso")
+                logger.info(f"🔄 Atualizando personagem {character.name}")
                 
-            else:
-                # Lidar com erro
-                character.scrape_error_count += 1
-                character.last_scrape_error = scrape_result.error_message
+                # Fazer scraping
+                scrape_result = await scrape_character_data(
+                    character.server, character.world, character.name
+                )
                 
-                if scrape_result.retry_after:
-                    character.next_scrape_at = scrape_result.retry_after
+                if scrape_result.success:
+                    # Criar novo snapshot
+                    await service.create_snapshot(character.id, scrape_result.data, source)
+                    
+                    # Agendar próxima atualização
+                    await service.schedule_next_update(character.id)
+                    
+                    # Commit da transação
+                    await db.commit()
+                    
+                    logger.info(f"✅ Personagem {character.name} atualizado com sucesso")
+                    
                 else:
-                    character.next_scrape_at = datetime.now() + timedelta(hours=1)
-                
-                await db.commit()
-                
-                logger.warning(f"⚠️ Erro ao atualizar {character.name}: {scrape_result.error_message}")
+                    # Lidar com erro
+                    character.scrape_error_count += 1
+                    character.last_scrape_error = scrape_result.error_message
+                    
+                    if scrape_result.retry_after:
+                        character.next_scrape_at = scrape_result.retry_after
+                    else:
+                        character.next_scrape_at = datetime.now() + timedelta(hours=1)
+                    
+                    # Commit da transação
+                    await db.commit()
+                    
+                    logger.warning(f"⚠️ Erro ao atualizar {character.name}: {scrape_result.error_message}")
+                    
+            except Exception as e:
+                # Rollback em caso de erro
+                await db.rollback()
+                logger.error(f"❌ Erro ao atualizar personagem {character_id}: {e}")
+                raise
                 
     except Exception as e:
         logger.error(f"❌ Erro ao atualizar personagem {character_id}: {e}")

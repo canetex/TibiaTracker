@@ -880,7 +880,7 @@ async def list_characters(
                 and_(
                     CharacterSnapshotModel.scraped_at >= target_datetime_start,
                     CharacterSnapshotModel.scraped_at < target_datetime_end,
-                    CharacterSnapshotModel.experience > 0
+                    CharacterSnapshotModel.experience.is_not(None)
                 )
             ).distinct()
             
@@ -1170,7 +1170,7 @@ async def filter_character_ids(
                 and_(
                     CharacterSnapshotModel.scraped_at >= target_datetime_start,
                     CharacterSnapshotModel.scraped_at < target_datetime_end,
-                    CharacterSnapshotModel.experience > 0
+                    CharacterSnapshotModel.experience.is_not(None)
                 )
             )
         if activity_conditions:
