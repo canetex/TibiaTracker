@@ -22,7 +22,7 @@ const ComparisonPanel = ({
   onRemoveCharacter, 
   onShowComparison, 
   onClearAll,
-  maxCharacters = 10 
+  maxCharacters = 50 
 }) => {
   if (characters.length === 0) {
     return null;
@@ -51,9 +51,9 @@ const ComparisonPanel = ({
               Comparação de Personagens
             </Typography>
             <Chip 
-              label={`${characters.length}/${maxCharacters}`}
+              label={maxCharacters ? `${characters.length}/${maxCharacters}` : `${characters.length}`}
               size="small"
-              color={characters.length >= maxCharacters ? 'error' : 'primary'}
+              color={maxCharacters && characters.length >= maxCharacters ? 'error' : 'primary'}
               variant="outlined"
             />
           </Box>
@@ -174,7 +174,7 @@ const ComparisonPanel = ({
         </Box>
 
         {/* Warning when max characters reached */}
-        {characters.length >= maxCharacters && (
+        {maxCharacters && characters.length >= maxCharacters && (
           <Fade in={characters.length >= maxCharacters}>
             <Box sx={{ 
               mt: 1, 

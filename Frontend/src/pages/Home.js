@@ -333,11 +333,6 @@ const Home = () => {
   };
 
   const handleAddToComparison = (character) => {
-    if (comparisonCharacters.length >= 10) {
-      setError('Máximo de 10 personagens para comparação.');
-      return;
-    }
-    
     if (!comparisonCharacters.some(c => c.id === character.id)) {
       setComparisonCharacters([...comparisonCharacters, character]);
     }
@@ -657,7 +652,6 @@ const Home = () => {
         onRemoveCharacter={handleRemoveFromComparison}
         onShowComparison={handleShowComparison}
         onClearAll={handleClearComparison}
-        maxCharacters={10}
       />
 
       {/* Gráfico de Comparação */}

@@ -144,7 +144,7 @@ export const apiService = {
   /**
    * Obter personagens recentes
    */
-  async getRecentCharacters(limit = 10) {
+  async getRecentCharacters(limit = 50) {
     try {
       console.log(`[API] getRecentCharacters chamado com limite: ${limit}`);
       const response = await api.get('/api/v1/characters/recent', {
