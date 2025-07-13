@@ -1252,9 +1252,7 @@ async def get_characters_by_ids(req: CharacterIDsRequest, db: AsyncSession = Dep
         
         character_list.append(char_dict)
     
-        return character_list
-    
-    return characters
+    return character_list
 
 
 # ===== ENDPOINTS DE PERSONAGEM ESPECÍFICO =====
