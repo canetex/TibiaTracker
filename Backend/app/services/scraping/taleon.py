@@ -243,12 +243,9 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                         experience_gained = 0
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Sem experiência ganha")
                     else:
-                        # Extrair número e garantir que seja positivo
+                        # Extrair número (pode ser negativo para mortes)
                         raw_experience = self._extract_number(exp_text)
-                        experience_gained = max(0, raw_experience)  # Garantir que não seja negativo
-                        
-                        if raw_experience != experience_gained:
-                            logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Experiência negativa corrigida: {raw_experience} → {experience_gained}")
+                        experience_gained = raw_experience  # Permitir valores negativos
                         
                         logger.debug(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Experiência extraída: {experience_gained:,}")
                     
@@ -268,7 +265,7 @@ class TaleonCharacterScraper(BaseCharacterScraper):
                             logger.warning(f"[TALEON-{self.current_world_config.name if self.current_world_config else 'UNKNOWN'}] Linha {i}: Não foi possível parsear data: {date_text}")
                             continue
                     
-                    if snapshot_date and experience_gained >= 0:
+                    if snapshot_date:
                         history_data.append({
                             'date': snapshot_date,
                             'experience_gained': experience_gained,
