@@ -15,6 +15,7 @@ from typing import Dict, Any
 
 from app.db.database import get_db
 from app.core.config import settings
+from app.services.scheduler import get_scheduler_info
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,27 @@ async def detailed_health_check(db: AsyncSession = Depends(get_db)):
         health_status["status"] = "unhealthy"
     
     return health_status
+
+
+@router.get("/scheduler")
+async def scheduler_status():
+    """
+    Verificar status do scheduler
+    """
+    try:
+        scheduler_info = get_scheduler_info()
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "scheduler": scheduler_info
+        }
+    except Exception as e:
+        logger.error(f"Erro ao verificar scheduler: {e}")
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
 
 
 @router.get("/readiness")

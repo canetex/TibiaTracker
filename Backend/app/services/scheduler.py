@@ -128,14 +128,17 @@ async def update_all_characters():
             service = CharacterService(db)
             
             # Buscar personagens que precisam ser atualizados
-            from sqlalchemy import select, and_
+            from sqlalchemy import select, and_, or_
             from app.models.character import Character
             
             result = await db.execute(
                 select(Character).where(
                     and_(
                         Character.is_active == True,
-                        Character.next_scrape_at <= datetime.now()
+                        or_(
+                            Character.next_scrape_at <= datetime.now(),
+                            Character.next_scrape_at.is_(None)
+                        )
                     )
                 )
             )
