@@ -192,9 +192,9 @@ const ComparisonChart = ({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '90vw',
-          maxWidth: 1200,
-          height: '80vh',
+          width: '95vw',
+          maxWidth: 1400,
+          height: '85vh',
           zIndex: 2000,
           p: 3,
           overflow: 'hidden',
@@ -303,7 +303,7 @@ const ComparisonChart = ({
                 <XAxis 
                   dataKey="date" 
                   type="category"
-                  tick={{ fontSize: 12, fill: '#666666' }}
+                  tick={{ fontSize: 11, fill: '#666666' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
@@ -314,15 +314,15 @@ const ComparisonChart = ({
                   type="number"
                   domain={getLevelDomain()}
                   allowDataOverflow={true}
-                  label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666' }}
-                  tick={{ fontSize: 12, fill: '#666666' }}
+                  label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666', fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: '#666666' }}
                   tickFormatter={(value) => value.toLocaleString('pt-BR')}
                 />
                 <YAxis 
                   yAxisId="experience" 
                   orientation="right"
-                  label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#666666' }}
-                  tick={{ fontSize: 12, fill: '#666666' }}
+                  label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#666666', fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: '#666666' }}
                   tickFormatter={(value) => value.toLocaleString('pt-BR')}
                 />
                 
