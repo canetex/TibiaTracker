@@ -456,50 +456,11 @@ const Home = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
-        🏰 Tibia Tracker
+      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
+        Tibia Tracker
       </Typography>
 
-      {/* Global Stats */}
-      {globalStats && (
-        <Paper sx={{ p: 3, mb: 4, bgcolor: 'primary.50' }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-            📊 Estatísticas Globais
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {(globalStats.total_characters || 0).toLocaleString('pt-BR')}
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  Personagens Monitorados
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {(globalStats.total_snapshots || 0).toLocaleString('pt-BR')}
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  Snapshots Coletados
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {(globalStats.favorited_characters || 0).toLocaleString('pt-BR')}
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  Personagens Favoritados
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      )}
+
 
       {/* Search Section */}
       <Card sx={{ mb: 4 }}>

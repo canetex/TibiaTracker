@@ -16,17 +16,23 @@ function App() {
         {/* Header */}
         <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
           <Toolbar>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{ 
-                flexGrow: 1, 
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 600
-              }}
-            >
-              🏰 Tibia Tracker
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+              <img 
+                src="/Gemini_Generated_Image_krd5zkrd5zkrd5zk.png" 
+                alt="Tibia Tracker" 
+                style={{ width: 32, height: 32, marginRight: 12 }}
+              />
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{ 
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontWeight: 600
+                }}
+              >
+                Tibia Tracker
+              </Typography>
+            </Box>
             
             <IconButton
               color="inherit"
