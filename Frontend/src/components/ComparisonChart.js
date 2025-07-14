@@ -71,8 +71,8 @@ const ComparisonChart = ({
         try {
           // Buscar dados de level e experiência
           const [levelResponse, expResponse] = await Promise.all([
-            fetch(`http://192.168.1.227:8000/api/v1/characters/${character.id}/charts/level?days=30`),
-            fetch(`http://192.168.1.227:8000/api/v1/characters/${character.id}/charts/experience?days=30`)
+            fetch(`/api/v1/characters/${character.id}/charts/level?days=30`),
+            fetch(`/api/v1/characters/${character.id}/charts/experience?days=30`)
           ]);
 
           const levelData = await levelResponse.json();

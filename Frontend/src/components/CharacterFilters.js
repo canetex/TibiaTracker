@@ -191,7 +191,6 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
                 onClick={onShowChart}
                 variant="outlined"
                 color="secondary"
-                disabled={filteredCount > 15}
               >
                 Gráfico ({filteredCount})
               </Button>

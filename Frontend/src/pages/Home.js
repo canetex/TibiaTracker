@@ -353,7 +353,7 @@ const Home = () => {
   };
 
   const handleShowFilteredChart = () => {
-    if (filteredCharacters.length > 1 && filteredCharacters.length <= 15) {
+    if (filteredCharacters.length > 1) {
       setFilteredChartOpen(true);
     }
   };
