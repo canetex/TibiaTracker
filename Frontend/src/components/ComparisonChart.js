@@ -193,7 +193,6 @@ const ComparisonChart = ({
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '95vw',
-          maxWidth: 1400,
           height: '85vh',
           zIndex: 2000,
           p: 3,
