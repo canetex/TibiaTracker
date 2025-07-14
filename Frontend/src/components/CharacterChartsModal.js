@@ -283,28 +283,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                     }
                     label="Level"
                   />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={chartOptions.deaths}
-                        onChange={() => handleOptionChange('deaths')}
-                        color="primary"
-                        disabled
-                      />
-                    }
-                    label="Mortes (em breve)"
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={chartOptions.charmPoints}
-                        onChange={() => handleOptionChange('charmPoints')}
-                        color="primary"
-                        disabled
-                      />
-                    }
-                    label="Charm Points (em breve)"
-                  />
+
                 </FormGroup>
               </Grid>
             </Grid>

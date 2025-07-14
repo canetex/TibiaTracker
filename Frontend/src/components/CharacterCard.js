@@ -264,8 +264,8 @@ const CharacterCard = ({
             <Box>
               <Typography variant="body2" color="text.secondary">
                 {character.last_experience_date 
-                  ? `Experiência (último dia - ${character.last_experience_date})`
-                  : 'Experiência (último dia)'
+                  ? `Exp. Total (último dia - ${character.last_experience_date})`
+                  : 'Exp. Total (último dia)'
                 }
               </Typography>
               <Tooltip title={(!character.snapshots || character.snapshots.length === 0) ? 'Dados de experiência detalhados não disponíveis para este personagem filtrado.' : ''}>
@@ -290,16 +290,7 @@ const CharacterCard = ({
             </Box>
           </Grid>
           
-          <Grid item xs={6}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Snapshots
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {(character.total_snapshots || character.snapshots_count || 0).toLocaleString('pt-BR')}
-              </Typography>
-            </Box>
-          </Grid>
+
         </Grid>
 
         {/* Experience Progress */}
@@ -309,9 +300,9 @@ const CharacterCard = ({
           return exp ? (
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Progresso (30 dias)
-                </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                Exp. Ganha (30 dias)
+              </Typography>
                 <Typography variant="body2" color="text.secondary">
                   +{totalGained.toLocaleString('pt-BR')}
                 </Typography>

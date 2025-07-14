@@ -154,31 +154,35 @@ Tibia Tracker/
 - [x] Script de rescraping completo de todos os personagens
 - [x] Sistema de monitoramento de processos
 
-### 4. 🔄 Desenvolvimento de Funcionalidades Frontend
+### 4. ✅ CONCLUÍDO - Desenvolvimento de Funcionalidades Frontend
 - [x] Completar integração Frontend com API
 - [x] Implementar busca de personagens no Frontend
 - [x] Adicionar gráficos de evolução temporal
 - [x] Sistema de comparação entre personagens
-- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
-  - [ ] Incluir botão de favoritar em cada personagem
-  - [ ] Guardar cookie/sessão dos favoritos
-  - [ ] Revisar cards - mostrar "experiência do último dia"
-  - [ ] Implementar tecla Enter nos filtros
-  - [ ] Implementar filtros rápidos via tags dos cards
-  - [ ] Seleção múltipla no filtro Atividade
+- [x] **✅ Melhorias de UX/UI Implementadas**:
+  - [x] Incluir botão de favoritar em cada personagem
+  - [x] Revisar cards - mostrar "experiência do último dia"
+  - [x] Implementar tecla Enter nos filtros
+  - [x] Implementar filtros rápidos via tags dos cards
+  - [x] Seleção múltipla no filtro Atividade
 
 ### 5. 🔄 Configuração de Produção
-- [ ] Configurar domínio DNS para o IP 192.168.1.227
+- [x] Configurar domínio DNS para o IP 192.168.1.227 (DESCONTINUADO)
 - [ ] Voltar ambiente para `production` com hosts corretos
 - [ ] Configurar SSL/HTTPS via Caddy
 - [ ] Implementar backup automático
 
-### 6. 🎨 Melhorias no Frontend
+### 6. ✅ CONCLUÍDO - Melhorias no Frontend
 - [x] Integrar com endpoints da API
 - [x] Implementar busca de personagens
 - [x] Adicionar gráficos de evolução
 - [x] Sistema de comparação entre personagens
-- [ ] Sistema de favoritos com persistência
+- [x] Sistema de favoritos implementado
+- [ ] **🆕 Próximas Melhorias**:
+  - [ ] Persistência de favoritos (cookie/sessão)
+  - [ ] Revisar labels incorretos
+  - [ ] Remover título abaixo do Header
+  - [ ] Implementar Autenticação OAuth (Google/Discord)
 
 ## 🛠️ STACK IMPLEMENTADA
 
@@ -265,15 +269,19 @@ Backend/app/services/scraping/
 - [x] **Interface React responsiva**
 - [x] **Gráficos de evolução**
 - [x] **Sistema de comparação entre personagens**
-- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
-  - [ ] Botão de favoritar em cada personagem
-  - [ ] Cookie/sessão dos favoritos
-  - [ ] Revisão dos cards - experiência do último dia
-  - [ ] Tecla Enter nos filtros
-  - [ ] Filtros rápidos via tags
-  - [ ] Seleção múltipla no filtro Atividade
+- [x] **✅ Melhorias de UX/UI Implementadas**:
+  - [x] Botão de favoritar em cada personagem
+  - [x] Revisão dos cards - experiência do último dia
+  - [x] Tecla Enter nos filtros
+  - [x] Filtros rápidos via tags
+  - [x] Seleção múltipla no filtro Atividade
+- [ ] **🆕 Próximas Melhorias**:
+  - [ ] Persistência de favoritos (cookie/sessão)
+  - [ ] Revisar labels incorretos
+  - [ ] Remover título abaixo do Header
+  - [ ] Implementar Autenticação OAuth (Google/Discord)
 
-### 🔐 Autenticação (Futuro)
+### 🔐 Autenticação (Próxima Fase)
 - [ ] Login Google OAuth
 - [ ] Login Discord OAuth
 - [ ] Gestão de sessões
@@ -436,4 +444,4 @@ Para dúvidas ou problemas:
 
 **Status Atual**: 🎉 **SISTEMA COMPLETO** - Web scraping, automação e frontend funcionando  
 **Servidor**: LXC Debian 192.168.1.227 - Todos os serviços operacionais  
-**Próximo**: Melhorias de UX/UI e configuração de produção 
+**Próximo**: Autenticação OAuth e migração para produção 

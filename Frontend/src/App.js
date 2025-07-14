@@ -65,7 +65,7 @@ function App() {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            © 2024 Tibia Tracker - Desenvolvido com ❤️ para a comunidade Tibia
+            © 2025 Tibia Tracker - Desenvolvido com ❤️ para a comunidade Tibia
           </Typography>
         </Box>
       </Box>

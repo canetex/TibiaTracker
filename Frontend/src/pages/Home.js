@@ -455,14 +455,7 @@ const Home = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      {/* Removido o header antigo */}
-      {/* <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
-        Tibia Tracker
-      </Typography> */}
-          <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 900, fontSize: '2.2rem', mb: 4 }}>
-            Tibia Tracker
-          </Typography>
+      {/* Header - Removido título duplicado */}
 
 
       {/* Search Section */}
@@ -519,10 +512,10 @@ const Home = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center' }}>
             <TrendingUp sx={{ mr: 1 }} />
-            {hasActiveFilters ? 'Personagens Filtrados' : (searchResult ? 'Outros Personagens Recentes' : 'Personagens Adicionados Recentemente')}
+            {hasActiveFilters ? 'Personagens Filtrados' : (searchResult ? 'Outros Recentes' : 'Personagens Recentes')}
             {Object.keys(filters).length > 0 && (
               <Chip 
-                label={`${filteredCharacters.length.toLocaleString('pt-BR')} de ${recentCharacters.length.toLocaleString('pt-BR')}`}
+                label={`${filteredCharacters.length.toLocaleString('pt-BR')} de ${globalStats?.total_characters?.toLocaleString('pt-BR') || recentCharacters.length.toLocaleString('pt-BR')}`}
                 size="small"
                 color="primary"
                 sx={{ ml: 1 }}
@@ -578,7 +571,7 @@ const Home = () => {
               Nenhum personagem encontrado com os filtros aplicados
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Tente ajustar os filtros ou limpar para ver todos os personagens
+              Tente ajustar os filtros ou limpar para ver todos
             </Typography>
           </Paper>
         ) : (
@@ -625,7 +618,7 @@ const Home = () => {
         onClose={() => setComparisonChartOpen(false)}
       />
 
-      {/* Gráfico dos Personagens Filtrados */}
+      {/* Gráfico dos Filtrados */}
       <ComparisonChart
         characters={filteredCharacters}
         open={filteredChartOpen}

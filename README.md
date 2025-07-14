@@ -296,13 +296,17 @@ sudo ./Scripts/Remoção/clean-docker.sh [all|stop|containers|images|volumes|net
 - [x] Interface React responsiva
 - [x] Gráficos de evolução
 - [x] Sistema de comparação entre personagens
-- [ ] **🆕 Melhorias de UX/UI (Tasklist Atual)**:
-  - [ ] Incluir botão de favoritar em cada personagem
-  - [ ] Guardar cookie/sessão dos favoritos
-  - [ ] Revisar cards - mostrar "experiência do último dia"
-  - [ ] Implementar tecla Enter nos filtros
-  - [ ] Implementar filtros rápidos via tags dos cards
-  - [ ] Seleção múltipla no filtro Atividade
+- [x] **✅ Melhorias de UX/UI Implementadas**:
+  - [x] Incluir botão de favoritar em cada personagem
+  - [x] Revisar cards - mostrar "experiência do último dia"
+  - [x] Implementar tecla Enter nos filtros
+  - [x] Implementar filtros rápidos via tags dos cards
+  - [x] Seleção múltipla no filtro Atividade
+- [ ] **🆕 Próximas Melhorias**:
+  - [ ] Persistência de favoritos (cookie/sessão)
+  - [ ] Revisar labels incorretos
+  - [ ] Remover título abaixo do Header
+  - [ ] Implementar Autenticação OAuth (Google/Discord)
 
 ### 🔐 Autenticação
 - [ ] Login Google OAuth
@@ -403,4 +407,4 @@ MIT License - Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 **🎯 Status Atual**: 🎉 **SISTEMA COMPLETO** - Web scraping, automação e frontend funcionando
 **📍 Servidor LXC**: 192.168.1.227 - Todos os serviços operacionais  
-**📍 Próximo Passo**: Melhorias de UX/UI e configuração de produção 
+**📍 Próximo Passo**: Autenticação OAuth e migração para produção 

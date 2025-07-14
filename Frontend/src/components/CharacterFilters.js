@@ -148,9 +148,9 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
 
   const activityFilters = [
     { value: 'active_today', label: `Ativos Hoje (${new Date().toLocaleDateString('pt-BR')})` },
-    { value: 'active_yesterday', label: `Ativos D-1 (Ontem ${new Date(Date.now() - 24*60*60*1000).toLocaleDateString('pt-BR')})` },
-    { value: 'active_2days', label: `Ativos D-2 (${new Date(Date.now() - 2*24*60*60*1000).toLocaleDateString('pt-BR')})` },
-    { value: 'active_3days', label: `Ativos D-3 (${new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_yesterday', label: `Ativos Ontem (${new Date(Date.now() - 24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_2days', label: `Ativos Últimos 2 dias (${new Date(Date.now() - 2*24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_3days', label: `Ativos Últimos 3 dias (${new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('pt-BR')})` },
   ];
 
   return (
@@ -388,7 +388,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
                   onKeyPress={handleKeyPress}
                   label="Mostrar"
                 >
-                  <MenuItem value="all">Todos os Personagens</MenuItem>
+                  <MenuItem value="all">Todos</MenuItem>
                   <MenuItem value="3">3 Personagens</MenuItem>
                   <MenuItem value="10">10 Personagens</MenuItem>
                   <MenuItem value="30">30 Personagens</MenuItem>

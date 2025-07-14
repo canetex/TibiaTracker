@@ -200,15 +200,15 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
             disabled={loading}
             sx={{ height: 56 }} // Mesma altura dos outros campos
           >
-            {loading ? 'Processando...' : 'Buscar/Adicionar'}
+            {loading ? 'Verificando...' : 'Buscar Personagem'}
           </Button>
         </Grid>
       </Grid>
 
       {/* Dica para o usuário */}
       <Box sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
-        💡 <strong>Dica:</strong> O botão "Buscar/Adicionar" primeiro verifica se o personagem já existe. 
-        Se existir, mostra como filtro. Se não existir, adiciona automaticamente!
+        💡 <strong>Dica:</strong> O botão "Buscar Personagem" primeiro verifica se o personagem já existe. 
+        Se existir, mostra os dados. Se não existir, adiciona automaticamente!
       </Box>
     </Box>
   );
