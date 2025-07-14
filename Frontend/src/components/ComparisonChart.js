@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
   Typography,
   IconButton,
-  Button,
   FormControlLabel,
   Checkbox,
   Chip,
   Grid,
-  Tooltip,
   Fade,
 } from '@mui/material';
 import {
@@ -17,7 +15,6 @@ import {
   Visibility,
   VisibilityOff,
   TrendingUp,
-  TrendingDown,
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -42,98 +39,68 @@ const ComparisonChart = ({
   const [loading, setLoading] = useState(false);
 
   // Cores únicas para cada personagem
-  const colors = [
-    '#1976d2', '#dc004e', '#2e7d32', '#ed6c02', '#9c27b0',
-    '#d32f2f', '#388e3c', '#f57c00', '#7b1fa2', '#c62828'
-  ];
+  const colors = useMemo(() => [
+    '#1976d2', '#388e3c', '#fbc02d', '#d32f2f', '#7b1fa2', '#0288d1', '#c2185b', '#ffa000', '#388e3c', '#455a64',
+    '#8d6e63', '#f57c00', '#0288d1', '#c2185b', '#7b1fa2', '#1976d2', '#388e3c', '#fbc02d', '#d32f2f', '#7b1fa2'
+  ], []);
 
   useEffect(() => {
-    if (characters.length > 0 && open) {
-      // Inicializar visibilidade para todos os personagens
-      const initialVisibility = {};
-      characters.forEach(char => {
-        initialVisibility[char.id] = true;
-      });
-      setVisibility(initialVisibility);
-      
-      // Preparar dados do gráfico
-      prepareChartData();
-    }
-  }, [characters, open]);
-
-  const prepareChartData = async () => {
-    if (characters.length === 0) return;
-
-    setLoading(true);
-    try {
-      // Buscar dados históricos para cada personagem
-      const characterDataPromises = characters.map(async (character, index) => {
-        try {
-          // Buscar dados de level e experiência
-          const [levelResponse, expResponse] = await Promise.all([
-            fetch(`/api/v1/characters/${character.id}/charts/level?days=30`),
-            fetch(`/api/v1/characters/${character.id}/charts/experience?days=30`)
-          ]);
-
-          const levelData = await levelResponse.json();
-          const expData = await expResponse.json();
-
-          return {
-            character,
-            color: colors[index % colors.length],
-            levelData: levelData.data || [],
-            expData: expData.data || []
-          };
-        } catch (error) {
-          console.error(`Erro ao buscar dados para ${character.name}:`, error);
-          return {
-            character,
-            color: colors[index % colors.length],
-            levelData: [],
-            expData: []
-          };
-        }
-      });
-
-      const allCharacterData = await Promise.all(characterDataPromises);
-
-      // Combinar todos os dados em um formato para o gráfico
-      const combinedData = {};
-      
-      allCharacterData.forEach(({ character, color, levelData, expData }) => {
-        // Processar dados de level
-        levelData.forEach(item => {
-          const date = item.date;
-          if (!combinedData[date]) {
-            combinedData[date] = { date };
+    if (!open || characters.length === 0) return;
+    const fetchChartData = async () => {
+      setLoading(true);
+      try {
+        const characterDataPromises = characters.map(async (character, index) => {
+          try {
+            const [levelResponse, expResponse] = await Promise.all([
+              fetch(`/api/v1/characters/${character.id}/charts/level?days=30`),
+              fetch(`/api/v1/characters/${character.id}/charts/experience?days=30`)
+            ]);
+            const levelData = await levelResponse.json();
+            const expData = await expResponse.json();
+            return {
+              character,
+              color: colors[index % colors.length],
+              levelData: levelData.data || [],
+              expData: expData.data || []
+            };
+          } catch (error) {
+            console.error(`Erro ao buscar dados para ${character.name}:`, error);
+            return {
+              character,
+              color: colors[index % colors.length],
+              levelData: [],
+              expData: []
+            };
           }
-          combinedData[date][`${character.name}_level`] = item.level;
         });
-
-        // Processar dados de experiência
-        expData.forEach(item => {
-          const date = item.date;
-          if (!combinedData[date]) {
-            combinedData[date] = { date };
-          }
-          combinedData[date][`${character.name}_exp`] = item.experience || item.experience_gained || 0;
+        const allCharacterData = await Promise.all(characterDataPromises);
+        const combinedData = {};
+        allCharacterData.forEach(({ character, color, levelData, expData }) => {
+          levelData.forEach(item => {
+            const date = item.date;
+            if (!combinedData[date]) {
+              combinedData[date] = { date };
+            }
+            combinedData[date][`${character.name}_level`] = item.level;
+          });
+          expData.forEach(item => {
+            const date = item.date;
+            if (!combinedData[date]) {
+              combinedData[date] = { date };
+            }
+            combinedData[date][`${character.name}_exp`] = item.experience || item.experience_gained || 0;
+          });
         });
-      });
-
-      // Converter para array e ordenar por data
-      const chartDataArray = Object.values(combinedData).sort((a, b) => 
-        new Date(a.date) - new Date(b.date)
-      );
-
-      console.log('Dados do gráfico preparados:', chartDataArray);
-      setChartData(chartDataArray);
-
-    } catch (error) {
-      console.error('Erro ao preparar dados do gráfico:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
+        setChartData(chartDataArray);
+      } catch (error) {
+        console.error('Erro ao preparar dados do gráfico:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChartData();
+  }, [characters, open, colors]);
 
   const handleToggleCharacter = (characterId) => {
     setVisibility(prev => ({

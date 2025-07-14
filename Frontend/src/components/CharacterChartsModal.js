@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -54,51 +54,19 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   
   const [timeRange, setTimeRange] = useState(30); // días
 
-  useEffect(() => {
-    if (open && character?.id) {
-      loadChartData();
-    } else if (!open) {
-      // Cleanup quando modal é fechado
-      setChartData([]);
-      setError(null);
-      setLoading(false);
-    }
-  }, [open, character, timeRange]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      setChartData([]);
-      setError(null);
-      setLoading(false);
-    };
-  }, []);
-
-  const loadChartData = async () => {
+  const loadChartData = useCallback(async () => {
     if (!character?.id) {
-      console.log('CharacterChartsModal: Nenhum personagem ou ID fornecido');
       setError('Erro: ID do personagem não encontrado');
       return;
     }
-    
-    console.log('CharacterChartsModal: Carregando dados para personagem:', character);
-    
     try {
       setLoading(true);
       setError(null);
-
-      console.log('CharacterChartsModal: Fazendo requisições para API...');
       const [experienceData, levelData] = await Promise.all([
         apiService.getCharacterExperienceChart(character.id, timeRange),
         apiService.getCharacterLevelChart(character.id, timeRange)
       ]);
-
-      console.log('CharacterChartsModal: Dados recebidos:', { experienceData, levelData });
-      
-      // Preparar dados para Recharts
       const combinedData = {};
-      
-      // Processar dados de experiência
       if (experienceData?.data) {
         experienceData.data.forEach(item => {
           const date = item.date;
@@ -108,8 +76,6 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           combinedData[date].experience = item.experience_gained || item.experience || 0;
         });
       }
-      
-      // Processar dados de level
       if (levelData?.data) {
         levelData.data.forEach(item => {
           const date = item.date;
@@ -119,21 +85,27 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           combinedData[date].level = item.level;
         });
       }
-      
-      // Converter para array e ordenar por data
-      const chartDataArray = Object.values(combinedData).sort((a, b) => 
-        new Date(a.date) - new Date(b.date)
-      );
-      
+      const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
       setChartData(chartDataArray);
-
     } catch (err) {
-      console.error('CharacterChartsModal: Erro ao carregar dados dos gráficos:', err);
       setError(`Erro ao carregar dados dos gráficos: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, [character, timeRange]);
+
+  useEffect(() => {
+    loadChartData();
+  }, [loadChartData]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setChartData([]);
+      setError(null);
+      setLoading(false);
+    };
+  }, []);
 
   const refreshCharacterData = async () => {
     if (!character?.id) {

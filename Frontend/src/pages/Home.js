@@ -4,13 +4,8 @@ import {
   Typography,
   Card,
   CardContent,
-  TextField,
   Button,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   CircularProgress,
   Chip,
@@ -118,110 +113,7 @@ const Home = () => {
     }
   };
 
-  // Função para aplicar filtros
-  const applyFilters = (characters, currentFilters) => {
-    if (!currentFilters || Object.keys(currentFilters).length === 0) {
-      return characters;
-    }
 
-    let filtered = characters.filter(character => {
-      // Filtro por nome
-      if (currentFilters.search && !character.name.toLowerCase().includes(currentFilters.search.toLowerCase())) {
-        return false;
-      }
-
-      // Filtro por servidor
-      if (currentFilters.server && character.server !== currentFilters.server) {
-        return false;
-      }
-
-      // Filtro por mundo
-      if (currentFilters.world && character.world !== currentFilters.world) {
-        return false;
-      }
-
-      // Filtro por vocação
-      if (currentFilters.vocation) {
-        if (!character.vocation || character.vocation.toLowerCase() !== currentFilters.vocation.toLowerCase()) {
-          return false;
-        }
-      }
-
-      // Filtro por guild
-      if (currentFilters.guild) {
-        if (!character.guild || character.guild.toLowerCase() !== currentFilters.guild.toLowerCase()) {
-          return false;
-        }
-      }
-
-      // Filtro por level mínimo
-      if (currentFilters.minLevel) {
-        const level = character.latest_snapshot?.level || character.level || 0;
-        if (level < parseInt(currentFilters.minLevel)) {
-          return false;
-        }
-      }
-
-      // Filtro por level máximo
-      if (currentFilters.maxLevel) {
-        const level = character.latest_snapshot?.level || character.level || 0;
-        if (level > parseInt(currentFilters.maxLevel)) {
-          return false;
-        }
-      }
-
-      // Filtro por favoritos
-      if (currentFilters.isFavorited !== '') {
-        const isFavorited = currentFilters.isFavorited === 'true';
-        if (character.is_favorited !== isFavorited) {
-          return false;
-        }
-      }
-
-      // Filtro por atividade (múltipla seleção)
-      if (currentFilters.activityFilter && currentFilters.activityFilter.length > 0) {
-        const now = new Date();
-        const lastScraped = character.last_scraped_at ? new Date(character.last_scraped_at) : null;
-        
-        // Verificar se o personagem atende a pelo menos um dos filtros de atividade selecionados
-        const meetsAnyActivityFilter = currentFilters.activityFilter.some(filterType => {
-          switch (filterType) {
-            case 'active_today':
-              return lastScraped && lastScraped.toDateString() === now.toDateString();
-            case 'active_yesterday':
-              const yesterday = new Date(now);
-              yesterday.setDate(yesterday.getDate() - 1);
-              return lastScraped && lastScraped.toDateString() === yesterday.toDateString();
-            case 'active_2days':
-              const twoDaysAgo = new Date(now);
-              twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-              return lastScraped && lastScraped >= twoDaysAgo;
-            case 'active_3days':
-              const threeDaysAgo = new Date(now);
-              threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-              return lastScraped && lastScraped >= threeDaysAgo;
-            default:
-              return false;
-          }
-        });
-        
-        if (!meetsAnyActivityFilter) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Aplicar limite de quantidade
-    if (currentFilters.limit && currentFilters.limit !== 'all') {
-      const limit = parseInt(currentFilters.limit);
-      filtered = filtered.slice(0, limit);
-    }
-    // Se limit for 'all', não aplicar nenhum corte - mostrar todos os filtrados
-
-    return filtered;
-  };
 
   const handleFilterChange = async (newFilters) => {
     console.log('[FILTER] handleFilterChange chamado com:', newFilters);
@@ -380,41 +272,7 @@ const Home = () => {
     }
   };
 
-  // Função para favoritar/desfavoritar personagem
-  const handleToggleFavorite = async (characterId, isFavorited) => {
-    try {
-      console.log(`[FAVORITE] Alternando favorito para personagem ${characterId}: ${isFavorited}`);
-      
-      // Chamar API para alternar favorito
-      await apiService.toggleFavorite(characterId);
-      
-      // Atualizar o estado local (a API retorna o novo estado)
-      const updatedCharacters = recentCharacters.map(char => 
-        char.id === characterId 
-          ? { ...char, is_favorited: !char.is_favorited }
-          : char
-      );
-      
-      const updatedFilteredCharacters = filteredCharacters.map(char => 
-        char.id === characterId 
-          ? { ...char, is_favorited: !char.is_favorited }
-          : char
-      );
-      
-      setRecentCharacters(updatedCharacters);
-      setFilteredCharacters(updatedFilteredCharacters);
-      
-      // Atualizar estatísticas globais
-      const stats = await apiService.getGlobalStats();
-      setGlobalStats(stats);
-      
-      console.log(`[FAVORITE] Favorito alternado com sucesso para personagem ${characterId}`);
-      
-    } catch (err) {
-      console.error('Erro ao alternar favorito:', err);
-      setError('Erro ao favoritar personagem. Tente novamente.');
-    }
-  };
+
 
   // Função para atualizar personagem
   const handleRefreshCharacter = async (characterId) => {
@@ -500,7 +358,6 @@ const Home = () => {
           <CharacterCard 
             character={searchResult} 
             onViewCharts={handleViewCharts}
-            onToggleFavorite={handleToggleFavorite}
             onRefresh={handleRefreshCharacter}
             onQuickFilter={handleQuickFilter}
           />
@@ -545,7 +402,6 @@ const Home = () => {
                 <CharacterCard 
                   character={character} 
                   onViewCharts={handleViewCharts}
-                  onToggleFavorite={handleToggleFavorite}
                   onRefresh={handleRefreshCharacter}
                   onAddToComparison={handleAddToComparison}
                   onRemoveFromComparison={handleRemoveFromComparison}
