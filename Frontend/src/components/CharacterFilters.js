@@ -25,10 +25,13 @@ import {
   ExpandMore,
   ExpandLess,
   TrendingUp,
+  Star,
 } from '@mui/icons-material';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
   const [expanded, setExpanded] = useState(false);
+  const { getFavoritesCount } = useFavorites();
   const [filters, setFilters] = useState({
     server: '',
     world: '',
@@ -92,30 +95,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
     }
   };
 
-  // Função para filtros rápidos
-  const handleQuickFilter = (filterType, value) => {
-    const newFilters = { ...filters };
-    
-    switch (filterType) {
-      case 'server':
-        newFilters.server = value;
-        break;
-      case 'world':
-        newFilters.world = value;
-        break;
-      case 'vocation':
-        newFilters.vocation = value;
-        break;
-      case 'guild':
-        newFilters.guild = value;
-        break;
-      default:
-        break;
-    }
-    
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
+
 
   const hasActiveFilters = Object.values(filters).some(value => {
     if (Array.isArray(value)) {
@@ -341,9 +321,14 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
                   onChange={(e) => handleFieldChange('isFavorited', e.target.value)}
                   onKeyPress={handleKeyPress}
                   label="Favoritos"
+                  startAdornment={
+                    <Star sx={{ mr: 1, color: 'action.active' }} />
+                  }
                 >
                   <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="true">Apenas Favoritos</MenuItem>
+                  <MenuItem value="true">
+                    Apenas Favoritos ({getFavoritesCount()})
+                  </MenuItem>
                   <MenuItem value="false">Não Favoritos</MenuItem>
                 </Select>
               </FormControl>

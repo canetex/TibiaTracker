@@ -16,9 +16,7 @@ import {
   Star,
   StarBorder,
   Refresh,
-  TrendingUp,
   Person,
-  Public,
   Schedule,
   Analytics,
   OpenInNew,
@@ -27,11 +25,11 @@ import {
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 const CharacterCard = ({ 
   character, 
   onRefresh, 
-  onToggleFavorite, 
   onViewCharts, 
   onAddToComparison, 
   onRemoveFromComparison, 
@@ -39,7 +37,7 @@ const CharacterCard = ({
   onQuickFilter // Nova prop para filtros rápidos
 }) => {
   const [refreshing, setRefreshing] = useState(false);
-  const [favoriting, setFavoriting] = useState(false);
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   // Log dos dados do personagem para debug
   console.log(`[CHARACTER_CARD] Renderizando card para ${character.name}:`, {
@@ -67,15 +65,8 @@ const CharacterCard = ({
     }
   };
 
-  const handleToggleFavorite = async () => {
-    if (onToggleFavorite && !favoriting) {
-      setFavoriting(true);
-      try {
-        await onToggleFavorite(character.id, !character.is_favorited);
-      } finally {
-        setFavoriting(false);
-      }
-    }
+  const handleToggleFavorite = () => {
+    toggleFavorite(character.id);
   };
 
   const handleViewCharts = () => {
@@ -187,16 +178,13 @@ const CharacterCard = ({
           </Box>
           
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {onToggleFavorite && (
-              <IconButton
-                onClick={handleToggleFavorite}
-                disabled={favoriting}
-                size="small"
-                sx={{ color: character.is_favorited ? 'error.main' : 'action.disabled' }}
-              >
-                {character.is_favorited ? <Star /> : <StarBorder />}
-              </IconButton>
-            )}
+            <IconButton
+              onClick={handleToggleFavorite}
+              size="small"
+              sx={{ color: isFavorite(character.id) ? 'error.main' : 'action.disabled' }}
+            >
+              {isFavorite(character.id) ? <Star /> : <StarBorder />}
+            </IconButton>
             
             {onAddToComparison && (
               <Tooltip title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}>
