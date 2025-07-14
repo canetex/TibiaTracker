@@ -456,10 +456,13 @@ const Home = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
+      {/* Removido o header antigo */}
+      {/* <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
         Tibia Tracker
-      </Typography>
-
+      </Typography> */}
+          <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 900, fontSize: '2.2rem', mb: 4 }}>
+            Tibia Tracker
+          </Typography>
 
 
       {/* Search Section */}
