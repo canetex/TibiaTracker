@@ -18,18 +18,32 @@ function App() {
           {/* Header */}
           <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
             <Toolbar>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                <img 
-                  src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'} 
-                  alt="Tibia Tracker" 
-                  style={{ width: 32, height: 32, marginRight: 12 }}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, position: 'relative', height: 100 }}>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    bottom: '-20%',
+                    height: '120px', // 120% da barra (100px)
+                    width: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    zIndex: 2,
+                  }}
+                >
+                  <img
+                    src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'}
+                    alt="Tibia Tracker"
+                    style={{ height: '120px', width: '120px', objectFit: 'contain' }}
+                  />
+                </Box>
                 <Typography
                   variant="h6"
                   component="div"
                   sx={{ 
                     fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    marginLeft: '130px', // espaço para o logo
                   }}
                 >
                   Tibia Tracker

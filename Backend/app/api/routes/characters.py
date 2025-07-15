@@ -1088,7 +1088,7 @@ async def filter_character_ids(
         conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
 
     # Filtro de favoritos
-    if is_favorited is not None:
+    if is_favorited is not None and is_favorited != '':
         if is_favorited.lower() == 'true':
             # Apenas favoritos
             conditions.append(
