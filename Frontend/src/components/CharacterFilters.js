@@ -120,6 +120,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
 
   const servers = [
     { value: 'taleon', label: 'Taleon' },
+    { value: 'rubinot', label: 'Rubinot' },
     { value: 'rubini', label: 'Rubini' },
   ];
 
@@ -127,6 +128,16 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
     { value: 'san', label: 'San' },
     { value: 'aura', label: 'Aura' },
     { value: 'gaia', label: 'Gaia' },
+    { value: 'auroria', label: 'Auroria' },
+    { value: 'belaria', label: 'Belaria' },
+    { value: 'elysian', label: 'Elysian' },
+    { value: 'bellum', label: 'Bellum' },
+    { value: 'harmonian', label: 'Harmonian' },
+    { value: 'vesperia', label: 'Vesperia' },
+    { value: 'spectrum', label: 'Spectrum' },
+    { value: 'kalarian', label: 'Kalarian' },
+    { value: 'lunarian', label: 'Lunarian' },
+    { value: 'solarian', label: 'Solarian' },
   ];
 
   const activityFilters = [

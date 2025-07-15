@@ -18,7 +18,7 @@ import os
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.database import engine, create_all_tables
-from app.api.routes import characters, health
+from app.api.routes import characters, health, bulk_processing
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 # Adicionar imports para métricas
@@ -99,6 +99,7 @@ if settings.ENVIRONMENT == "production":
 # Incluir rotas
 app.include_router(health.router, prefix="/health", tags=["Health"])
 app.include_router(characters.router, prefix="/api/v1", tags=["Characters"])
+app.include_router(bulk_processing.router, prefix="/api/v1", tags=["Bulk Processing"])
 
 # Servir arquivos estáticos de outfits
 outfits_dir = "outfits"
@@ -118,6 +119,10 @@ async def root():
         "supported_servers": {
             "taleon": {
                 "worlds": ["san", "aura", "gaia"],
+                "status": "active"
+            },
+            "rubinot": {
+                "worlds": ["auroria", "belaria", "elysian", "bellum", "harmonian", "vesperia", "spectrum", "kalarian", "lunarian", "solarian"],
                 "status": "active"
             }
         }

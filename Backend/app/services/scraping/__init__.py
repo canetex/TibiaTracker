@@ -11,12 +11,14 @@ import logging
 
 from .base import BaseCharacterScraper, ScrapingResult
 from .taleon import TaleonCharacterScraper
+from .rubinot import RubinotCharacterScraper
 
 logger = logging.getLogger(__name__)
 
 # Registro de scrapers por servidor
 SCRAPERS: Dict[str, Type[BaseCharacterScraper]] = {
     "taleon": TaleonCharacterScraper,
+    "rubinot": RubinotCharacterScraper,
     # "rubini": RubiniCharacterScraper,    # Futuro
     # "deus_ot": DeusOTCharacterScraper,   # Futuro  
     # "tibia": TibiaOfficialScraper,       # Futuro

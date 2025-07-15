@@ -386,6 +386,77 @@ export const apiService = {
       throw error;
     }
   },
+
+  // ============================================================================
+  // BULK PROCESSING
+  // ============================================================================
+
+  /**
+   * Processar lista de personagens em lotes
+   */
+  async processCharacterBatch(characterList, server, world, batchSize = 50, maxConcurrent = 10) {
+    try {
+      const response = await api.post('/api/v1/bulk/process-batch', characterList, {
+        params: {
+          server,
+          world,
+          batch_size: batchSize,
+          max_concurrent: maxConcurrent
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Iniciar carga inicial do Rubinot para um mundo
+   */
+  async rubinotInitialLoad(world) {
+    try {
+      const response = await api.post(`/api/v1/bulk/rubinot/initial-load/${world}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Obter estatísticas de processamento em lotes
+   */
+  async getBulkProcessingStats(server, world) {
+    try {
+      const response = await api.get(`/api/v1/bulk/stats/${server}/${world}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Obter servidores suportados para processamento em lotes
+   */
+  async getBulkSupportedServers() {
+    try {
+      const response = await api.get('/api/v1/bulk/supported-servers');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Obter configuração de processamento em lotes
+   */
+  async getBulkProcessingConfig() {
+    try {
+      const response = await api.get('/api/v1/bulk/config');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 // Função utilitária para formatar erros
