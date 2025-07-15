@@ -16,9 +16,9 @@ function App() {
       <FavoritesProvider>
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
           {/* Header */}
-          <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
-            <Toolbar>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, position: 'relative', height: 100 }}>
+          <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main', height: 56 }}>
+            <Toolbar sx={{ minHeight: 56, height: 56, px: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, position: 'relative', height: 56 }}>
                 <img
                   src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'}
                   alt="Tibia Tracker"

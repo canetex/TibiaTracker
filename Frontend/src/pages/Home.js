@@ -158,9 +158,11 @@ const Home = () => {
         if (newFilters.isFavorited === 'true') {
           filterParams.is_favorited = 'true';
           filterParams.favorite_ids = favorites;
+          console.log('[FAVORITES] IDs enviados:', favorites);
         } else if (newFilters.isFavorited === 'false') {
           filterParams.is_favorited = 'false';
           filterParams.favorite_ids = favorites;
+          console.log('[FAVORITES] IDs enviados:', favorites);
         }
         if (newFilters.limit && newFilters.limit !== 'all') {
           filterParams.limit = newFilters.limit;
