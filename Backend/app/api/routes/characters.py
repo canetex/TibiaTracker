@@ -15,7 +15,7 @@ import logging
 
 from app.db.database import get_db
 from app.core.utils import get_utc_now, normalize_datetime, days_between, calculate_last_experience_data, calculate_experience_stats, format_date_pt_br
-from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel
+from app.models.character import Character as CharacterModel, CharacterSnapshot as CharacterSnapshotModel, CharacterFavorite as CharacterFavoriteModel
 from app.schemas.character import (
     CharacterBase, CharacterCreate, CharacterUpdate, Character,
     CharacterSnapshot, CharacterSnapshotCreate, CharacterWithSnapshots,
@@ -992,7 +992,6 @@ async def filter_character_ids(
     server: Optional[str] = Query(None),
     world: Optional[str] = Query(None),
     is_active: Optional[bool] = Query(None),
-
     search: Optional[str] = Query(None),
     guild: Optional[str] = Query(None),
     activity_filter: Optional[List[str]] = Query(None),
@@ -1005,6 +1004,7 @@ async def filter_character_ids(
     max_snapshots: Optional[int] = Query(None, alias='maxSnapshots', description='Filtrar por número máximo de snapshots'),
     min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
     max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
+    is_favorited: Optional[str] = Query(None, description='Filtrar por favoritos (true, false, ou omitir para todos)'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
     request: Request = None
@@ -1022,6 +1022,7 @@ async def filter_character_ids(
     logger.info(f"[FILTER-IDS] max_level: {max_level} (tipo: {type(max_level)})")
     logger.info(f"[FILTER-IDS] vocation: {vocation} (tipo: {type(vocation)})")
     logger.info(f"[FILTER-IDS] activity_filter: {activity_filter} (tipo: {type(activity_filter)})")
+    logger.info(f"[FILTER-IDS] is_favorited: {is_favorited} (tipo: {type(is_favorited)})")
     logger.info(f"[FILTER-IDS] limit: {limit} (tipo: {type(limit)})")
     
     # Log da URL completa se request estiver disponível
@@ -1085,6 +1086,29 @@ async def filter_character_ids(
         conditions.append(CharacterModel.name.ilike(f"%{search}%"))
     if guild:
         conditions.append(CharacterModel.guild.ilike(f"%{guild}%"))
+
+    # Filtro de favoritos
+    if is_favorited is not None:
+        if is_favorited.lower() == 'true':
+            # Apenas favoritos
+            conditions.append(
+                exists().where(
+                    and_(
+                        CharacterFavoriteModel.character_id == CharacterModel.id,
+                        CharacterFavoriteModel.user_id == 1  # user_id = 1 para compatibilidade
+                    )
+                )
+            )
+        elif is_favorited.lower() == 'false':
+            # Apenas não favoritos
+            conditions.append(
+                ~exists().where(
+                    and_(
+                        CharacterFavoriteModel.character_id == CharacterModel.id,
+                        CharacterFavoriteModel.user_id == 1  # user_id = 1 para compatibilidade
+                    )
+                )
+            )
 
     # Filtro de vocação (OR se múltiplas opções)
     if vocation:

@@ -66,10 +66,8 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
     
-    // Aplicar automaticamente o filtro de favoritos
-    if (field === 'isFavorited') {
-      onFilterChange(newFilters);
-    }
+    // Removido: aplicação automática do filtro de favoritos
+    // Agora todos os filtros são aplicados apenas ao clicar no botão "Filtrar"
   };
 
   const handleApplyFilters = () => {

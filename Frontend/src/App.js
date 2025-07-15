@@ -20,7 +20,7 @@ function App() {
             <Toolbar>
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                 <img 
-                  src={process.env.PUBLIC_URL + '/Gemini_Generated_Image_krd5zkrd5zkrd5zk.png'} 
+                  src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'} 
                   alt="Tibia Tracker" 
                   style={{ width: 32, height: 32, marginRight: 12 }}
                 />
