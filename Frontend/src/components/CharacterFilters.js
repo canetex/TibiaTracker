@@ -65,6 +65,11 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
   const handleFieldChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
+    
+    // Aplicar automaticamente o filtro de favoritos
+    if (field === 'isFavorited') {
+      onFilterChange(newFilters);
+    }
   };
 
   const handleApplyFilters = () => {
