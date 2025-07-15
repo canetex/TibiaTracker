@@ -1005,6 +1005,7 @@ async def filter_character_ids(
     min_experience: Optional[int] = Query(None, alias='minExperience', description='Filtrar por experiência mínima'),
     max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
     is_favorited: Optional[str] = Query(None, description='Filtrar por favoritos (true, false, ou omitir para todos)'),
+    favorite_ids: Optional[List[int]] = Query(None, description='Lista de IDs favoritos do usuário (frontend)'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
     request: Request = None
@@ -1090,25 +1091,13 @@ async def filter_character_ids(
     # Filtro de favoritos
     if is_favorited is not None and is_favorited != '':
         if is_favorited.lower() == 'true':
-            # Apenas favoritos
-            conditions.append(
-                exists().where(
-                    and_(
-                        CharacterFavoriteModel.character_id == CharacterModel.id,
-                        CharacterFavoriteModel.user_id == 1  # user_id = 1 para compatibilidade
-                    )
-                )
-            )
+            # Apenas favoritos do frontend (cookie)
+            if favorite_ids:
+                conditions.append(CharacterModel.id.in_(favorite_ids))
         elif is_favorited.lower() == 'false':
-            # Apenas não favoritos
-            conditions.append(
-                ~exists().where(
-                    and_(
-                        CharacterFavoriteModel.character_id == CharacterModel.id,
-                        CharacterFavoriteModel.user_id == 1  # user_id = 1 para compatibilidade
-                    )
-                )
-            )
+            # Apenas não favoritos do frontend (cookie)
+            if favorite_ids:
+                conditions.append(~CharacterModel.id.in_(favorite_ids))
 
     # Filtro de vocação (OR se múltiplas opções)
     if vocation:

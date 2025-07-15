@@ -60,7 +60,7 @@ const Home = () => {
   const [filteredChartOpen, setFilteredChartOpen] = useState(false);
 
   // Contexto de favoritos
-  const { isFavorite } = useFavorites();
+  const { isFavorite, favorites } = useFavorites();
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -155,7 +155,13 @@ const Home = () => {
         if (newFilters.activityFilter && newFilters.activityFilter.length > 0) {
           filterParams.activity_filter = newFilters.activityFilter;
         }
-        if (newFilters.isFavorited) filterParams.is_favorited = newFilters.isFavorited;
+        if (newFilters.isFavorited === 'true') {
+          filterParams.is_favorited = 'true';
+          filterParams.favorite_ids = favorites;
+        } else if (newFilters.isFavorited === 'false') {
+          filterParams.is_favorited = 'false';
+          filterParams.favorite_ids = favorites;
+        }
         if (newFilters.limit && newFilters.limit !== 'all') {
           filterParams.limit = newFilters.limit;
         } else {

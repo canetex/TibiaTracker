@@ -19,24 +19,11 @@ function App() {
           <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
             <Toolbar>
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, position: 'relative', height: 100 }}>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    bottom: '-20%',
-                    height: '120px', // 120% da barra (100px)
-                    width: '120px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    zIndex: 2,
-                  }}
-                >
-                  <img
-                    src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'}
-                    alt="Tibia Tracker"
-                    style={{ height: '120px', width: '120px', objectFit: 'contain' }}
-                  />
-                </Box>
+                <img
+                  src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'}
+                  alt="Tibia Tracker"
+                  style={{ height: '120px', width: '120px', objectFit: 'contain', position: 'absolute', left: 0, bottom: '-20px', zIndex: 2 }}
+                />
                 <Typography
                   variant="h6"
                   component="div"

@@ -310,7 +310,16 @@ export const apiService = {
    */
   async filterCharacterIds(params = {}) {
     try {
-      const response = await api.get('/api/v1/characters/filter-ids', { params });
+      // Serializar arrays como múltiplos parâmetros na query string
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => searchParams.append(key, v));
+        } else if (value !== undefined && value !== null) {
+          searchParams.append(key, value);
+        }
+      });
+      const response = await api.get('/api/v1/characters/filter-ids?' + searchParams.toString());
       return response.data;
     } catch (error) {
       throw error;
