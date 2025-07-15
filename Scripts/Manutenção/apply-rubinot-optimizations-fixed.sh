@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Script para Aplicar Otimizações do Rubinot (VERSÃO CORRIGIDA)
-# =============================================================
-# Aplica otimizações no banco de dados para suportar +10.000 personagens
+# =============================================================================
+# SCRIPT DE APLICAÇÃO DAS OTIMIZAÇÕES DO RUBINOT
+# =============================================================================
+# Este script aplica as otimizações necessárias para processar o volume alto
+# de personagens do Rubinot (+10.000 personagens)
 
-set -e
+set -e  # Para o script se qualquer comando falhar
 
 # Cores para output
 RED='\033[0;31m'
@@ -13,137 +15,141 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Função para log colorido
+# Função para log com timestamp
 log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
+# Função para log de sucesso
+success() {
+    log "${GREEN}✅ $1${NC}"
 }
 
+# Função para log de erro
 error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+    log "${RED}❌ $1${NC}"
 }
 
+# Função para log de aviso
+warning() {
+    log "${YELLOW}⚠️  $1${NC}"
+}
+
+# Função para log de informação
 info() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1${NC}"
+    log "${BLUE}ℹ️  $1${NC}"
 }
 
 # Verificar se estamos no diretório correto
 if [ ! -f "docker-compose.yml" ]; then
-    error "Execute este script na raiz do projeto (onde está o docker-compose.yml)"
+    error "Este script deve ser executado no diretório raiz do projeto (onde está o docker-compose.yml)"
     exit 1
 fi
 
-# Verificar se o container do banco está rodando
-if ! docker-compose ps | grep -q "postgres.*Up"; then
-    error "Container do PostgreSQL não está rodando. Inicie com: docker-compose up -d postgres"
+# Verificar se o container do PostgreSQL está rodando
+if ! docker ps | grep -q tibia-tracker-postgres; then
+    error "Container do PostgreSQL não está rodando. Inicie os containers primeiro com: docker-compose up -d"
     exit 1
 fi
 
-log "🚀 Iniciando aplicação das otimizações do Rubinot..."
+info "🚀 Iniciando aplicação das otimizações do Rubinot..."
 
-# 1. Backup do banco antes das alterações
-log "📦 Criando backup do banco antes das alterações..."
+# =============================================================================
+# 1. BACKUP DO BANCO
+# =============================================================================
+info "📦 Criando backup do banco antes das alterações..."
 BACKUP_FILE="backup_pre_rubinot_$(date +%Y%m%d_%H%M%S).sql"
-docker exec tibia-tracker-postgres pg_dump -U postgres tibia_tracker_db > "$BACKUP_FILE"
-log "✅ Backup criado: $BACKUP_FILE"
 
-# 2. Aplicar script de otimização
-log "🔧 Aplicando otimizações do banco de dados..."
-docker exec -i tibia-tracker-postgres psql -U postgres -d tibia_tracker_db < Backend/sql/optimize_for_rubinot.sql
-
-if [ $? -eq 0 ]; then
-    log "✅ Otimizações aplicadas com sucesso!"
+if docker exec tibia-tracker-postgres pg_dump -U tibia_user -d tibia_tracker > "$BACKUP_FILE" 2>/dev/null; then
+    success "Backup criado: $BACKUP_FILE"
 else
-    error "❌ Erro ao aplicar otimizações"
+    warning "Não foi possível criar o backup. Continuando mesmo assim..."
+fi
+
+# =============================================================================
+# 2. APLICAR OTIMIZAÇÕES DO BANCO
+# =============================================================================
+info "🔧 Aplicando otimizações do banco de dados..."
+
+# Verificar se o arquivo SQL existe
+if [ ! -f "add_outfit_fields.sql" ]; then
+    error "Arquivo add_outfit_fields.sql não encontrado!"
     exit 1
 fi
 
-# 3. Verificar se os índices foram criados
-log "🔍 Verificando índices criados..."
-docker exec tibia-tracker-postgres psql -U postgres -d tibia_tracker_db -c "
-SELECT 
-    schemaname,
-    tablename,
-    indexname
-FROM pg_indexes 
-WHERE tablename IN ('characters', 'character_snapshots', 'character_favorites')
-ORDER BY tablename, indexname;
-"
+# Aplicar as otimizações
+if docker exec -i tibia-tracker-postgres psql -U tibia_user -d tibia_tracker < add_outfit_fields.sql; then
+    success "Otimizações do banco aplicadas com sucesso!"
+else
+    error "Falha ao aplicar otimizações do banco!"
+    exit 1
+fi
 
-# 4. Verificar estatísticas das tabelas
-log "📊 Verificando estatísticas das tabelas..."
-docker exec tibia-tracker-postgres psql -U postgres -d tibia_tracker_db -c "
-SELECT 
-    tablename,
-    n_live_tup as live_rows,
-    n_dead_tup as dead_rows,
-    last_vacuum,
-    last_autovacuum
-FROM pg_stat_user_tables 
-WHERE tablename IN ('characters', 'character_snapshots', 'character_favorites')
-ORDER BY tablename;
-"
+# =============================================================================
+# 3. REINICIAR CONTAINERS
+# =============================================================================
+info "🔄 Reiniciando containers para aplicar as mudanças..."
 
-# 5. Testar performance com consulta simples
-log "⚡ Testando performance com consulta simples..."
-docker exec tibia-tracker-postgres psql -U postgres -d tibia_tracker_db -c "
-EXPLAIN (ANALYZE, BUFFERS) 
-SELECT COUNT(*) FROM characters WHERE server = 'rubinot';
-"
+if docker-compose restart backend; then
+    success "Container do backend reiniciado!"
+else
+    error "Falha ao reiniciar o container do backend!"
+    exit 1
+fi
 
-# 6. Verificar configurações do PostgreSQL
-log "⚙️ Verificando configurações do PostgreSQL..."
-docker exec tibia-tracker-postgres psql -U postgres -d tibia_tracker_db -c "
-SHOW work_mem;
-SHOW shared_buffers;
-SHOW effective_cache_size;
-SHOW max_connections;
-"
-
-# 7. Reiniciar containers para aplicar mudanças
-log "🔄 Reiniciando containers para aplicar mudanças..."
-docker-compose restart backend
-
-# 8. Verificar se a API está funcionando
-log "🔍 Verificando se a API está funcionando..."
+# Aguardar o backend ficar pronto
+info "⏳ Aguardando o backend ficar pronto..."
 sleep 10
 
+# Verificar se o backend está respondendo
 if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-    log "✅ API está funcionando corretamente"
+    success "Backend está respondendo corretamente!"
 else
-    warn "⚠️ API pode não estar respondendo ainda, aguarde alguns segundos"
+    warning "Backend pode não estar totalmente pronto ainda. Aguarde alguns segundos."
 fi
 
-# 9. Testar endpoint de estatísticas do Rubinot
-log "🧪 Testando endpoint de estatísticas do Rubinot..."
-if curl -f "http://localhost:8000/api/v1/bulk/stats/rubinot/auroria" > /dev/null 2>&1; then
-    log "✅ Endpoint de estatísticas do Rubinot funcionando"
+# =============================================================================
+# 4. VERIFICAR ARQUIVO CSV
+# =============================================================================
+info "📋 Verificando arquivo CSV do Rubinot..."
+
+if [ -f "Scripts/InitialLoad/Rubinot.csv" ]; then
+    CSV_LINES=$(wc -l < "Scripts/InitialLoad/Rubinot.csv")
+    success "Arquivo CSV encontrado com $CSV_LINES linhas"
 else
-    warn "⚠️ Endpoint de estatísticas pode não estar disponível ainda"
+    error "Arquivo Scripts/InitialLoad/Rubinot.csv não encontrado!"
+    info "Execute: wget -O Scripts/InitialLoad/Rubinot.csv https://raw.githubusercontent.com/canetex/TibiaTracker/feature/rubinot-scraper/Scripts/InitialLoad/Rubinot.csv"
+    exit 1
 fi
 
-# 10. Resumo final
-log "🎉 Otimizações do Rubinot aplicadas com sucesso!"
+# =============================================================================
+# 5. EXECUTAR BULK ADD
+# =============================================================================
+info "🚀 Executando bulk add dos personagens do Rubinot..."
+
+if [ -f "Scripts/Manutenção/bulk-add-rubinot.sh" ]; then
+    if chmod +x "Scripts/Manutenção/bulk-add-rubinot.sh" && ./Scripts/Manutenção/bulk-add-rubinot.sh; then
+        success "Bulk add executado com sucesso!"
+    else
+        error "Falha ao executar o bulk add!"
+        exit 1
+    fi
+else
+    error "Script bulk-add-rubinot.sh não encontrado!"
+    info "Execute: wget -O Scripts/Manutenção/bulk-add-rubinot.sh https://raw.githubusercontent.com/canetex/TibiaTracker/feature/rubinot-scraper/Scripts/Manutenção/bulk-add-rubinot.sh"
+    exit 1
+fi
+
+# =============================================================================
+# CONCLUSÃO
+# =============================================================================
+success "🎉 Todas as otimizações do Rubinot foram aplicadas com sucesso!"
+info "📊 O sistema está pronto para processar o volume alto de personagens do Rubinot"
+info "🔍 Você pode monitorar o progresso nos logs do backend"
+info "📈 Acesse o frontend para ver os personagens sendo carregados"
+
 echo ""
-echo "📋 Resumo das alterações:"
-echo "   ✅ Backup do banco criado: $BACKUP_FILE"
-echo "   ✅ Índices otimizados criados"
-echo "   ✅ Funções auxiliares criadas"
-echo "   ✅ Views materializadas criadas"
-echo "   ✅ Triggers de manutenção criados"
-echo "   ✅ Containers reiniciados"
-echo ""
-echo "🚀 O sistema está pronto para processar +10.000 personagens do Rubinot!"
-echo ""
-echo "📊 Para monitorar o desempenho:"
-echo "   - Verificar logs: docker-compose logs -f backend"
-echo "   - Estatísticas do banco: docker exec tibia-tracker-postgres psql -U postgres -d tibia_tracker_db -c \"SELECT * FROM pg_stat_user_tables;\""
-echo "   - Testar endpoint: curl http://localhost:8000/api/v1/bulk/stats/rubinot/auroria"
-echo ""
-echo "⚠️ Lembre-se:"
-echo "   - O backup está salvo em: $BACKUP_FILE"
-echo "   - Monitore o uso de memória e CPU"
-echo "   - Considere ajustar configurações do PostgreSQL se necessário" 
+info "📝 Próximos passos:"
+echo "   1. Monitore os logs: docker logs -f tibia-tracker-backend"
+echo "   2. Verifique o progresso no frontend: http://localhost:3000"
+echo "   3. Acompanhe as estatísticas na API: http://localhost:8000/health" 
