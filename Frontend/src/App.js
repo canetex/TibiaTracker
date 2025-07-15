@@ -22,7 +22,7 @@ function App() {
                 <img
                   src={process.env.PUBLIC_URL + '/LogoTibiaTracker.png'}
                   alt="Tibia Tracker"
-                  style={{ height: '120px', width: '120px', objectFit: 'contain', position: 'absolute', left: 0, bottom: '-20px', zIndex: 2 }}
+                  style={{ height: '100px', width: '100px', objectFit: 'contain', position: 'absolute', left: 0, bottom: '-45px', zIndex: 2 }}
                 />
                 <Typography
                   variant="h6"

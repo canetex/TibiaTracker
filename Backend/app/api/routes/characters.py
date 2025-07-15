@@ -1024,6 +1024,7 @@ async def filter_character_ids(
     logger.info(f"[FILTER-IDS] vocation: {vocation} (tipo: {type(vocation)})")
     logger.info(f"[FILTER-IDS] activity_filter: {activity_filter} (tipo: {type(activity_filter)})")
     logger.info(f"[FILTER-IDS] is_favorited: {is_favorited} (tipo: {type(is_favorited)})")
+    logger.info(f"[FILTER-IDS] favorite_ids: {favorite_ids} (tipo: {type(favorite_ids)})")
     logger.info(f"[FILTER-IDS] limit: {limit} (tipo: {type(limit)})")
     
     # Log da URL completa se request estiver disponível
@@ -1047,6 +1048,21 @@ async def filter_character_ids(
             except ValueError:
                 logger.warning(f"[FILTER-IDS] max_level inválido nos query_params: {request.query_params['max_level']}")
                 max_level = None
+        
+        # Verificar parâmetros de favoritos nos query_params
+        if 'is_favorited' in request.query_params:
+            logger.info(f"[FILTER-IDS] is_favorited nos query_params: {request.query_params['is_favorited']}")
+        
+        if 'favorite_ids' in request.query_params:
+            logger.info(f"[FILTER-IDS] favorite_ids nos query_params: {request.query_params.getlist('favorite_ids')}")
+            # Tentar converter para lista de inteiros
+            try:
+                favorite_ids_from_params = [int(id_str) for id_str in request.query_params.getlist('favorite_ids')]
+                logger.info(f"[FILTER-IDS] favorite_ids convertidos: {favorite_ids_from_params}")
+                favorite_ids = favorite_ids_from_params
+            except ValueError as e:
+                logger.error(f"[FILTER-IDS] Erro ao converter favorite_ids: {e}")
+                favorite_ids = []
     
     # Converter min_level e max_level para inteiros se necessário
     if min_level is not None:
@@ -1090,14 +1106,25 @@ async def filter_character_ids(
 
     # Filtro de favoritos
     if is_favorited is not None and is_favorited != '':
+        logger.info(f"[FILTER-IDS] Aplicando filtro de favoritos: is_favorited={is_favorited}")
         if is_favorited.lower() == 'true':
             # Apenas favoritos do frontend (cookie)
             if favorite_ids:
+                logger.info(f"[FILTER-IDS] Filtrando apenas favoritos. IDs: {favorite_ids}")
                 conditions.append(CharacterModel.id.in_(favorite_ids))
+            else:
+                logger.warning(f"[FILTER-IDS] is_favorited=true mas favorite_ids está vazio!")
         elif is_favorited.lower() == 'false':
             # Apenas não favoritos do frontend (cookie)
             if favorite_ids:
+                logger.info(f"[FILTER-IDS] Filtrando apenas não favoritos. IDs: {favorite_ids}")
                 conditions.append(~CharacterModel.id.in_(favorite_ids))
+            else:
+                logger.warning(f"[FILTER-IDS] is_favorited=false mas favorite_ids está vazio!")
+        else:
+            logger.warning(f"[FILTER-IDS] Valor inválido para is_favorited: {is_favorited}")
+    else:
+        logger.info(f"[FILTER-IDS] Nenhum filtro de favoritos aplicado")
 
     # Filtro de vocação (OR se múltiplas opções)
     if vocation:
