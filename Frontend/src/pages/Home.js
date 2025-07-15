@@ -27,6 +27,7 @@ import CharacterFilters from '../components/CharacterFilters';
 import ComparisonPanel from '../components/ComparisonPanel';
 import ComparisonChart from '../components/ComparisonChart';
 import { apiService } from '../services/api';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 const Home = () => {
   const [searchLoading, setSearchLoading] = useState(false);
@@ -57,6 +58,9 @@ const Home = () => {
   const [comparisonCharacters, setComparisonCharacters] = useState([]);
   const [comparisonChartOpen, setComparisonChartOpen] = useState(false);
   const [filteredChartOpen, setFilteredChartOpen] = useState(false);
+
+  // Contexto de favoritos
+  const { isFavorite } = useFavorites();
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -113,7 +117,15 @@ const Home = () => {
     }
   };
 
-
+  // Função para aplicar filtros de favoritos no frontend
+  const applyFavoritesFilter = (characters, isFavoritedFilter) => {
+    if (isFavoritedFilter === 'true') {
+      return characters.filter(character => isFavorite(character.id));
+    } else if (isFavoritedFilter === 'false') {
+      return characters.filter(character => !isFavorite(character.id));
+    }
+    return characters;
+  };
 
   const handleFilterChange = async (newFilters) => {
     console.log('[FILTER] handleFilterChange chamado com:', newFilters);
@@ -121,8 +133,9 @@ const Home = () => {
     setLoadingRecent(true);
     setError(null);
 
-    // Verificar se há filtros ativos
-    const hasActiveFilters = Object.values(newFilters).some(value => {
+    // Verificar se há filtros ativos (exceto favoritos)
+    const hasActiveFilters = Object.entries(newFilters).some(([key, value]) => {
+      if (key === 'isFavorited') return false; // Ignorar favoritos aqui
       if (Array.isArray(value)) {
         return value.length > 0;
       }
@@ -131,7 +144,7 @@ const Home = () => {
 
     if (hasActiveFilters) {
       try {
-        // Montar parâmetros para a API de filtro de IDs
+        // Montar parâmetros para a API de filtro de IDs (sem favoritos)
         const filterParams = {};
         if (newFilters.search) filterParams.search = newFilters.search;
         if (newFilters.server) filterParams.server = newFilters.server;
@@ -140,7 +153,6 @@ const Home = () => {
         if (newFilters.guild) filterParams.guild = newFilters.guild;
         if (newFilters.minLevel) filterParams.min_level = newFilters.minLevel;
         if (newFilters.maxLevel) filterParams.max_level = newFilters.maxLevel;
-        if (newFilters.isFavorited !== '') filterParams.is_favorited = newFilters.isFavorited;
         if (newFilters.activityFilter && newFilters.activityFilter.length > 0) {
           filterParams.activity_filter = newFilters.activityFilter;
         }
@@ -163,6 +175,11 @@ const Home = () => {
           chars = await apiService.getCharactersByIds(ids);
           console.log('[FILTER] Dados completos recebidos:', chars);
         }
+        
+        // 3. Aplicar filtro de favoritos no frontend
+        chars = applyFavoritesFilter(chars, newFilters.isFavorited);
+        console.log('[FILTER] Após filtro de favoritos:', chars.length, 'personagens');
+        
         setFilteredCharacters(chars);
       } catch (err) {
         console.error('Erro ao aplicar filtros:', err);
@@ -171,8 +188,13 @@ const Home = () => {
         setLoadingRecent(false);
       }
     } else {
-      // Se não há filtros ativos, mostrar personagens recentes
-      setFilteredCharacters(recentCharacters);
+      // Se não há filtros ativos, aplicar apenas filtro de favoritos
+      let chars = recentCharacters;
+      if (newFilters.isFavorited !== '') {
+        chars = applyFavoritesFilter(chars, newFilters.isFavorited);
+        console.log('[FILTER] Aplicando apenas filtro de favoritos:', chars.length, 'personagens');
+      }
+      setFilteredCharacters(chars);
       setLoadingRecent(false);
     }
   };
