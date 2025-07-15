@@ -201,8 +201,8 @@ async def update_character_data(character_id: int, source: str = "scheduled"):
                 )
                 
                 if scrape_result.success:
-                    # Criar novo snapshot
-                    await service.create_snapshot(character.id, scrape_result.data, source)
+                    # Criar/atualizar snapshots com histórico completo
+                    snapshot_result = await service.create_snapshot_with_history(character.id, scrape_result.data, source)
                     
                     # Agendar próxima atualização
                     await service.schedule_next_update(character.id)
@@ -210,7 +210,8 @@ async def update_character_data(character_id: int, source: str = "scheduled"):
                     # Commit da transação
                     await db.commit()
                     
-                    logger.info(f"✅ Personagem {character.name} atualizado com sucesso")
+                    logger.info(f"✅ Personagem {character.name} atualizado com sucesso - "
+                              f"Snapshots: {snapshot_result['created']} criados, {snapshot_result['updated']} atualizados")
                     
                 else:
                     # Lidar com erro

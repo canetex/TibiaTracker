@@ -189,6 +189,165 @@ class CharacterService:
             logger.error(f"Erro ao criar snapshot: {e}")
             raise
 
+    async def create_snapshot_with_history(
+        self, character_id: int, scraped_data: Dict[str, Any], source: str = "scheduled"
+    ) -> Dict[str, int]:
+        """
+        Criar/atualizar snapshots para todos os dias do histórico de experiência
+        Retorna: {"created": int, "updated": int}
+        """
+        try:
+            from sqlalchemy import select, and_, desc
+            from datetime import datetime
+            
+            # Obter personagem
+            character = await self.get_character(character_id)
+            if not character:
+                raise ValueError(f"Personagem {character_id} não encontrado")
+            
+            # Extrair histórico completo de experiência
+            history_data = scraped_data.get('experience_history', [])
+            
+            snapshots_created = 0
+            snapshots_updated = 0
+            
+            # Processar histórico se disponível
+            if history_data:
+                for entry in history_data:
+                    # Verificar se entry['date'] é válido
+                    if not entry.get('date'):
+                        continue
+                    
+                    # Verificar se já existe snapshot para esta data usando exp_date
+                    existing_snapshot_query = select(CharacterSnapshotModel).where(
+                        and_(
+                            CharacterSnapshotModel.character_id == character.id,
+                            CharacterSnapshotModel.exp_date == entry['date']
+                        )
+                    ).limit(1)
+                    snapshot_result = await self.db.execute(existing_snapshot_query)
+                    existing_snapshot = snapshot_result.scalar_one_or_none()
+                    
+                    snapshot_date = datetime.combine(entry['date'], datetime.min.time())
+                    
+                    if existing_snapshot:
+                        # Atualizar snapshot existente
+                        existing_snapshot.experience = max(0, entry['experience_gained'])
+                        existing_snapshot.level = scraped_data.get('level', existing_snapshot.level)
+                        existing_snapshot.vocation = scraped_data.get('vocation', existing_snapshot.vocation)
+                        existing_snapshot.deaths = scraped_data.get('deaths', existing_snapshot.deaths)
+                        existing_snapshot.charm_points = scraped_data.get('charm_points', existing_snapshot.charm_points)
+                        existing_snapshot.bosstiary_points = scraped_data.get('bosstiary_points', existing_snapshot.bosstiary_points)
+                        existing_snapshot.achievement_points = scraped_data.get('achievement_points', existing_snapshot.achievement_points)
+                        existing_snapshot.world = character.world
+                        existing_snapshot.residence = scraped_data.get('residence', existing_snapshot.residence)
+                        existing_snapshot.outfit_image_url = scraped_data.get('outfit_image_url', existing_snapshot.outfit_image_url)
+                        existing_snapshot.scrape_source = source
+                        snapshots_updated += 1
+                    else:
+                        # Criar novo snapshot
+                        snapshot = CharacterSnapshotModel(
+                            character_id=character.id,
+                            level=scraped_data.get('level', 0),
+                            experience=max(0, entry['experience_gained']),
+                            deaths=scraped_data.get('deaths', 0),
+                            charm_points=scraped_data.get('charm_points'),
+                            bosstiary_points=scraped_data.get('bosstiary_points'),
+                            achievement_points=scraped_data.get('achievement_points'),
+                            vocation=scraped_data.get('vocation', 'None'),
+                            world=character.world,
+                            residence=scraped_data.get('residence', ''),
+                            house=scraped_data.get('house'),
+                            guild=scraped_data.get('guild'),
+                            guild_rank=scraped_data.get('guild_rank'),
+                            is_online=scraped_data.get('is_online', False),
+                            last_login=scraped_data.get('last_login'),
+                            outfit_image_url=scraped_data.get('outfit_image_url'),
+                            exp_date=entry['date'],
+                            scraped_at=snapshot_date,
+                            scrape_source=source
+                        )
+                        self.db.add(snapshot)
+                        snapshots_created += 1
+            else:
+                # Se não há histórico, criar/atualizar snapshot de hoje
+                today = datetime.now().date()
+                existing_snapshot_query = select(CharacterSnapshotModel).where(
+                    and_(
+                        CharacterSnapshotModel.character_id == character.id,
+                        CharacterSnapshotModel.exp_date == today
+                    )
+                ).limit(1)
+                snapshot_result = await self.db.execute(existing_snapshot_query)
+                existing_snapshot = snapshot_result.scalar_one_or_none()
+                
+                if existing_snapshot:
+                    # Atualizar snapshot de hoje
+                    existing_snapshot.experience = max(0, scraped_data.get('experience', 0))
+                    existing_snapshot.level = scraped_data.get('level', existing_snapshot.level)
+                    existing_snapshot.vocation = scraped_data.get('vocation', existing_snapshot.vocation)
+                    existing_snapshot.deaths = scraped_data.get('deaths', existing_snapshot.deaths)
+                    existing_snapshot.scrape_source = source
+                    snapshots_updated = 1
+                else:
+                    # Criar novo snapshot para hoje
+                    snapshot = CharacterSnapshotModel(
+                        character_id=character.id,
+                        level=scraped_data.get('level', 0),
+                        experience=max(0, scraped_data.get('experience', 0)),
+                        deaths=scraped_data.get('deaths', 0),
+                        charm_points=scraped_data.get('charm_points'),
+                        bosstiary_points=scraped_data.get('bosstiary_points'),
+                        achievement_points=scraped_data.get('achievement_points'),
+                        vocation=scraped_data.get('vocation', 'None'),
+                        world=character.world,
+                        residence=scraped_data.get('residence', ''),
+                        house=scraped_data.get('house'),
+                        guild=scraped_data.get('guild'),
+                        guild_rank=scraped_data.get('guild_rank'),
+                        is_online=scraped_data.get('is_online', False),
+                        last_login=scraped_data.get('last_login'),
+                        outfit_image_url=scraped_data.get('outfit_image_url'),
+                        exp_date=today,
+                        scraped_at=datetime.now(),
+                        scrape_source=source
+                    )
+                    self.db.add(snapshot)
+                    snapshots_created = 1
+            
+            # Atualizar informações básicas do personagem
+            character.level = scraped_data.get('level', character.level)
+            character.vocation = scraped_data.get('vocation', character.vocation)
+            character.residence = scraped_data.get('residence', character.residence)
+            character.last_scraped_at = datetime.now()
+            character.scrape_error_count = 0
+            character.last_scrape_error = None
+            character.next_scrape_at = datetime.now() + timedelta(days=1)
+            
+            # Atualizar o campo guild do personagem principal com base no snapshot mais recente
+            latest_snapshot_result = await self.db.execute(
+                select(CharacterSnapshotModel)
+                .where(CharacterSnapshotModel.character_id == character_id)
+                .order_by(desc(CharacterSnapshotModel.scraped_at))
+                .limit(1)
+            )
+            latest_snapshot = latest_snapshot_result.scalar_one_or_none()
+            if latest_snapshot:
+                character.guild = latest_snapshot.guild
+            
+            logger.info(f"Snapshots processados para personagem {character_id}: {snapshots_created} criados, {snapshots_updated} atualizados")
+            
+            return {
+                "created": snapshots_created,
+                "updated": snapshots_updated,
+                "total": snapshots_created + snapshots_updated
+            }
+            
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Erro ao criar snapshots com histórico: {e}")
+            raise
+
     async def update_character(
         self, character_id: int, character_data: CharacterUpdate
     ) -> Optional[CharacterModel]:
