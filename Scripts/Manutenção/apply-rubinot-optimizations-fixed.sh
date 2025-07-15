@@ -60,10 +60,18 @@ info "🚀 Iniciando aplicação das otimizações do Rubinot..."
 info "📦 Criando backup do banco antes das alterações..."
 BACKUP_FILE="backup_pre_rubinot_$(date +%Y%m%d_%H%M%S).sql"
 
+# Tentar criar backup usando docker exec
 if docker exec tibia-tracker-postgres pg_dump -U tibia_user -d tibia_tracker > "$BACKUP_FILE" 2>/dev/null; then
     success "Backup criado: $BACKUP_FILE"
 else
-    warning "Não foi possível criar o backup. Continuando mesmo assim..."
+    warning "Não foi possível criar o backup. Tentando método alternativo..."
+    # Método alternativo: copiar o comando para dentro do container
+    if docker exec tibia-tracker-postgres bash -c "pg_dump -U tibia_user -d tibia_tracker > /tmp/backup.sql" && \
+       docker cp tibia-tracker-postgres:/tmp/backup.sql "$BACKUP_FILE"; then
+        success "Backup criado: $BACKUP_FILE"
+    else
+        warning "Não foi possível criar o backup. Continuando mesmo assim..."
+    fi
 fi
 
 # =============================================================================
