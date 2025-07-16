@@ -11,10 +11,12 @@ Características:
 - Detecção automática do mundo
 - Preparado para volume alto (+10.000 chars)
 - Interpolação de level para dias sem dados
+- Headers robustos para evitar bloqueio
 """
 
 import re
 import json
+import random
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta, date
 from urllib.parse import quote
@@ -50,7 +52,33 @@ class RubinotCharacterScraper(BaseCharacterScraper):
     
     def _get_request_delay(self) -> float:
         """Delay específico do Rubinot entre requests"""
-        return 1.0  # Delay reduzido para volume alto
+        return 2.0  # Aumentado para evitar bloqueio
+    
+    def _get_default_headers(self) -> Dict[str, str]:
+        """Headers específicos para o Rubinot para evitar bloqueio"""
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+        ]
+        
+        return {
+            'User-Agent': random.choice(user_agents),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1',
+            'Referer': 'https://rubinot.com.br/',
+        }
     
     def _build_character_url(self, world: str, character_name: str) -> str:
         """Construir URL específica do personagem para o Rubinot"""
