@@ -78,7 +78,26 @@ class RubinotCharacterScraper(BaseCharacterScraper):
             'Cache-Control': 'max-age=0',
             'DNT': '1',
             'Referer': 'https://rubinot.com.br/',
+            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
         }
+    
+    async def _setup_session(self):
+        """Configurar sessão com cookies e headers persistentes"""
+        # Primeiro acessar a página principal para obter cookies
+        try:
+            logger.info("[RUBINOT] Configurando sessão...")
+            
+            # Acessar página principal primeiro
+            async with self.session.get('https://rubinot.com.br/', headers=self._get_default_headers()) as response:
+                if response.status == 200:
+                    logger.info("[RUBINOT] Sessão configurada com sucesso")
+                else:
+                    logger.warning(f"[RUBINOT] Erro ao configurar sessão: HTTP {response.status}")
+                    
+        except Exception as e:
+            logger.warning(f"[RUBINOT] Erro ao configurar sessão: {e}")
     
     def _build_character_url(self, world: str, character_name: str) -> str:
         """Construir URL específica do personagem para o Rubinot"""
