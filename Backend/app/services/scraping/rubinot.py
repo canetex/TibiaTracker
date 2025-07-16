@@ -101,9 +101,13 @@ class RubinotCharacterScraper(BaseCharacterScraper):
     
     def _build_character_url(self, world: str, character_name: str) -> str:
         """Construir URL específica do personagem para o Rubinot"""
-        # URL única do Rubinot: https://rubinot.com.br/?subtopic=characters&name=CharacterName
+        # URLs alternativas que funcionam (não bloqueadas pelo Cloudflare)
+        # https://rubinot.com e https://rubinot.net são acessíveis
         encoded_name = quote(character_name)
-        return f"https://rubinot.com.br/?subtopic=characters&name={encoded_name}"
+        
+        # Tentar primeiro rubinot.com (Vercel - mais rápido)
+        # Se falhar, tentar rubinot.net (Cloudflare + LiteSpeed)
+        return f"https://rubinot.com/?subtopic=characters&name={encoded_name}"
     
     def _extract_world_from_page(self, soup: BeautifulSoup) -> str:
         """Extrair mundo automaticamente da página"""
