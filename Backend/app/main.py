@@ -6,14 +6,20 @@ API REST para monitoramento de personagens do Tibia.
 Desenvolvido com FastAPI, PostgreSQL e Redis.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import logging
 import uvicorn
 import os
+
+# Rate Limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -29,6 +35,9 @@ import psutil
 # Configurar logging
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Configurar Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -80,20 +89,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configurar CORS
+# Configurar Rate Limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Configurar CORS - Restrito apenas para frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["http://localhost:3000", "http://frontend:80", "http://frontend:3000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Middleware de hosts confiáveis
+# Middleware de hosts confiáveis - Apenas containers Docker
 if settings.ENVIRONMENT == "production":
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
+        allowed_hosts=["localhost", "127.0.0.1", "frontend", "backend", "caddy"]
     )
 
 # Incluir rotas

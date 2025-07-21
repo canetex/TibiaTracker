@@ -10,9 +10,20 @@ Este diretório contém scripts para manutenção e migração do sistema Tibia 
 - **`run-outfit-migration-simple.sh`** - Script de execução simplificado
 - **`test-migration.py`** - Script de teste da migração
 
+### 🗄️ Migração de Estrutura do Banco
+
+- **`add_outfit_fields.sql`** - Adiciona campos de outfit nas tabelas
+- **`add_missing_fields.sql`** - Adiciona campos faltantes nas tabelas
+- **`apply-outfit-fields-migration.sh`** - Script para aplicar migrações de outfit
+
 ### 💾 Backup
 
 - **`backup-database-simple.sh`** - Script de backup simplificado
+- **`full-backup-production.sh`** - Script de backup completo para produção
+
+### 🔄 Atualização de Dados
+
+- **`update_all_guilds.sh`** - Atualiza guilds de todos os personagens
 
 ## 🚀 Como Usar
 
@@ -46,6 +57,27 @@ Este diretório contém scripts para manutenção e migração do sistema Tibia 
 ./Scripts/Manutenção/backup-database-simple.sh
 ```
 
+### Migração de Estrutura do Banco
+
+```bash
+# Aplicar migrações de outfit e campos faltantes
+./Scripts/Manutenção/apply-outfit-fields-migration.sh
+```
+
+### Atualização de Guilds
+
+```bash
+# Atualizar guilds de todos os personagens
+./Scripts/Manutenção/update_all_guilds.sh
+```
+
+**O que este script faz:**
+1. Cria backup automático do banco
+2. Aplica `add_outfit_fields.sql` (campos de outfit)
+3. Aplica `add_missing_fields.sql` (campos faltantes)
+4. Reinicia o backend
+5. Verifica se tudo funcionou
+
 ## 📊 O que a Migração Faz
 
 1. **Backup Automático** - Faz backup completo do banco antes da migração
@@ -53,6 +85,14 @@ Este diretório contém scripts para manutenção e migração do sistema Tibia 
 3. **Download de Imagens** - Baixa todas as imagens de outfit
 4. **Organização** - Organiza por hash MD5 (evita duplicatas)
 5. **Logs Detalhados** - Registra todo o processo
+
+## 🔄 O que o Script de Atualização de Guilds Faz
+
+1. **Lista Personagens** - Obtém todos os personagens da API
+2. **Refresh Individual** - Faz refresh de cada personagem para atualizar dados
+3. **Atualiza Guilds** - Extrai e atualiza informações de guild
+4. **Estatísticas** - Mostra progresso e resultados
+5. **Rate Limiting** - Pausa entre requisições para não sobrecarregar
 
 ## 📁 Estrutura de Arquivos
 
@@ -90,6 +130,18 @@ docker exec tibia-tracker-backend find /app/outfits/images -type f | wc -l
 docker exec tibia-tracker-backend du -sh /app/outfits/images
 ```
 
+### Problemas com Atualização de Guilds
+```bash
+# Verificar se a API está funcionando
+curl -s http://localhost:8000/health
+
+# Verificar se há personagens
+curl -s http://localhost:8000/api/v1/characters?limit=5
+
+# Verificar logs do backend
+docker-compose logs backend | tail -20
+```
+
 ## 📈 Estatísticas Esperadas
 
 - **URLs únicas:** ~630 (baseado no banco atual)
@@ -114,6 +166,18 @@ Após a migração, verifique:
 3. **Backup criado:**
    ```bash
    ls -la ./backups/ | tail -5
+   ```
+
+Após a atualização de guilds, verifique:
+
+1. **Personagens com guild:**
+   ```bash
+   curl -s "http://localhost:8000/api/v1/characters?limit=10" | jq '.characters[] | select(.guild != null) | {name: .name, guild: .guild}' | head -10
+   ```
+
+2. **Estatísticas de guilds:**
+   ```bash
+   curl -s "http://localhost:8000/api/v1/characters?limit=1000" | jq '.characters | group_by(.guild) | map({guild: .[0].guild, count: length}) | sort_by(.count) | reverse'
    ```
 
 ## 🔄 Restauração

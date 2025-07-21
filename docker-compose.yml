@@ -12,8 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./Backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "${DB_PORT}:5432"
+    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
     networks:
       - tibia-network
     restart: unless-stopped
@@ -30,8 +29,7 @@ services:
     image: redis:7-alpine
     container_name: tibia-tracker-redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
-    ports:
-      - "${REDIS_PORT}:6379"
+    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
     volumes:
       - redis_data:/data
     networks:
@@ -72,8 +70,7 @@ services:
       - TALEON_SAN_URL=${TALEON_SAN_URL}
       - TALEON_AURA_URL=${TALEON_AURA_URL}
       - TALEON_GAIA_URL=${TALEON_GAIA_URL}
-    ports:
-      - "${API_PORT}:8000"
+    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
     volumes:
       - ./Backend:/app
       - backend_logs:/var/log/tibia-tracker

@@ -12,6 +12,11 @@ from sqlalchemy.orm import selectinload, aliased
 from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
+import re
+
+# Rate Limiting
+from slowapi.util import get_remote_address
+from slowapi import Limiter
 
 from app.db.database import get_db
 from app.core.utils import get_utc_now, normalize_datetime, days_between, calculate_last_experience_data, calculate_experience_stats, format_date_pt_br
@@ -28,6 +33,50 @@ from app.services.scraping import scrape_character_data, get_supported_servers, 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/characters", tags=["characters"])
+
+# Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+
+# Funções de validação para prevenir SQL Injection e XSS
+def validate_character_name(name: str) -> str:
+    """Validar nome do personagem - apenas letras, números e espaços"""
+    if not name or len(name) < 2 or len(name) > 20:
+        raise HTTPException(status_code=400, detail="Nome deve ter entre 2 e 20 caracteres")
+    
+    # Apenas letras, números e espaços
+    if not re.match(r'^[a-zA-Z0-9\s]+$', name):
+        raise HTTPException(status_code=400, detail="Nome contém caracteres inválidos")
+    
+    return name.strip()
+
+def validate_server_name(server: str) -> str:
+    """Validar nome do servidor"""
+    valid_servers = ["taleon", "rubini", "rubinot"]
+    if server.lower() not in valid_servers:
+        raise HTTPException(status_code=400, detail=f"Servidor inválido. Válidos: {', '.join(valid_servers)}")
+    return server.lower()
+
+def validate_world_name(world: str) -> str:
+    """Validar nome do world"""
+    if not world or len(world) < 2 or len(world) > 10:
+        raise HTTPException(status_code=400, detail="World deve ter entre 2 e 10 caracteres")
+    
+    # Apenas letras e números
+    if not re.match(r'^[a-zA-Z0-9]+$', world):
+        raise HTTPException(status_code=400, detail="World contém caracteres inválidos")
+    
+    return world.lower()
+
+def validate_search_query(search: str) -> str:
+    """Validar query de busca"""
+    if not search or len(search) < 2 or len(search) > 50:
+        raise HTTPException(status_code=400, detail="Busca deve ter entre 2 e 50 caracteres")
+    
+    # Apenas letras, números e espaços
+    if not re.match(r'^[a-zA-Z0-9\s]+$', search):
+        raise HTTPException(status_code=400, detail="Busca contém caracteres inválidos")
+    
+    return search.strip()
 
 
 # ===== ENDPOINTS DE INFORMAÇÃO =====
@@ -141,12 +190,18 @@ async def get_specific_world_details(server: str, world: str):
 # ===== ENDPOINTS DE TESTE =====
 
 @router.get("/search")
+@limiter.limit("10/minute")  # Máximo 10 buscas por minuto
 async def search_character(
+    request: Request,
     name: str = Query(..., description="Nome do personagem"),
     server: str = Query(..., description="Servidor (taleon, rubini, etc)"), 
     world: str = Query(..., description="World (san, aura, gaia)"),
     db: AsyncSession = Depends(get_db)
 ):
+    # Validar inputs
+    name = validate_character_name(name)
+    server = validate_server_name(server)
+    world = validate_world_name(world)
     """Buscar personagem - se não existir, faz scraping e cria"""
     
     try:
@@ -351,12 +406,18 @@ async def test_scraping(
 
 
 @router.post("/scrape-and-create")
+@limiter.limit("5/minute")  # Máximo 5 criações por minuto
 async def scrape_and_create_character(
+    request: Request,
     server: str = Query(..., description="Servidor (taleon, rubini, etc)"),
     world: str = Query(..., description="World (san, aura, gaia)"),
     character_name: str = Query(..., description="Nome do personagem"),
     db: AsyncSession = Depends(get_db)
 ):
+    # Validar inputs
+    server = validate_server_name(server)
+    world = validate_world_name(world)
+    character_name = validate_character_name(character_name)
     """Fazer scraping e criar personagem + primeiro snapshot"""
     
     try:
@@ -822,7 +883,9 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("")
+@limiter.limit("30/minute")  # Máximo 30 listagens por minuto
 async def list_characters(
+    request: Request,
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
     limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
     server: Optional[str] = Query(None, description="Filtrar por servidor"),
@@ -833,6 +896,13 @@ async def list_characters(
     activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
     db: AsyncSession = Depends(get_db)
 ):
+    # Validar inputs opcionais
+    if server:
+        server = validate_server_name(server)
+    if world:
+        world = validate_world_name(world)
+    if search:
+        search = validate_search_query(search)
     """Listar personagens com filtros e paginação"""
     
     query = select(CharacterModel)
