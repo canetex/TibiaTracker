@@ -96,10 +96,18 @@ const ComparisonChart = ({
         const allCharacterData = await Promise.all(characterDataPromises);
         const combinedData = {};
         
+        console.log('🔍 DEBUG - Dados recebidos para comparação:');
+        console.log('MIN_DATE:', MIN_DATE);
+        
         allCharacterData.forEach(({ character, color, levelData, expData }) => {
+          console.log(`🔍 DEBUG - Personagem ${character.name}:`);
+          console.log('Level data:', levelData);
+          console.log('Exp data:', expData);
+          
           // Filtrar dados de level a partir de 03/07/2024
           levelData.forEach(item => {
             const itemDate = new Date(item.date);
+            console.log(`🔍 DEBUG - Level item date: ${item.date}, parsed: ${itemDate}, >= MIN_DATE: ${itemDate >= MIN_DATE}`);
             if (itemDate >= MIN_DATE) {
               const date = item.date;
               if (!combinedData[date]) {
@@ -112,6 +120,7 @@ const ComparisonChart = ({
           // Filtrar dados de experiência a partir de 03/07/2024
           expData.forEach(item => {
             const itemDate = new Date(item.date);
+            console.log(`🔍 DEBUG - Exp item date: ${item.date}, parsed: ${itemDate}, >= MIN_DATE: ${itemDate >= MIN_DATE}`);
             if (itemDate >= MIN_DATE) {
               const date = item.date;
               if (!combinedData[date]) {
@@ -123,6 +132,7 @@ const ComparisonChart = ({
         });
         
         const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
+        console.log('🔍 DEBUG - Dados filtrados finais para comparação:', chartDataArray);
         setChartData(chartDataArray);
       } catch (error) {
         console.error('Erro ao preparar dados do gráfico:', error);
@@ -319,7 +329,9 @@ const ComparisonChart = ({
                 <XAxis 
                   dataKey="date" 
                   type="category"
-                  tick={{ fontSize: 11, fill: '#666666' }}
+                  tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                  axisLine={{ stroke: '#ffffff' }}
+                  tickLine={{ stroke: '#ffffff' }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
@@ -337,15 +349,19 @@ const ComparisonChart = ({
                   type="number"
                   domain={getLevelDomain()}
                   allowDataOverflow={true}
-                  label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#666666', fontSize: 11 }}
-                  tick={{ fontSize: 11, fill: '#666666' }}
+                  label={{ value: 'Level', angle: -90, position: 'insideLeft', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
+                  tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                  axisLine={{ stroke: '#ffffff' }}
+                  tickLine={{ stroke: '#ffffff' }}
                   tickFormatter={(value) => value.toLocaleString('pt-BR')}
                 />
                 <YAxis 
                   yAxisId="experience" 
                   orientation="right"
-                  label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#666666', fontSize: 11 }}
-                  tick={{ fontSize: 11, fill: '#666666' }}
+                  label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
+                  tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                  axisLine={{ stroke: '#ffffff' }}
+                  tickLine={{ stroke: '#ffffff' }}
                   tickFormatter={formatExperience}
                 />
                 

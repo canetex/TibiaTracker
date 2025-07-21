@@ -86,12 +86,19 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
         apiService.getCharacterExperienceChart(character.id, timeRange),
         apiService.getCharacterLevelChart(character.id, timeRange)
       ]);
+      
+      console.log('🔍 DEBUG - Dados recebidos da API:');
+      console.log('MIN_DATE:', MIN_DATE);
+      console.log('Experience data:', experienceData?.data);
+      console.log('Level data:', levelData?.data);
+      
       const combinedData = {};
       
       // Processar dados de experiência
       if (experienceData?.data) {
         experienceData.data.forEach(item => {
           const itemDate = new Date(item.date);
+          console.log(`🔍 DEBUG - Item date: ${item.date}, parsed: ${itemDate}, >= MIN_DATE: ${itemDate >= MIN_DATE}`);
           // Filtrar apenas dados a partir de 03/07/2024
           if (itemDate >= MIN_DATE) {
             const date = item.date;
@@ -107,6 +114,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       if (levelData?.data) {
         levelData.data.forEach(item => {
           const itemDate = new Date(item.date);
+          console.log(`🔍 DEBUG - Level item date: ${item.date}, parsed: ${itemDate}, >= MIN_DATE: ${itemDate >= MIN_DATE}`);
           // Filtrar apenas dados a partir de 03/07/2024
           if (itemDate >= MIN_DATE) {
             const date = item.date;
@@ -119,6 +127,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
       }
       
       const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
+      console.log('🔍 DEBUG - Dados filtrados finais:', chartDataArray);
       setChartData(chartDataArray);
     } catch (err) {
       setError(`Erro ao carregar dados dos gráficos: ${err.message}`);
@@ -300,6 +309,9 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                           month: '2-digit'
                         });
                       }}
+                      tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                      axisLine={{ stroke: '#ffffff' }}
+                      tickLine={{ stroke: '#ffffff' }}
                     />
                     {/* Renderização condicional dos eixos Y */}
                     {chartOptions.experience && chartOptions.level && (
@@ -308,6 +320,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                           yAxisId="left"
                           orientation="left"
                           tickFormatter={formatExperience}
+                          tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                          axisLine={{ stroke: '#ffffff' }}
+                          tickLine={{ stroke: '#ffffff' }}
+                          label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
                         />
                         <YAxis 
                           yAxisId="right"
@@ -315,6 +331,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                           type="number"
                           domain={getLevelDomain()}
                           allowDataOverflow={true}
+                          tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                          axisLine={{ stroke: '#ffffff' }}
+                          tickLine={{ stroke: '#ffffff' }}
+                          label={{ value: 'Level', angle: 90, position: 'insideRight', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
                         />
                       </>
                     )}
@@ -325,6 +345,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         type="number"
                         domain={getLevelDomain()}
                         allowDataOverflow={true}
+                        tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                        axisLine={{ stroke: '#ffffff' }}
+                        tickLine={{ stroke: '#ffffff' }}
+                        label={{ value: 'Level', angle: 90, position: 'insideRight', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
                       />
                     )}
                     {chartOptions.experience && !chartOptions.level && (
@@ -332,6 +356,10 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         yAxisId="left"
                         orientation="left"
                         tickFormatter={formatExperience}
+                        tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
+                        axisLine={{ stroke: '#ffffff' }}
+                        tickLine={{ stroke: '#ffffff' }}
+                        label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
                       />
                     )}
                     <RechartsTooltip
