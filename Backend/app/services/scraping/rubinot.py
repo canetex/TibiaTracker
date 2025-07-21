@@ -163,14 +163,20 @@ class RubinotCharacterScraper(BaseCharacterScraper):
             }
             
             # Procurar por level na página
-            page_text = soup.get_text()
+            page_text = soup.get_text() if soup else ""
             
-            # Padrões para encontrar level
+            # Padrões mais abrangentes para encontrar level
             level_patterns = [
                 r'level[:\s]*(\d+)',
                 r'(\d+)\s*level',
                 r'lvl[:\s]*(\d+)',
-                r'(\d+)\s*lvl'
+                r'(\d+)\s*lvl',
+                r'level\s*(\d+)',
+                r'(\d+)\s*level',
+                r'level\s*=\s*(\d+)',
+                r'(\d+)\s*=\s*level',
+                r'level:\s*(\d+)',
+                r'(\d+)\s*:\s*level'
             ]
             
             for pattern in level_patterns:
@@ -186,13 +192,13 @@ class RubinotCharacterScraper(BaseCharacterScraper):
                     break
             
             # Procurar em tabelas específicas
-            if level_data['current_level'] == 0:
+            if level_data['current_level'] == 0 and soup:
                 tables = soup.find_all('table')
                 for table in tables:
-                    if hasattr(table, 'find_all'):
+                    if table and hasattr(table, 'find_all'):
                         rows = table.find_all('tr')
                         for row in rows:
-                            if hasattr(row, 'find_all'):
+                            if row and hasattr(row, 'find_all'):
                                 cells = row.find_all(['td', 'th'])
                                 if len(cells) >= 2:
                                     label = cells[0].get_text().strip().lower()
@@ -209,6 +215,29 @@ class RubinotCharacterScraper(BaseCharacterScraper):
                         if level_data['current_level'] > 0:
                             break
             
+            # Procurar em divs e spans que possam conter level
+            if level_data['current_level'] == 0 and soup:
+                for tag in ['div', 'span', 'p', 'strong', 'b']:
+                    elements = soup.find_all(tag)
+                    for element in elements:
+                        if element and hasattr(element, 'get_text'):
+                            element_text = element.get_text()
+                            for pattern in level_patterns:
+                                matches = re.findall(pattern, element_text, re.IGNORECASE)
+                                for match in matches:
+                                    if match.isdigit():
+                                        level = int(match)
+                                        if 1 <= level <= 9999:
+                                            level_data['current_level'] = level
+                                            logger.debug(f"[RUBINOT] Level encontrado em {tag}: {level}")
+                                            break
+                                if level_data['current_level'] > 0:
+                                    break
+                        if level_data['current_level'] > 0:
+                            break
+                    if level_data['current_level'] > 0:
+                        break
+            
             # Se encontrou level, criar entrada para hoje
             if level_data['current_level'] > 0:
                 today = datetime.now().date()
@@ -216,6 +245,8 @@ class RubinotCharacterScraper(BaseCharacterScraper):
                     'date': today,
                     'level': level_data['current_level']
                 })
+            else:
+                logger.warning("[RUBINOT] Nenhum level encontrado na página")
             
             return level_data
             
@@ -348,8 +379,10 @@ class RubinotCharacterScraper(BaseCharacterScraper):
                             # Se tem login recente, pode estar online
                             if data['last_login']:
                                 # Considerar online se último login foi nas últimas 2 horas
-                                time_diff = normalize_datetime(datetime.now()) - normalize_datetime(data['last_login'])
-                                if time_diff:
+                                current_time = normalize_datetime(datetime.now())
+                                last_login_time = normalize_datetime(data['last_login'])
+                                if current_time and last_login_time:
+                                    time_diff = current_time - last_login_time
                                     data['is_online'] = time_diff.total_seconds() < 7200
                         
                         elif 'residence' in label:

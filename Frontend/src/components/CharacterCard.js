@@ -178,13 +178,13 @@ const CharacterCard = ({
           </Box>
           
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton
-              onClick={handleToggleFavorite}
-              size="small"
+              <IconButton
+                onClick={handleToggleFavorite}
+                size="small"
               sx={{ color: isFavorite(character.id) ? 'error.main' : 'action.disabled' }}
-            >
+              >
               {isFavorite(character.id) ? <Star /> : <StarBorder />}
-            </IconButton>
+              </IconButton>
             
             {onAddToComparison && (
               <Tooltip title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}>
@@ -288,9 +288,9 @@ const CharacterCard = ({
           return exp ? (
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                 Exp. Ganha (30 dias)
-              </Typography>
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   +{totalGained.toLocaleString('pt-BR')}
                 </Typography>

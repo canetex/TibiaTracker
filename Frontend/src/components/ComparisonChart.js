@@ -38,6 +38,26 @@ const ComparisonChart = ({
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Data mínima: 03/07/2024
+  const MIN_DATE = new Date('2024-07-03');
+
+  // Função para formatar experiência em milhões (KK)
+  const formatExperience = (value) => {
+    if (!value || isNaN(value)) return '0';
+    const millions = value / 1000000;
+    return `${millions.toFixed(1)}KK`;
+  };
+
+  // Função para formatar data completa
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   // Cores únicas para cada personagem
   const colors = useMemo(() => [
     '#1976d2', '#388e3c', '#fbc02d', '#d32f2f', '#7b1fa2', '#0288d1', '#c2185b', '#ffa000', '#388e3c', '#455a64',
@@ -75,22 +95,33 @@ const ComparisonChart = ({
         });
         const allCharacterData = await Promise.all(characterDataPromises);
         const combinedData = {};
+        
         allCharacterData.forEach(({ character, color, levelData, expData }) => {
+          // Filtrar dados de level a partir de 03/07/2024
           levelData.forEach(item => {
-            const date = item.date;
-            if (!combinedData[date]) {
-              combinedData[date] = { date };
+            const itemDate = new Date(item.date);
+            if (itemDate >= MIN_DATE) {
+              const date = item.date;
+              if (!combinedData[date]) {
+                combinedData[date] = { date };
+              }
+              combinedData[date][`${character.name}_level`] = item.level;
             }
-            combinedData[date][`${character.name}_level`] = item.level;
           });
+          
+          // Filtrar dados de experiência a partir de 03/07/2024
           expData.forEach(item => {
-            const date = item.date;
-            if (!combinedData[date]) {
-              combinedData[date] = { date };
+            const itemDate = new Date(item.date);
+            if (itemDate >= MIN_DATE) {
+              const date = item.date;
+              if (!combinedData[date]) {
+                combinedData[date] = { date };
+              }
+              combinedData[date][`${character.name}_exp`] = item.experience || item.experience_gained || 0;
             }
-            combinedData[date][`${character.name}_exp`] = item.experience || item.experience_gained || 0;
           });
         });
+        
         const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
         setChartData(chartDataArray);
       } catch (error) {
@@ -100,7 +131,17 @@ const ComparisonChart = ({
       }
     };
     fetchChartData();
-  }, [characters, open, colors]);
+  }, [open, characters, colors]);
+
+  useEffect(() => {
+    if (characters.length > 0) {
+      const initialVisibility = {};
+      characters.forEach(char => {
+        initialVisibility[char.id] = true;
+      });
+      setVisibility(initialVisibility);
+    }
+  }, [characters]);
 
   const handleToggleCharacter = (characterId) => {
     setVisibility(prev => ({
@@ -122,8 +163,7 @@ const ComparisonChart = ({
     return colors[index % colors.length];
   };
 
-  const roundDown100 = (value) => Math.floor(value / 100) * 100;
-  const roundUp100 = (value) => Math.ceil(value / 100) * 100;
+  // Função para calcular limites do gráfico com 1% de margem
   const getLevelDomain = () => {
     let min = Infinity;
     let max = -Infinity;
@@ -138,11 +178,17 @@ const ComparisonChart = ({
     if (min === Infinity || max === -Infinity) {
       return [0, 100]; // fallback
     }
-    let yMin = roundDown100(min * 0.9);
-    let yMax = roundUp100(max * 1.05);
-    if (yMax - yMin < 100) {
-      yMax = yMin + 100;
+    
+    // Calcular 1% de margem
+    const margin = (max - min) * 0.01;
+    const yMin = Math.floor(min - margin);
+    const yMax = Math.ceil(max + margin);
+    
+    // Garantir diferença mínima
+    if (yMax - yMin < 10) {
+      return [yMin - 5, yMax + 5];
     }
+    
     return [yMin, yMax];
   };
 
@@ -170,7 +216,11 @@ const ComparisonChart = ({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TrendingUp sx={{ color: 'primary.main' }} />
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            <Typography variant="h4" sx={{ 
+              fontSize: '2.5rem',
+              fontWeight: 600,
+              lineHeight: 1.2
+            }}>
               Comparação de Personagens
             </Typography>
             <Chip 
@@ -273,6 +323,13 @@ const ComparisonChart = ({
                   angle={-45}
                   textAnchor="end"
                   height={80}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit'
+                    });
+                  }}
                 />
                 <YAxis 
                   yAxisId="level" 
@@ -289,23 +346,45 @@ const ComparisonChart = ({
                   orientation="right"
                   label={{ value: 'Experiência', angle: 90, position: 'insideRight', fill: '#666666', fontSize: 11 }}
                   tick={{ fontSize: 11, fill: '#666666' }}
-                  tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                  tickFormatter={formatExperience}
                 />
                 
                 <RechartsTooltip 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <Paper sx={{ p: 2, bgcolor: 'background.paper' }}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            {label}
+                        <Box sx={{ 
+                          bgcolor: 'background.paper', 
+                          border: 1, 
+                          borderColor: 'divider', 
+                          borderRadius: 1, 
+                          p: 2,
+                          boxShadow: 3
+                        }}>
+                          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                            {formatDate(label)}
                           </Typography>
-                          {payload.map((entry, index) => (
-                            <Typography key={index} variant="body2" sx={{ color: entry.color }}>
-                              {entry.name}: {entry.value?.toLocaleString('pt-BR')}
-                            </Typography>
-                          ))}
-                        </Paper>
+                          {payload.map((entry, index) => {
+                            const isExperience = entry.name.includes('Experiência');
+                            const displayValue = isExperience 
+                              ? formatExperience(entry.value)
+                              : entry.value?.toLocaleString('pt-BR');
+                            
+                            return (
+                              <Typography key={index} variant="body2" sx={{ 
+                                color: entry.color,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: 2
+                              }}>
+                                <span>{entry.name}:</span>
+                                <span style={{ fontWeight: 600 }}>
+                                  {displayValue}
+                                </span>
+                              </Typography>
+                            );
+                          })}
+                        </Box>
                       );
                     }
                     return null;
@@ -374,6 +453,11 @@ const ComparisonChart = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box sx={{ width: 20, height: 2, bgcolor: 'grey.600', borderTop: '2px dashed grey.600' }} />
               <Typography variant="body2">Linha tracejada = Experiência</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Dados a partir de 03/07/2024
+              </Typography>
             </Box>
           </Box>
         </Box>
