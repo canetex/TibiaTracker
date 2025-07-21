@@ -54,6 +54,26 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   
   const [timeRange, setTimeRange] = useState(30); // días
 
+  // Data mínima: 03/07/2024
+  const MIN_DATE = new Date('2024-07-03');
+
+  // Função para formatar experiência em milhões (KK)
+  const formatExperience = (value) => {
+    if (!value || isNaN(value)) return '0';
+    const millions = value / 1000000;
+    return `${millions.toFixed(1)}KK`;
+  };
+
+  // Função para formatar data completa
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   const loadChartData = useCallback(async () => {
     if (!character?.id) {
       setError('Erro: ID do personagem não encontrado');
@@ -67,24 +87,37 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
         apiService.getCharacterLevelChart(character.id, timeRange)
       ]);
       const combinedData = {};
+      
+      // Processar dados de experiência
       if (experienceData?.data) {
         experienceData.data.forEach(item => {
-          const date = item.date;
-          if (!combinedData[date]) {
-            combinedData[date] = { date };
+          const itemDate = new Date(item.date);
+          // Filtrar apenas dados a partir de 03/07/2024
+          if (itemDate >= MIN_DATE) {
+            const date = item.date;
+            if (!combinedData[date]) {
+              combinedData[date] = { date };
+            }
+            combinedData[date].experience = item.experience_gained || item.experience || 0;
           }
-          combinedData[date].experience = item.experience_gained || item.experience || 0;
         });
       }
+      
+      // Processar dados de level
       if (levelData?.data) {
         levelData.data.forEach(item => {
-          const date = item.date;
-          if (!combinedData[date]) {
-            combinedData[date] = { date };
+          const itemDate = new Date(item.date);
+          // Filtrar apenas dados a partir de 03/07/2024
+          if (itemDate >= MIN_DATE) {
+            const date = item.date;
+            if (!combinedData[date]) {
+              combinedData[date] = { date };
+            }
+            combinedData[date].level = item.level;
           }
-          combinedData[date].level = item.level;
         });
       }
+      
       const chartDataArray = Object.values(combinedData).sort((a, b) => new Date(a.date) - new Date(b.date));
       setChartData(chartDataArray);
     } catch (err) {
@@ -98,39 +131,8 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
     loadChartData();
   }, [loadChartData]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      setChartData([]);
-      setError(null);
-      setLoading(false);
-    };
-  }, []);
-
   const refreshCharacterData = async () => {
-    if (!character?.id) {
-      setError('Erro: ID do personagem não encontrado');
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('CharacterChartsModal: Fazendo novo scraping...');
-      
-      // Fazer novo scraping
-      await apiService.refreshCharacter(character.id);
-      
-      // Recarregar dados dos gráficos após scraping
-      await loadChartData();
-
-    } catch (err) {
-      console.error('CharacterChartsModal: Erro ao atualizar dados:', err);
-      setError(`Erro ao atualizar dados: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+    await loadChartData();
   };
 
   const handleOptionChange = (option) => {
@@ -142,8 +144,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
 
   const hasData = chartData.length > 0 && (chartOptions.experience || chartOptions.level);
 
-  const roundDown100 = (value) => Math.floor(value / 100) * 100;
-  const roundUp100 = (value) => Math.ceil(value / 100) * 100;
+  // Função para calcular limites do gráfico com 1% de margem
   const getLevelDomain = () => {
     let min = Infinity;
     let max = -Infinity;
@@ -156,11 +157,17 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
     if (min === Infinity || max === -Infinity) {
       return [0, 100]; // fallback
     }
-    let yMin = roundDown100(min * 0.9);
-    let yMax = roundUp100(max * 1.05);
-    if (yMax - yMin < 100) {
-      yMax = yMin + 100;
+    
+    // Calcular 1% de margem
+    const margin = (max - min) * 0.01;
+    const yMin = Math.floor(min - margin);
+    const yMax = Math.ceil(max + margin);
+    
+    // Garantir diferença mínima
+    if (yMax - yMin < 10) {
+      return [yMin - 5, yMax + 5];
     }
+    
     return [yMin, yMax];
   };
 
@@ -191,7 +198,11 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
             />
           )}
           <Analytics sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6">
+          <Typography variant="h4" sx={{ 
+            fontSize: '2.5rem',
+            fontWeight: 600,
+            lineHeight: 1.2
+          }}>
             Gráficos - {character?.name}
           </Typography>
         </Box>
@@ -296,7 +307,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                         <YAxis 
                           yAxisId="left"
                           orientation="left"
-                          tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                          tickFormatter={formatExperience}
                         />
                         <YAxis 
                           yAxisId="right"
@@ -320,21 +331,53 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                       <YAxis 
                         yAxisId="left"
                         orientation="left"
-                        tickFormatter={(value) => value.toLocaleString('pt-BR')}
+                        tickFormatter={formatExperience}
                       />
                     )}
                     <RechartsTooltip
-                      formatter={(value, name) => [
-                        !isNaN(value) ? value.toLocaleString('pt-BR') : value,
-                        name
-                      ]}
+                      formatter={(value, name) => {
+                        if (name === 'Experiência') {
+                          return [formatExperience(value), name];
+                        }
+                        return [value, name];
+                      }}
                       labelFormatter={(label) => {
-                        const date = new Date(label);
-                        return date.toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        });
+                        return formatDate(label);
+                      }}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <Box sx={{ 
+                              bgcolor: 'background.paper', 
+                              border: 1, 
+                              borderColor: 'divider', 
+                              borderRadius: 1, 
+                              p: 2,
+                              boxShadow: 3
+                            }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+                                {formatDate(label)}
+                              </Typography>
+                              {payload.map((entry, index) => (
+                                <Typography key={index} variant="body2" sx={{ 
+                                  color: entry.color,
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  gap: 2
+                                }}>
+                                  <span>{entry.name}:</span>
+                                  <span style={{ fontWeight: 600 }}>
+                                    {entry.name === 'Experiência' 
+                                      ? formatExperience(entry.value)
+                                      : entry.value?.toLocaleString('pt-BR')
+                                    }
+                                  </span>
+                                </Typography>
+                              ))}
+                            </Box>
+                          );
+                        }
+                        return null;
                       }}
                     />
                     <Legend />
@@ -374,6 +417,9 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Selecione pelo menos uma métrica ou tente um período diferente
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Dados disponíveis apenas a partir de 03/07/2024
                 </Typography>
               </Box>
             )}
