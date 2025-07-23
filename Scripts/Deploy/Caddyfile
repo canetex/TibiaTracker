@@ -44,7 +44,8 @@ localhost {
     tls internal
 }
 
-217.196.63.249 {
+# Configuração para IP público - aceitar HTTP sem redirecionamento
+217.196.63.249:80 {
     # Redirecionar API para backend
     reverse_proxy /api/* backend:8000
     
@@ -80,7 +81,4 @@ localhost {
         output file /var/log/caddy/access.log
         format json
     }
-    
-    # SSL auto-assinado para IP público
-    tls internal
 } 
