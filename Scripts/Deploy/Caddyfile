@@ -3,7 +3,7 @@
 # =============================================================================
 # Proxy reverso com SSL automático e headers de segurança
 
-localhost, 217.196.63.249 {
+localhost {
     # Redirecionar API para backend
     reverse_proxy /api/* backend:8000
     
@@ -40,8 +40,47 @@ localhost, 217.196.63.249 {
         format json
     }
     
-    # SSL automático para produção
-    tls {
-        on_demand
+    # SSL interno para localhost
+    tls internal
+}
+
+217.196.63.249 {
+    # Redirecionar API para backend
+    reverse_proxy /api/* backend:8000
+    
+    # Servir frontend para todas as outras rotas
+    reverse_proxy /* frontend:80
+    
+    # Headers de segurança
+    header {
+        # Proteção contra clickjacking
+        X-Frame-Options SAMEORIGIN
+        
+        # Proteção contra MIME sniffing
+        X-Content-Type-Options nosniff
+        
+        # Proteção XSS
+        X-XSS-Protection "1; mode=block"
+        
+        # Política de referrer
+        Referrer-Policy strict-origin-when-cross-origin
+        
+        # Política de permissões
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        
+        # Content Security Policy - Permitir fontes externas
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://backend:8000; frame-src 'none'; object-src 'none'"
+        
+        # Remover header Server por segurança
+        -Server
     }
+    
+    # Logs detalhados
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+    
+    # SSL auto-assinado para IP público
+    tls internal
 } 
