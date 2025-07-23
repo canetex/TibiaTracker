@@ -81,6 +81,6 @@ localhost {
         format json
     }
     
-    # SSL auto-assinado para IP público
-    tls internal
+    # Aceitar HTTP sem redirecionamento para HTTPS
+    auto_https off
 } 
