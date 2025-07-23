@@ -3,7 +3,7 @@
 # =============================================================================
 # Proxy reverso com SSL automático e headers de segurança
 
-localhost {
+localhost, 217.196.63.249 {
     # Redirecionar API para backend
     reverse_proxy /api/* backend:8000
     
@@ -40,6 +40,8 @@ localhost {
         format json
     }
     
-    # SSL interno para desenvolvimento
-    tls internal
+    # SSL automático para produção
+    tls {
+        on_demand
+    }
 } 
