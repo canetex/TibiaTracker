@@ -1,18 +1,22 @@
+# =============================================================================
+# TIBIA TRACKER - DOCKER COMPOSE
+# =============================================================================
+# Configuração para deploy em produção com PostgreSQL, Redis e monitoramento
+
 services:
   # ===========================================================================
-  # DATABASE - POSTGRESQL
+  # BANCO DE DADOS - POSTGRESQL
   # ===========================================================================
   postgres:
     image: postgres:15-alpine
     container_name: tibia-tracker-postgres
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./Backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
     networks:
       - tibia-network
     restart: unless-stopped
@@ -29,7 +33,6 @@ services:
     image: redis:7-alpine
     container_name: tibia-tracker-redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
-    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
     volumes:
       - redis_data:/data
     networks:
@@ -70,7 +73,8 @@ services:
       - TALEON_SAN_URL=${TALEON_SAN_URL}
       - TALEON_AURA_URL=${TALEON_AURA_URL}
       - TALEON_GAIA_URL=${TALEON_GAIA_URL}
-    # Removido ports para bloquear acesso externo - apenas acesso interno via Docker network
+    ports:
+      - "8000:8000"
     volumes:
       - ./Backend:/app
       - backend_logs:/var/log/tibia-tracker
@@ -100,7 +104,8 @@ services:
         - REACT_APP_API_URL=${REACT_APP_API_URL}
         - REACT_APP_ENVIRONMENT=${REACT_APP_ENVIRONMENT}
     container_name: tibia-tracker-frontend
-    # Removido ports - acesso apenas via Caddy
+    ports:
+      - "3000:80"
     volumes:
       - ./Frontend:/app
       - /app/node_modules
@@ -111,87 +116,60 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # PROXY REVERSO - CADDY
-  # ===========================================================================
-  caddy:
-    image: caddy:2-alpine
-    container_name: tibia-tracker-caddy
-    ports:
-      - "${CADDY_PORT}:80"
-      - "${CADDY_HTTPS_PORT}:443"
-    volumes:
-      - ./Scripts/Deploy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - tibia-network
-    depends_on:
-      - frontend
-      - backend
-    restart: unless-stopped
-    environment:
-      - DOMAIN=${DOMAIN}
-      - SSL_EMAIL=${SSL_EMAIL}
-
-  # ===========================================================================
   # MONITORAMENTO - PROMETHEUS
   # ===========================================================================
   prometheus:
     image: prom/prometheus:latest
     container_name: tibia-tracker-prometheus
-    # Removido ports - acesso apenas interno
+    ports:
+      - "9090:9090"
     volumes:
       - ./Scripts/Deploy/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
-    networks:
-      - tibia-network
-    restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - tibia-network
+    restart: unless-stopped
 
   # ===========================================================================
-  # NODE EXPORTER
+  # MONITORAMENTO - NODE EXPORTER
   # ===========================================================================
   node-exporter:
     image: prom/node-exporter:latest
     container_name: tibia-tracker-node-exporter
-    # Removido ports - acesso apenas interno
+    ports:
+      - "9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
       - tibia-network
     restart: unless-stopped
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
 
 # =============================================================================
 # VOLUMES
 # =============================================================================
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
   backend_logs:
-    driver: local
   outfits_data:
-    driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
   prometheus_data:
-    driver: local
 
 # =============================================================================
-# NETWORKS
+# REDES
 # =============================================================================
 networks:
   tibia-network:

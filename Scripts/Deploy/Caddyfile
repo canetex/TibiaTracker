@@ -40,8 +40,8 @@ localhost {
         format json
     }
     
-    # SSL interno para localhost
-    tls internal
+    # Desabilitar redirecionamento automático para HTTPS em desenvolvimento
+    # tls internal
 }
 
 # Configuração para IP público - aceitar HTTP sem redirecionamento
