@@ -73,8 +73,7 @@ services:
       - TALEON_SAN_URL=${TALEON_SAN_URL}
       - TALEON_AURA_URL=${TALEON_AURA_URL}
       - TALEON_GAIA_URL=${TALEON_GAIA_URL}
-    ports:
-      - "8000:8000"
+    # Removido ports - acesso apenas interno via Docker network
     volumes:
       - ./Backend:/app
       - backend_logs:/var/log/tibia-tracker
@@ -105,7 +104,7 @@ services:
         - REACT_APP_ENVIRONMENT=${REACT_APP_ENVIRONMENT}
     container_name: tibia-tracker-frontend
     ports:
-      - "3000:80"
+      - "80:80"  # Porta padrão HTTP
     volumes:
       - ./Frontend:/app
       - /app/node_modules
@@ -121,8 +120,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: tibia-tracker-prometheus
-    ports:
-      - "9090:9090"
+    # Removido ports - acesso apenas interno
     volumes:
       - ./Scripts/Deploy/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -143,8 +141,7 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: tibia-tracker-node-exporter
-    ports:
-      - "9100:9100"
+    # Removido ports - acesso apenas interno
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro

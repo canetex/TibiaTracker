@@ -93,16 +93,25 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Configurar CORS - Restrito apenas para frontend
+# Configurar CORS - Permitir frontend na porta 80
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://frontend:80", "http://frontend:3000"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:80", 
+        "http://localhost", 
+        "http://frontend:80", 
+        "http://frontend:3000",
+        "http://192.168.1.227:3000",
+        "http://192.168.1.227:80",
+        "http://192.168.1.227"
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Middleware de hosts confiáveis - Apenas containers Docker
+# Middleware de hosts confiáveis - Apenas em produção
 if settings.ENVIRONMENT == "production":
     app.add_middleware(
         TrustedHostMiddleware,
