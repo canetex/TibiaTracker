@@ -1064,6 +1064,7 @@ async def filter_character_ids(
     max_experience: Optional[int] = Query(None, alias='maxExperience', description='Filtrar por experiência máxima'),
     is_favorited: Optional[str] = Query(None, description='Filtrar por favoritos (true, false, ou omitir para todos)'),
     favorite_ids: Optional[List[int]] = Query(None, description='Lista de IDs favoritos do usuário (frontend)'),
+    recovery_active: Optional[str] = Query(None, description='Filtrar por recovery ativo (true, false, ou omitir para todos)'),
     limit: Optional[int] = Query(1000, ge=1, le=10000),
     db: AsyncSession = Depends(get_db),
     request: Request = None
@@ -1083,6 +1084,7 @@ async def filter_character_ids(
     logger.info(f"[FILTER-IDS] activity_filter: {activity_filter} (tipo: {type(activity_filter)})")
     logger.info(f"[FILTER-IDS] is_favorited: {is_favorited} (tipo: {type(is_favorited)})")
     logger.info(f"[FILTER-IDS] favorite_ids: {favorite_ids} (tipo: {type(favorite_ids)})")
+    logger.info(f"[FILTER-IDS] recovery_active: {recovery_active} (tipo: {type(recovery_active)})")
     logger.info(f"[FILTER-IDS] limit: {limit} (tipo: {type(limit)})")
     
     # Log da URL completa se request estiver disponível
@@ -1156,6 +1158,11 @@ async def filter_character_ids(
         conditions.append(CharacterModel.world.ilike(world))
     if is_active is not None:
         conditions.append(CharacterModel.is_active == is_active)
+    if recovery_active is not None and recovery_active != '':
+        if recovery_active.lower() == 'true':
+            conditions.append(CharacterModel.recovery_active == True)
+        elif recovery_active.lower() == 'false':
+            conditions.append(CharacterModel.recovery_active == False)
 
     if search:
         conditions.append(CharacterModel.name.ilike(f"%{search}%"))

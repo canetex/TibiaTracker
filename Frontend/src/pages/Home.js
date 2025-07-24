@@ -46,6 +46,7 @@ const Home = () => {
     maxLevel: '',
     isFavorited: '',
     activityFilter: [],
+    recoveryActive: '', // Adicionar campo recoveryActive
     limit: 'all',
   });
   const [filteredCharacters, setFilteredCharacters] = useState([]);
@@ -164,6 +165,11 @@ const Home = () => {
           filterParams.favorite_ids = favorites;
           console.log('[FAVORITES] IDs enviados:', favorites);
         }
+        if (newFilters.recoveryActive === 'true') {
+          filterParams.recovery_active = 'true';
+        } else if (newFilters.recoveryActive === 'false') {
+          filterParams.recovery_active = 'false';
+        }
         if (newFilters.limit && newFilters.limit !== 'all') {
           filterParams.limit = newFilters.limit;
         } else {
@@ -209,6 +215,7 @@ const Home = () => {
       maxLevel: '',
       isFavorited: '',
       activityFilter: [],
+      recoveryActive: '', // Adicionar campo recoveryActive
       limit: 'all',
     };
     setFilters(clearedFilters);
