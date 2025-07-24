@@ -96,7 +96,7 @@ export const apiService = {
    */
   async searchCharacter(name, server, world) {
     try {
-      const response = await api.get('/v1/characters/search', {
+      const response = await api.get('/characters/search', {
         params: { name, server, world }
       });
       return response.data;
@@ -110,7 +110,7 @@ export const apiService = {
    */
   async createCharacter(characterData) {
     try {
-      const response = await api.post('/v1/characters/', characterData);
+      const response = await api.post('/characters/', characterData);
       return response.data;
     } catch (error) {
       throw error;
@@ -122,7 +122,7 @@ export const apiService = {
    */
   async getCharacter(characterId) {
     try {
-      const response = await api.get(`/v1/characters/${characterId}`);
+      const response = await api.get(`/characters/${characterId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -134,7 +134,7 @@ export const apiService = {
    */
   async listCharacters(params = {}) {
     try {
-      const response = await api.get('/v1/characters/', { params });
+      const response = await api.get('/characters/', { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -147,7 +147,7 @@ export const apiService = {
   async getRecentCharacters(limit = 50) {
     try {
       console.log(`[API] getRecentCharacters chamado com limite: ${limit}`);
-      const response = await api.get('/v1/characters/recent', {
+      const response = await api.get('/characters/recent', {
         params: { limit }
       });
       console.log('[API] getRecentCharacters resposta:', response.data);
@@ -181,7 +181,7 @@ export const apiService = {
    */
   async updateCharacter(characterId, updateData) {
     try {
-      const response = await api.put(`/v1/characters/${characterId}`, updateData);
+      const response = await api.put(`/characters/${characterId}`, updateData);
       return response.data;
     } catch (error) {
       throw error;
@@ -193,7 +193,7 @@ export const apiService = {
    */
   async toggleFavorite(characterId) {
     try {
-      const response = await api.get(`/v1/characters/${characterId}/toggle-favorite`);
+      const response = await api.get(`/characters/${characterId}/toggle-favorite`);
       return response.data;
     } catch (error) {
       throw error;
@@ -205,7 +205,7 @@ export const apiService = {
    */
   async refreshCharacter(characterId) {
     try {
-      const response = await api.post(`/v1/characters/${characterId}/refresh`);
+      const response = await api.post(`/characters/${characterId}/refresh`);
       return response.data;
     } catch (error) {
       throw error;
@@ -214,7 +214,7 @@ export const apiService = {
 
   async toggleRecovery(characterId) {
     try {
-      const response = await api.get(`/v1/characters/${characterId}/toggle-recovery`);
+      const response = await api.get(`/characters/${characterId}/toggle-recovery`);
       return response.data;
     } catch (error) {
       throw error;
@@ -223,7 +223,7 @@ export const apiService = {
 
   async manualScrape(characterId) {
     try {
-      const response = await api.post(`/v1/characters/${characterId}/manual-scrape`);
+      const response = await api.post(`/characters/${characterId}/manual-scrape`);
       return response.data;
     } catch (error) {
       throw error;
@@ -232,7 +232,7 @@ export const apiService = {
 
   async getRecoveryStats() {
     try {
-      const response = await api.get('/v1/characters/recovery-stats');
+      const response = await api.get('/characters/recovery-stats');
       return response.data;
     } catch (error) {
       throw error;
@@ -244,7 +244,7 @@ export const apiService = {
    */
   async getCharacterStats(characterId, days = 30) {
     try {
-      const response = await api.get(`/v1/characters/${characterId}/stats`, {
+      const response = await api.get(`/characters/${characterId}/stats`, {
         params: { days }
       });
       return response.data;
@@ -258,7 +258,7 @@ export const apiService = {
    */
   async deleteCharacter(characterId) {
     try {
-      const response = await api.delete(`/v1/characters/${characterId}`);
+      const response = await api.delete(`/characters/${characterId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -270,7 +270,7 @@ export const apiService = {
    */
   async getGlobalStats() {
     try {
-      const response = await api.get('/v1/characters/stats/global');
+      const response = await api.get('/characters/stats/global');
       return response.data;
     } catch (error) {
       throw error;
@@ -283,7 +283,7 @@ export const apiService = {
   async scrapeWithHistory(name, server, world) {
     console.log(`API: Fazendo scraping com histórico para ${name} em ${server}/${world}`);
     
-    const response = await api.post('/v1/characters/scrape-with-history', null, {
+          const response = await api.post('/characters/scrape-with-history', null, {
       params: {
         character_name: name,
         server: server,
@@ -301,7 +301,7 @@ export const apiService = {
   async getCharacterExperienceChart(characterId, days = 30) {
     try {
       console.log(`API: Buscando dados de experiência para personagem ${characterId}, ${days} dias`);
-      const response = await api.get(`/v1/characters/${characterId}/charts/experience`, {
+      const response = await api.get(`/characters/${characterId}/charts/experience`, {
         params: { days }
       });
       console.log('API: Dados de experiência recebidos:', response.data);
@@ -318,7 +318,7 @@ export const apiService = {
   async getCharacterLevelChart(characterId, days = 30) {
     try {
       console.log(`API: Buscando dados de level para personagem ${characterId}, ${days} dias`);
-      const response = await api.get(`/v1/characters/${characterId}/charts/level`, {
+      const response = await api.get(`/characters/${characterId}/charts/level`, {
         params: { days }
       });
       console.log('API: Dados de level recebidos:', response.data);
@@ -343,7 +343,7 @@ export const apiService = {
           searchParams.append(key, value);
         }
       });
-      const response = await api.get('/v1/characters/filter-ids?' + searchParams.toString());
+      const response = await api.get('/characters/filter-ids?' + searchParams.toString());
       return response.data;
     } catch (error) {
       throw error;
@@ -356,7 +356,7 @@ export const apiService = {
   async getCharactersByIds(ids = []) {
     try {
       console.log('[API] getCharactersByIds chamado com IDs:', ids);
-      const response = await api.post('/v1/characters/by-ids', { ids });
+      const response = await api.post('/characters/by-ids', { ids });
       console.log('[API] getCharactersByIds resposta completa:', response.data);
       
       // Log detalhado dos campos de experiência para cada personagem
