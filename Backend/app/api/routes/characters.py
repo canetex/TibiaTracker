@@ -792,6 +792,7 @@ async def get_recent_characters(
                 "guild": char.guild,
                 "outfit_image_url": char.outfit_image_url,
                 "last_scraped_at": char.last_scraped_at,
+                "recovery_active": char.recovery_active,
                 "total_snapshots": total_snapshots,
                 "total_exp_gained": exp_stats['total_exp_gained'],
                 "average_daily_exp": exp_stats['average_daily_exp'],
