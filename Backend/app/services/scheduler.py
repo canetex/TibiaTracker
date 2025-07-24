@@ -119,7 +119,7 @@ def stop_scheduler():
 
 async def update_all_characters():
     """
-    Atualizar todos os personagens ativos
+    Atualizar todos os personagens ativos com recovery ativo
     """
     logger.info("🔄 Iniciando atualização diária de personagens...")
     
@@ -127,7 +127,7 @@ async def update_all_characters():
         async with get_db_session() as db:
             service = CharacterService(db)
             
-            # Buscar personagens que precisam ser atualizados
+            # Buscar personagens que precisam ser atualizados (apenas com recovery ativo)
             from sqlalchemy import select, and_, or_
             from app.models.character import Character
             
@@ -135,6 +135,7 @@ async def update_all_characters():
                 select(Character).where(
                     and_(
                         Character.is_active == True,
+                        Character.recovery_active == True,  # Apenas personagens com recovery ativo
                         or_(
                             Character.next_scrape_at <= datetime.now(),
                             Character.next_scrape_at.is_(None)
@@ -144,10 +145,11 @@ async def update_all_characters():
             )
             characters = result.scalars().all()
             
-            logger.info(f"📋 Encontrados {len(characters)} personagens para atualizar")
+            logger.info(f"📋 Encontrados {len(characters)} personagens para atualizar (com recovery ativo)")
             
             success_count = 0
             error_count = 0
+            deactivated_count = 0
             
             for character in characters:
                 try:
@@ -165,7 +167,13 @@ async def update_all_characters():
                     character.scrape_error_count += 1
                     character.last_scrape_error = str(e)
                     
-                    if character.scrape_error_count >= settings.SCRAPE_RETRY_ATTEMPTS:
+                    # Verificar se deve desativar recovery por erro consecutivo
+                    if character.scrape_error_count >= 3:
+                        character.recovery_active = False
+                        deactivated_count += 1
+                        logger.warning(f"⚠️ Personagem {character.name} desativado por 3 erros consecutivos")
+                        character.next_scrape_at = datetime.now() + timedelta(hours=24)
+                    elif character.scrape_error_count >= settings.SCRAPE_RETRY_ATTEMPTS:
                         character.next_scrape_at = datetime.now() + timedelta(hours=24)
                         logger.warning(f"⚠️ Personagem {character.name} atingiu limite de erros, próxima tentativa em 24h")
                     else:
@@ -173,7 +181,10 @@ async def update_all_characters():
                     
                     await db.commit()
             
-            logger.info(f"✅ Atualização concluída: {success_count} sucessos, {error_count} erros")
+            # Verificar personagens com 10 dias sem experiência e desativar recovery
+            await check_and_deactivate_inactive_characters(db)
+            
+            logger.info(f"✅ Atualização concluída: {success_count} sucessos, {error_count} erros, {deactivated_count} desativados por erro")
             
     except Exception as e:
         logger.error(f"❌ Erro na atualização diária: {e}")
@@ -315,3 +326,45 @@ def get_scheduler_info() -> dict:
         "timezone": str(scheduler.timezone),
         "jobs": jobs
     } 
+
+
+async def check_and_deactivate_inactive_characters(db):
+    """
+    Verificar e desativar personagens que não tiveram experiência nos últimos 10 dias
+    """
+    try:
+        from sqlalchemy import select, and_, not_, exists
+        from app.models.character import Character, CharacterSnapshot
+        
+        # Buscar personagens ativos com recovery ativo que não tiveram experiência nos últimos 10 dias
+        subquery = select(CharacterSnapshot.id).where(
+            and_(
+                CharacterSnapshot.character_id == Character.id,
+                CharacterSnapshot.exp_date >= datetime.now().date() - timedelta(days=10),
+                CharacterSnapshot.experience > 0
+            )
+        )
+        
+        result = await db.execute(
+            select(Character).where(
+                and_(
+                    Character.is_active == True,
+                    Character.recovery_active == True,
+                    not_(exists(subquery))
+                )
+            )
+        )
+        
+        inactive_characters = result.scalars().all()
+        
+        if inactive_characters:
+            for character in inactive_characters:
+                character.recovery_active = False
+                logger.info(f"⚠️ Personagem {character.name} desativado por 10 dias sem experiência")
+            
+            await db.commit()
+            logger.info(f"🔄 {len(inactive_characters)} personagens desativados por inatividade")
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao verificar personagens inativos: {e}")
+        await db.rollback() 

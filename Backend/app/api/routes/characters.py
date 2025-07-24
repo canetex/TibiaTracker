@@ -1683,20 +1683,153 @@ async def toggle_active(
     character_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """Alternar status ativo do personagem"""
-    
-    result = await db.execute(select(CharacterModel).where(CharacterModel.id == character_id))
-    character = result.scalar_one_or_none()
-    
-    if not character:
-        raise HTTPException(status_code=404, detail="Personagem não encontrado")
-    
-    character.is_active = not character.is_active
-    await db.commit()
-    
-    status = "ativado" if character.is_active else "desativado"
-    return {"message": f"Personagem '{character.name}' {status} para scraping"}
+    """Ativar/desativar personagem"""
+    try:
+        service = CharacterService(db)
+        character = await service.get_character(character_id)
+        
+        if not character:
+            raise HTTPException(status_code=404, detail="Personagem não encontrado")
+        
+        character.is_active = not character.is_active
+        await db.commit()
+        
+        status = "ativado" if character.is_active else "desativado"
+        return {
+            "success": True,
+            "message": f"Personagem {character.name} {status}",
+            "is_active": character.is_active
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao alterar status ativo do personagem {character_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
+@router.get("/{character_id}/toggle-recovery")
+async def toggle_recovery(
+    character_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Ativar/desativar recovery automático do personagem"""
+    try:
+        service = CharacterService(db)
+        character = await service.get_character(character_id)
+        
+        if not character:
+            raise HTTPException(status_code=404, detail="Personagem não encontrado")
+        
+        # Apenas permitir ativar, não desativar manualmente
+        if not character.recovery_active:
+            success = await service.activate_recovery_manual(character_id)
+            if success:
+                return {
+                    "success": True,
+                    "message": f"Recovery ativado para {character.name}",
+                    "recovery_active": True
+                }
+            else:
+                raise HTTPException(status_code=500, detail="Erro ao ativar recovery")
+        else:
+            return {
+                "success": False,
+                "message": "Recovery já está ativo. Só pode ser desativado automaticamente.",
+                "recovery_active": True
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao alterar recovery do personagem {character_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.post("/{character_id}/manual-scrape")
+async def manual_scrape_character(
+    character_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Fazer scraping manual de um personagem específico"""
+    try:
+        service = CharacterService(db)
+        character = await service.get_character(character_id)
+        
+        if not character:
+            raise HTTPException(status_code=404, detail="Personagem não encontrado")
+        
+        logger.info(f"🔄 Iniciando scraping manual para {character.name}")
+        
+        # Fazer scraping
+        scrape_result = await scrape_character_data(
+            character.server, character.world, character.name
+        )
+        
+        if scrape_result.success:
+            # Criar/atualizar snapshots com histórico completo
+            snapshot_result = await service.create_snapshot_with_history(
+                character.id, scrape_result.data, "manual"
+            )
+            
+            # Atualizar dados do personagem
+            character.last_scraped_at = datetime.now()
+            character.scrape_error_count = 0
+            character.last_scrape_error = None
+            
+            # Se teve experiência, ativar recovery se estiver inativo
+            if scrape_result.data.get('experience', 0) > 0 and not character.recovery_active:
+                character.recovery_active = True
+                logger.info(f"✅ Recovery reativado para {character.name} após experiência detectada")
+            
+            await db.commit()
+            
+            return {
+                "success": True,
+                "message": f"Scraping manual concluído para {character.name}",
+                "snapshots_created": snapshot_result.get('created', 0),
+                "snapshots_updated": snapshot_result.get('updated', 0),
+                "recovery_active": character.recovery_active
+            }
+        else:
+            # Incrementar contador de erro
+            character.scrape_error_count += 1
+            character.last_scrape_error = scrape_result.error_message
+            character.last_scraped_at = datetime.now()
+            
+            # Verificar se deve desativar recovery por erro
+            if character.scrape_error_count >= 3:
+                character.recovery_active = False
+                logger.warning(f"⚠️ Recovery desativado para {character.name} por 3 erros consecutivos")
+            
+            await db.commit()
+            
+            return {
+                "success": False,
+                "message": f"Erro no scraping: {scrape_result.error_message}",
+                "recovery_active": character.recovery_active
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro no scraping manual do personagem {character_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.get("/recovery-stats")
+async def get_recovery_stats(db: AsyncSession = Depends(get_db)):
+    """Obter estatísticas de recovery dos personagens"""
+    try:
+        service = CharacterService(db)
+        stats = await service.get_recovery_stats()
+        
+        return {
+            "success": True,
+            "stats": stats,
+            "message": "Estatísticas de recovery obtidas com sucesso"
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter estatísticas de recovery: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.post("/{character_id}/refresh")
 async def refresh_character_data(

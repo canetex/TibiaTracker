@@ -22,6 +22,8 @@ import {
   OpenInNew,
   Compare,
   CompareOutlined,
+  PlayArrow,
+  Pause,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -34,9 +36,13 @@ const CharacterCard = ({
   onAddToComparison, 
   onRemoveFromComparison, 
   isInComparison = false,
-  onQuickFilter // Nova prop para filtros rápidos
+  onQuickFilter, // Nova prop para filtros rápidos
+  onToggleRecovery, // Nova prop para toggle recovery
+  onManualScrape // Nova prop para scraping manual
 }) => {
   const [refreshing, setRefreshing] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [scrapingLoading, setScrapingLoading] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
 
   // Log dos dados do personagem para debug
@@ -80,6 +86,28 @@ const CharacterCard = ({
       onRemoveFromComparison?.(character.id);
     } else {
       onAddToComparison?.(character);
+    }
+  };
+
+  const handleToggleRecovery = async () => {
+    if (onToggleRecovery && !recoveryLoading) {
+      setRecoveryLoading(true);
+      try {
+        await onToggleRecovery(character.id);
+      } finally {
+        setRecoveryLoading(false);
+      }
+    }
+  };
+
+  const handleManualScrape = async () => {
+    if (onManualScrape && !scrapingLoading) {
+      setScrapingLoading(true);
+      try {
+        await onManualScrape(character.id);
+      } finally {
+        setScrapingLoading(false);
+      }
     }
   };
 
@@ -233,6 +261,29 @@ const CharacterCard = ({
               sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'secondary.50' } }}
             />
           )}
+          
+          {/* Recovery Status Chip */}
+          <Tooltip 
+            title={
+              character.recovery_active 
+                ? "Recuperação Ativa - Personagem recebe atualizações automáticas"
+                : "Recuperação Inativa - Não foi detectado dados de experiência nos últimos 10 dias. Clique para ativar scraping manual."
+            }
+          >
+            <Chip 
+              label={character.recovery_active ? "Recuperação Ativa" : "Recuperação Inativa"}
+              size="small"
+              color={character.recovery_active ? "success" : "warning"}
+              variant="outlined"
+              icon={character.recovery_active ? <PlayArrow /> : <Pause />}
+              onClick={character.recovery_active ? undefined : handleManualScrape}
+              disabled={scrapingLoading}
+              sx={{ 
+                cursor: character.recovery_active ? 'default' : 'pointer',
+                '&:hover': character.recovery_active ? {} : { bgcolor: 'warning.50' }
+              }}
+            />
+          </Tooltip>
         </Box>
 
         {/* Stats Grid */}

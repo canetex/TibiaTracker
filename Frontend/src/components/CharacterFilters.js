@@ -42,6 +42,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
     maxLevel: '',
     isFavorited: '',
     activityFilter: [],
+    recoveryActive: '', // Novo filtro para recovery
     limit: 'all',
   });
 
@@ -58,6 +59,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
       maxLevel: externalFilters.maxLevel || '',
       isFavorited: externalFilters.isFavorited || '',
       activityFilter: externalFilters.activityFilter || [],
+      recoveryActive: externalFilters.recoveryActive || '', // Sincroniza o novo filtro
       limit: externalFilters.limit || 'all',
     });
   }, [externalFilters]);
@@ -85,6 +87,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
       maxLevel: '',
       isFavorited: '',
       activityFilter: [],
+      recoveryActive: '', // Limpa o novo filtro
       limit: 'all',
     };
     setFilters(clearedFilters);
@@ -363,6 +366,24 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
                       <ListItemText primary={filter.label} />
                     </MenuItem>
                   ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Recovery Ativo</InputLabel>
+                <Select
+                  value={filters.recoveryActive}
+                  onChange={(e) => handleFieldChange('recoveryActive', e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  label="Recovery Ativo"
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="true">
+                    Apenas Recovery Ativo
+                  </MenuItem>
+                  <MenuItem value="false">Não Recovery Ativo</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

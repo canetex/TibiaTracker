@@ -324,6 +324,40 @@ const Home = () => {
     setSelectedCharacterForCharts(null);
   };
 
+  const handleToggleRecovery = async (characterId) => {
+    try {
+      const response = await apiService.toggleRecovery(characterId);
+      if (response.success) {
+        // Atualizar o personagem na lista
+        const updatedCharacters = recentCharacters.map(char => 
+          char.id === characterId 
+            ? { ...char, recovery_active: response.recovery_active }
+            : char
+        );
+        setRecentCharacters(updatedCharacters);
+        setFilteredCharacters(updatedCharacters);
+      }
+    } catch (error) {
+      console.error('Erro ao alterar recovery:', error);
+      setError('Erro ao alterar status de recovery');
+    }
+  };
+
+  const handleManualScrape = async (characterId) => {
+    try {
+      const response = await apiService.manualScrape(characterId);
+      if (response.success) {
+        // Recarregar dados do personagem
+        await handleRefreshCharacter(characterId);
+      } else {
+        setError(`Erro no scraping: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Erro no scraping manual:', error);
+      setError('Erro ao fazer scraping manual');
+    }
+  };
+
   // Função utilitária para saber se há filtros ativos
   const hasActiveFilters = Object.values(filters).some(value => {
     if (Array.isArray(value)) {
@@ -428,6 +462,8 @@ const Home = () => {
                   onRemoveFromComparison={handleRemoveFromComparison}
                   isInComparison={comparisonCharacters.some(c => c.id === character.id)}
                   onQuickFilter={handleQuickFilter}
+                  onToggleRecovery={handleToggleRecovery}
+                  onManualScrape={handleManualScrape}
                 />
               </Grid>
             ))}

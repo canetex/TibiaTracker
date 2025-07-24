@@ -205,12 +205,36 @@ export const apiService = {
    */
   async refreshCharacter(characterId) {
     try {
-      console.log(`API: Fazendo novo scraping para personagem ${characterId}`);
       const response = await api.post(`/v1/characters/${characterId}/refresh`);
-      console.log('API: Scraping de refresh concluído:', response.data);
       return response.data;
     } catch (error) {
-      console.error('API: Erro ao fazer refresh do personagem:', error);
+      throw error;
+    }
+  },
+
+  async toggleRecovery(characterId) {
+    try {
+      const response = await api.get(`/v1/characters/${characterId}/toggle-recovery`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async manualScrape(characterId) {
+    try {
+      const response = await api.post(`/v1/characters/${characterId}/manual-scrape`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async getRecoveryStats() {
+    try {
+      const response = await api.get('/v1/characters/recovery-stats');
+      return response.data;
+    } catch (error) {
       throw error;
     }
   },

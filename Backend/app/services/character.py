@@ -682,4 +682,71 @@ class CharacterService:
 
         except Exception as e:
             logger.error(f"Erro ao agendar atualização para personagem {character_id}: {e}")
-            await self.db.rollback() 
+            await self.db.rollback()
+
+    async def toggle_recovery_active(self, character_id: int, active: bool) -> bool:
+        """Ativar/desativar recovery automático para um personagem"""
+        try:
+            character = await self.get_character(character_id)
+            if character:
+                character.recovery_active = active
+                await self.db.commit()
+                
+                status = "ativado" if active else "desativado"
+                logger.info(f"Recovery {status} para personagem {character.name}")
+                return True
+            return False
+
+        except Exception as e:
+            logger.error(f"Erro ao alterar recovery para personagem {character_id}: {e}")
+            await self.db.rollback()
+            return False
+
+    async def activate_recovery_manual(self, character_id: int) -> bool:
+        """Ativar recovery manualmente (apenas para ativar, não desativar)"""
+        return await self.toggle_recovery_active(character_id, True)
+
+    async def get_recovery_stats(self) -> Dict[str, int]:
+        """Obter estatísticas de recovery dos personagens"""
+        try:
+            # Total de personagens
+            total_result = await self.db.execute(
+                select(func.count(CharacterModel.id))
+            )
+            total = total_result.scalar()
+
+            # Personagens com recovery ativo
+            active_result = await self.db.execute(
+                select(func.count(CharacterModel.id)).where(
+                    and_(
+                        CharacterModel.is_active == True,
+                        CharacterModel.recovery_active == True
+                    )
+                )
+            )
+            recovery_active = active_result.scalar()
+
+            # Personagens com recovery inativo
+            inactive_result = await self.db.execute(
+                select(func.count(CharacterModel.id)).where(
+                    and_(
+                        CharacterModel.is_active == True,
+                        CharacterModel.recovery_active == False
+                    )
+                )
+            )
+            recovery_inactive = inactive_result.scalar()
+
+            return {
+                "total_characters": total,
+                "recovery_active": recovery_active,
+                "recovery_inactive": recovery_inactive
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao obter estatísticas de recovery: {e}")
+            return {
+                "total_characters": 0,
+                "recovery_active": 0,
+                "recovery_inactive": 0
+            } 

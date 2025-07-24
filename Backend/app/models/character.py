@@ -38,6 +38,7 @@ class Character(Base):
     # Status e configurações
     is_active = Column(Boolean, default=True, index=True)
     is_public = Column(Boolean, default=True)
+    recovery_active = Column(Boolean, default=True, index=True)  # Controla se deve receber scraping automático
     
     # URLs e identificadores
     profile_url = Column(String(500))

@@ -62,6 +62,7 @@ class CharacterBase(BaseModel):
     guild: Optional[str] = Field(None, max_length=255, description="Guild do personagem")
     is_active: bool = Field(True, description="Se o personagem está ativo")
     is_public: bool = Field(True, description="Se o personagem é público")
+    recovery_active: bool = Field(True, description="Se o personagem deve receber scraping automático")
     profile_url: Optional[str] = Field(None, max_length=500, description="URL do perfil")
     character_url: Optional[str] = Field(None, max_length=500, description="URL do personagem")
     outfit_image_url: Optional[str] = Field(None, max_length=500, description="URL da imagem do outfit")
@@ -96,6 +97,7 @@ class CharacterUpdate(BaseModel):
     guild: Optional[str] = Field(None, max_length=255)
     is_active: Optional[bool] = None
     is_public: Optional[bool] = None
+    recovery_active: Optional[bool] = None
     profile_url: Optional[str] = Field(None, max_length=500)
     character_url: Optional[str] = Field(None, max_length=500)
     outfit_image_url: Optional[str] = Field(None, max_length=500)
@@ -170,6 +172,7 @@ class Character(CharacterBase):
     scrape_error_count: int = 0
     last_scrape_error: Optional[str] = None
     next_scrape_at: Optional[datetime] = None
+    recovery_active: bool = True
     created_at: datetime
     updated_at: datetime
 
