@@ -6,7 +6,7 @@
 # usando curl (disponível no servidor).
 
 # Configurações
-API_BASE="http://localhost:8000"
+API_BASE="http://localhost"
 FRONTEND_BASE="http://localhost"
 
 # Cores para output
