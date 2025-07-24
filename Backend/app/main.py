@@ -104,7 +104,10 @@ app.add_middleware(
         "http://frontend:3000",
         "http://192.168.1.227:3000",
         "http://192.168.1.227:80",
-        "http://192.168.1.227"
+        "http://192.168.1.227",
+        "http://217.196.63.249:3000",
+        "http://217.196.63.249:80",
+        "http://217.196.63.249"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -115,7 +118,7 @@ app.add_middleware(
 if settings.ENVIRONMENT == "production":
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["localhost", "127.0.0.1", "frontend", "backend", "caddy"]
+        allowed_hosts=["localhost", "127.0.0.1", "frontend", "backend", "caddy", "217.196.63.249"]
     )
 
 # Incluir rotas

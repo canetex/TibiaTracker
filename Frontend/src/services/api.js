@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configuração base do Axios
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',  // Usar proxy nginx em /api
+  baseURL: '/api',  // Usar proxy nginx interno sem duplicação
   timeout: 30000, // 30 segundos
   headers: {
     'Content-Type': 'application/json',
