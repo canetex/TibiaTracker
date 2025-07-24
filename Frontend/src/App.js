@@ -15,6 +15,42 @@ function App() {
     <ErrorBoundary>
       <FavoritesProvider>
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        {/* CSS Global */}
+        <style>
+          {`
+            .outfitImg {
+              width: 48px;
+              height: 64px;
+              object-fit: contain;
+              margin-right: 8px;
+              border-radius: 4px;
+              background: rgba(0, 0, 0, 0.05);
+              border: 1px solid rgba(0, 0, 0, 0.1);
+            }
+            
+            .outfitImg:hover {
+              transform: scale(1.05);
+              transition: transform 0.2s ease;
+            }
+            
+            /* Estilos para tooltips */
+            .MuiTooltip-tooltip {
+              font-size: 12px !important;
+              max-width: 300px !important;
+            }
+            
+            /* Estilos para cards */
+            .MuiCard-root {
+              transition: all 0.2s ease;
+            }
+            
+            .MuiCard-root:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+          `}
+        </style>
+
         {/* Header */}
           <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main', height: 56 }}>
             <Toolbar sx={{ minHeight: 56, height: 56, px: 2 }}>

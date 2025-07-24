@@ -188,17 +188,20 @@ def calculate_experience_stats(snapshots: list, days: int = 30) -> dict:
             'exp_gained': 0
         }
     
+    # Ordenar snapshots por data (mais recente primeiro)
+    sorted_snapshots = sorted(snapshots, key=lambda x: x.scraped_at, reverse=True)
+    
     # Calcular data limite
     cutoff_date = get_utc_now() - timedelta(days=days)
     
     # Filtrar snapshots do período
     recent_snapshots = [
-        snap for snap in snapshots 
+        snap for snap in sorted_snapshots 
         if snap.scraped_at >= cutoff_date
     ]
     
-    # Calcular experiência total ganha no período
-    total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
+    # Calcular experiência total ganha no período (tratar 0 como None)
+    total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots if snap.experience is not None and snap.experience > 0)
     
     # Calcular média diária
     average_daily_exp = 0
@@ -209,8 +212,16 @@ def calculate_experience_stats(snapshots: list, days: int = 30) -> dict:
     elif len(recent_snapshots) == 1:
         average_daily_exp = total_exp_gained
     
-    # Calcular última experiência válida
-    last_experience, last_experience_date = calculate_last_experience_data(snapshots)
+    # Calcular última experiência válida - CORREÇÃO: encontrar a experiência mais recente ≠ 0
+    last_experience = None
+    last_experience_date = None
+    
+    # Procurar a experiência mais recente que não seja 0 (ordem cronológica reversa)
+    for snapshot in sorted_snapshots:
+        if snapshot.experience is not None and snapshot.experience > 0:
+            last_experience = snapshot.experience
+            last_experience_date = format_date_pt_br(snapshot.scraped_at)
+            break  # Para na primeira experiência válida (mais recente)
     
     return {
         'total_exp_gained': total_exp_gained,
