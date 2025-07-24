@@ -231,20 +231,8 @@ async def search_character(
                 if snap.scraped_at >= thirty_days_ago
             ]
             
-            # Calcular estatísticas
-            total_exp_gained = sum(max(0, snap.experience) for snap in recent_snapshots)
-            average_daily_exp = 0
-            
-            if len(recent_snapshots) > 1:
-                # Usar função utilitária para calcular diferença de dias
-                days_diff = days_between(recent_snapshots[0].scraped_at, recent_snapshots[-1].scraped_at)
-                if days_diff > 0:
-                    average_daily_exp = total_exp_gained / days_diff
-            elif len(recent_snapshots) == 1:
-                average_daily_exp = total_exp_gained
-            
-            # Calcular última experiência válida
-            last_experience, last_experience_date = calculate_last_experience_data(existing_character.snapshots)
+            # Calcular estatísticas usando a função corrigida
+            exp_stats = calculate_experience_stats(existing_character.snapshots, days=30)
             
             return {
                 "success": True,
@@ -261,10 +249,10 @@ async def search_character(
                     "last_scraped_at": existing_character.last_scraped_at,
             
                     "total_snapshots": len(existing_character.snapshots),
-                    "total_exp_gained": total_exp_gained,
-                    "average_daily_exp": average_daily_exp,
-                    "last_experience": last_experience,
-                    "last_experience_date": last_experience_date,
+                    "total_exp_gained": exp_stats['total_exp_gained'],
+                    "average_daily_exp": exp_stats['average_daily_exp'],
+                    "last_experience": exp_stats['last_experience'],
+                    "last_experience_date": exp_stats['last_experience_date'],
                     "latest_snapshot": {
                         "level": latest_snapshot.level if latest_snapshot else existing_character.level,
                         "experience": latest_snapshot.experience if latest_snapshot else 0,
