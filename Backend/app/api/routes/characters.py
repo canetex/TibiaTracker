@@ -748,7 +748,7 @@ async def get_recent_characters(
         result = await db.execute(
             select(CharacterModel)
             .where(CharacterModel.is_active == True)
-            .order_by(desc(CharacterModel.created_at))
+            .order_by(desc(CharacterModel.last_scraped_at))
             .limit(limit)
         )
         characters = result.scalars().all()
