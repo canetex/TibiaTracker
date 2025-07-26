@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 // Configuração base do Axios
+// TIMESTAMP: 2025-07-24 20:30 - Forçar atualização do cache
 const api = axios.create({
   baseURL: '/api',  // Usar proxy nginx interno sem duplicação
   timeout: 30000, // 30 segundos
