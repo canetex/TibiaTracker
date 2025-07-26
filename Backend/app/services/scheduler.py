@@ -121,7 +121,24 @@ async def update_all_characters():
     """
     Atualizar todos os personagens ativos com recovery ativo
     """
+    start_time = datetime.now()
     logger.info("🔄 Iniciando atualização diária de personagens...")
+    
+    # Estatísticas detalhadas
+    stats = {
+        'total_characters': 0,
+        'success_count': 0,
+        'error_count': 0,
+        'deactivated_count': 0,
+        'manual_scrapes': 0,
+        'scheduled_scrapes': 0,
+        'refresh_scrapes': 0,
+        'level_ups': 0,
+        'total_snapshots_created': 0,
+        'total_snapshots_updated': 0,
+        'characters_with_errors': [],
+        'characters_deactivated': []
+    }
     
     try:
         async with get_db_session() as db:
@@ -144,50 +161,126 @@ async def update_all_characters():
                 )
             )
             characters = result.scalars().all()
+            stats['total_characters'] = len(characters)
             
             logger.info(f"📋 Encontrados {len(characters)} personagens para atualizar (com recovery ativo)")
             
-            success_count = 0
-            error_count = 0
-            deactivated_count = 0
-            
             for character in characters:
                 try:
-                    await update_character_data(character.id, source="scheduled")
-                    success_count += 1
+                    # Fazer scraping
+                    scrape_result = await scrape_character_data(
+                        character.server, character.world, character.name
+                    )
+                    
+                    if scrape_result.success:
+                        # Criar/atualizar snapshots com histórico completo
+                        snapshot_result = await service.create_snapshot_with_history(
+                            character.id, scrape_result.data, "scheduled"
+                        )
+                        
+                        # Atualizar estatísticas
+                        stats['success_count'] += 1
+                        stats['scheduled_scrapes'] += 1
+                        stats['total_snapshots_created'] += snapshot_result.get('created', 0)
+                        stats['total_snapshots_updated'] += snapshot_result.get('updated', 0)
+                        
+                        # Verificar se subiu de level
+                        if scrape_result.data.get('level', 0) > character.level:
+                            stats['level_ups'] += 1
+                            logger.info(f"🎉 {character.name} subiu de level! {character.level} → {scrape_result.data.get('level', 0)}")
+                        
+                        # Resetar contadores de erro
+                        character.scrape_error_count = 0
+                        character.last_scrape_error = None
+                        character.last_scraped_at = datetime.now()
+                        
+                        # Agendar próxima atualização
+                        character.next_scrape_at = datetime.now() + timedelta(days=1)
+                        
+                        logger.info(f"✅ {character.name} atualizado - Snapshots: +{snapshot_result.get('created', 0)}, Atualizados: {snapshot_result.get('updated', 0)}")
+                        
+                    else:
+                        # Lidar com erro
+                        stats['error_count'] += 1
+                        stats['characters_with_errors'].append({
+                            'id': character.id,
+                            'name': character.name,
+                            'error': scrape_result.error_message
+                        })
+                        
+                        character.scrape_error_count += 1
+                        character.last_scrape_error = scrape_result.error_message
+                        character.last_scraped_at = datetime.now()
+                        
+                        # Verificar se deve desativar recovery por erro consecutivo
+                        if character.scrape_error_count >= 3:
+                            character.recovery_active = False
+                            stats['deactivated_count'] += 1
+                            stats['characters_deactivated'].append({
+                                'id': character.id,
+                                'name': character.name,
+                                'errors': character.scrape_error_count
+                            })
+                            logger.warning(f"⚠️ {character.name} desativado por {character.scrape_error_count} erros consecutivos")
+                            character.next_scrape_at = datetime.now() + timedelta(hours=24)
+                        else:
+                            character.next_scrape_at = datetime.now() + timedelta(minutes=settings.SCRAPE_RETRY_DELAY_MINUTES)
+                        
+                        logger.error(f"❌ {character.name} - Erro: {scrape_result.error_message}")
+                    
+                    await db.commit()
                     
                     # Pequeno delay entre updates para não sobrecarregar os sites
                     await asyncio.sleep(settings.SCRAPE_DELAY_SECONDS)
                     
                 except Exception as e:
-                    logger.error(f"❌ Erro ao atualizar personagem {character.name}: {e}")
-                    error_count += 1
-                    
-                    # Incrementar contador de erro e agendar retry
-                    character.scrape_error_count += 1
-                    character.last_scrape_error = str(e)
-                    
-                    # Verificar se deve desativar recovery por erro consecutivo
-                    if character.scrape_error_count >= 3:
-                        character.recovery_active = False
-                        deactivated_count += 1
-                        logger.warning(f"⚠️ Personagem {character.name} desativado por 3 erros consecutivos")
-                        character.next_scrape_at = datetime.now() + timedelta(hours=24)
-                    elif character.scrape_error_count >= settings.SCRAPE_RETRY_ATTEMPTS:
-                        character.next_scrape_at = datetime.now() + timedelta(hours=24)
-                        logger.warning(f"⚠️ Personagem {character.name} atingiu limite de erros, próxima tentativa em 24h")
-                    else:
-                        character.next_scrape_at = datetime.now() + timedelta(minutes=settings.SCRAPE_RETRY_DELAY_MINUTES)
-                    
-                    await db.commit()
+                    stats['error_count'] += 1
+                    stats['characters_with_errors'].append({
+                        'id': character.id,
+                        'name': character.name,
+                        'error': str(e)
+                    })
+                    logger.error(f"❌ Erro inesperado ao atualizar {character.name}: {e}")
             
             # Verificar personagens com 10 dias sem experiência e desativar recovery
             await check_and_deactivate_inactive_characters(db)
             
-            logger.info(f"✅ Atualização concluída: {success_count} sucessos, {error_count} erros, {deactivated_count} desativados por erro")
+            # Log detalhado das estatísticas
+            end_time = datetime.now()
+            duration = end_time - start_time
+            
+            logger.info("=" * 80)
+            logger.info("📊 RELATÓRIO DETALHADO DA ATUALIZAÇÃO DIÁRIA")
+            logger.info("=" * 80)
+            logger.info(f"⏱️  Duração total: {duration}")
+            logger.info(f"📋 Total de personagens processados: {stats['total_characters']}")
+            logger.info(f"✅ Scrapings bem-sucedidos: {stats['success_count']}")
+            logger.info(f"❌ Scrapings com erro: {stats['error_count']}")
+            logger.info(f"⚠️  Personagens desativados: {stats['deactivated_count']}")
+            logger.info(f"🎉 Personagens que subiram de level: {stats['level_ups']}")
+            logger.info(f"📈 Taxa de sucesso: {(stats['success_count']/stats['total_characters']*100):.1f}%" if stats['total_characters'] > 0 else "N/A")
+            logger.info(f"➕ Snapshots criados: {stats['total_snapshots_created']}")
+            logger.info(f"🔄 Snapshots atualizados: {stats['total_snapshots_updated']}")
+            
+            if stats['characters_with_errors']:
+                logger.info(f"❌ Personagens com erro ({len(stats['characters_with_errors'])}):")
+                for char in stats['characters_with_errors'][:5]:  # Mostrar apenas os primeiros 5
+                    logger.info(f"   - {char['name']} (ID: {char['id']}): {char['error']}")
+                if len(stats['characters_with_errors']) > 5:
+                    logger.info(f"   ... e mais {len(stats['characters_with_errors']) - 5} personagens")
+            
+            if stats['characters_deactivated']:
+                logger.info(f"⚠️  Personagens desativados ({len(stats['characters_deactivated'])}):")
+                for char in stats['characters_deactivated'][:5]:  # Mostrar apenas os primeiros 5
+                    logger.info(f"   - {char['name']} (ID: {char['id']}, Erros: {char['errors']})")
+                if len(stats['characters_deactivated']) > 5:
+                    logger.info(f"   ... e mais {len(stats['characters_deactivated']) - 5} personagens")
+            
+            logger.info("=" * 80)
             
     except Exception as e:
         logger.error(f"❌ Erro na atualização diária: {e}")
+        logger.error(f"📊 Estatísticas parciais: {stats}")
 
 
 async def update_character_data(character_id: int, source: str = "scheduled"):
