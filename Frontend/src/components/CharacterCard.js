@@ -266,8 +266,8 @@ const CharacterCard = ({
           <Tooltip 
             title={
               character.recovery_active 
-                ? "Recuperação Ativa - Personagem recebe atualizações automáticas"
-                : "Recuperação Inativa - Não foi detectado dados de experiência nos últimos 10 dias. Clique para ativar scraping manual."
+                ? "Recuperação Ativa - Clique para desativar scraping automático"
+                : "Recuperação Inativa - Clique para ativar scraping automático"
             }
           >
             <Chip 
@@ -276,11 +276,11 @@ const CharacterCard = ({
               color={character.recovery_active ? "success" : "warning"}
               variant="outlined"
               icon={character.recovery_active ? <PlayArrow /> : <Pause />}
-              onClick={character.recovery_active ? undefined : handleManualScrape}
-              disabled={scrapingLoading}
+              onClick={handleToggleRecovery}
+              disabled={recoveryLoading}
               sx={{ 
-                cursor: character.recovery_active ? 'default' : 'pointer',
-                '&:hover': character.recovery_active ? {} : { bgcolor: 'warning.50' }
+                cursor: 'pointer',
+                '&:hover': { bgcolor: character.recovery_active ? 'success.50' : 'warning.50' }
               }}
             />
           </Tooltip>

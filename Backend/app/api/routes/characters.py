@@ -1728,23 +1728,18 @@ async def toggle_recovery(
         if not character:
             raise HTTPException(status_code=404, detail="Personagem não encontrado")
         
-        # Apenas permitir ativar, não desativar manualmente
-        if not character.recovery_active:
-            success = await service.activate_recovery_manual(character_id)
-            if success:
-                return {
-                    "success": True,
-                    "message": f"Recovery ativado para {character.name}",
-                    "recovery_active": True
-                }
-            else:
-                raise HTTPException(status_code=500, detail="Erro ao ativar recovery")
-        else:
+        # Toggle do status atual
+        new_status = not character.recovery_active
+        success = await service.toggle_recovery_active(character_id, new_status)
+        
+        if success:
             return {
-                "success": False,
-                "message": "Recovery já está ativo. Só pode ser desativado automaticamente.",
-                "recovery_active": True
+                "success": True,
+                "message": f"Recovery {'ativado' if new_status else 'desativado'} para {character.name}",
+                "recovery_active": new_status
             }
+        else:
+            raise HTTPException(status_code=500, detail="Erro ao alterar recovery")
         
     except HTTPException:
         raise

@@ -310,8 +310,14 @@ const Home = () => {
       // Chamar API para atualizar personagem
       await apiService.refreshCharacter(characterId);
       
-      // Recarregar dados
+      // Recarregar dados e re-aplicar filtros
       await loadInitialData();
+      
+      // Re-aplicar filtros se houver filtros ativos
+      if (hasActiveFilters) {
+        console.log(`[REFRESH] Re-aplicando filtros após refresh...`);
+        await handleFilterChange(filters);
+      }
       
       console.log(`[REFRESH] Personagem ${characterId} atualizado com sucesso`);
       
