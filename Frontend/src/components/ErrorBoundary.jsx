@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Typography, Button, Card, CardContent } from '@mui/material';
-import { Error as ErrorIcon, Refresh } from '@mui/icons-material';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,60 +24,41 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'background.default',
-            p: 3,
-          }}
-        >
-          <Card sx={{ maxWidth: 500, textAlign: 'center' }}>
-            <CardContent sx={{ p: 4 }}>
-              <ErrorIcon 
-                sx={{ 
-                  fontSize: 64, 
-                  color: 'error.main', 
-                  mb: 2 
-                }} 
-              />
-              
-              <Typography variant="h5" gutterBottom>
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md text-center">
+            <CardHeader>
+              <div className="flex justify-center mb-4">
+                <AlertTriangle className="h-16 w-16 text-destructive" />
+              </div>
+              <CardTitle className="text-xl font-semibold">
                 Oops! Algo deu errado
-              </Typography>
-              
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
                 Ocorreu um erro inesperado. Tente recarregar a página ou entre em contato 
                 conosco se o problema persistir.
-              </Typography>
+              </p>
               
               <Button
-                variant="contained"
-                startIcon={<Refresh />}
                 onClick={this.handleReload}
-                size="large"
+                className="w-full"
+                size="lg"
               >
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Recarregar Página
               </Button>
               
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <Box sx={{ mt: 3, textAlign: 'left' }}>
-                  <Typography variant="body2" color="error" component="pre" sx={{ 
-                    fontSize: '0.75rem',
-                    backgroundColor: 'grey.100',
-                    p: 2,
-                    borderRadius: 1,
-                    overflow: 'auto'
-                  }}>
+                <div className="mt-4 text-left">
+                  <p className="text-sm text-destructive font-mono bg-muted p-3 rounded-md overflow-auto">
                     {this.state.error.toString()}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
-        </Box>
+        </div>
       );
     }
 
