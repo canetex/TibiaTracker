@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { lightTheme, darkTheme } from '../theme';
 
 const ThemeContext = createContext();
 
@@ -30,25 +28,27 @@ export const ThemeProvider = ({ children }) => {
   // Salvar preferência no localStorage
   useEffect(() => {
     localStorage.setItem('tibiaTracker_theme', isDarkMode ? 'dark' : 'light');
+    
+    // Aplicar classe ao documento
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [isDarkMode]);
 
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
   };
 
-  const currentTheme = isDarkMode ? darkTheme : lightTheme;
-
   const value = {
     isDarkMode,
     toggleTheme,
-    theme: currentTheme,
   };
 
   return (
     <ThemeContext.Provider value={value}>
-      <MuiThemeProvider theme={currentTheme}>
-        {children}
-      </MuiThemeProvider>
+      {children}
     </ThemeContext.Provider>
   );
 }; 
