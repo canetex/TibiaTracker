@@ -1821,12 +1821,59 @@ async def manual_scrape_character(
 async def get_recovery_stats(db: AsyncSession = Depends(get_db)):
     """Obter estatísticas de recovery dos personagens"""
     try:
-        service = CharacterService(db)
-        stats = await service.get_recovery_stats()
-        
+        # Contar personagens com recovery ativo
+        active_recovery_result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(CharacterModel.recovery_active == True)
+        )
+        active_recovery_count = active_recovery_result.scalar() or 0
+
+        # Contar personagens com recovery inativo
+        inactive_recovery_result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(CharacterModel.recovery_active == False)
+        )
+        inactive_recovery_count = inactive_recovery_result.scalar() or 0
+
+        # Total de personagens
+        total_result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(CharacterModel.is_active == True)
+        )
+        total_characters = total_result.scalar() or 0
+
+        # Personagens por servidor com recovery
+        server_recovery_result = await db.execute(
+            select(CharacterModel.server, func.count(CharacterModel.id))
+            .where(CharacterModel.recovery_active == True)
+            .group_by(CharacterModel.server)
+        )
+        server_recovery_stats = {server: count for server, count in server_recovery_result.fetchall()}
+
+        # Personagens com erro de scraping (últimos 7 dias)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        error_result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(
+                and_(
+                    CharacterModel.last_scrape_error.is_not(None),
+                    CharacterModel.last_scraped_at >= seven_days_ago
+                )
+            )
+        )
+        error_count = error_result.scalar() or 0
+
         return {
             "success": True,
-            "stats": stats,
+            "stats": {
+                "active_recovery": active_recovery_count,
+                "inactive_recovery": inactive_recovery_count,
+                "total_characters": total_characters,
+                "recovery_percentage": (active_recovery_count / total_characters * 100) if total_characters > 0 else 0,
+                "server_recovery_stats": server_recovery_stats,
+                "error_count_last_7_days": error_count,
+                "last_updated": datetime.utcnow().isoformat()
+            },
             "message": "Estatísticas de recovery obtidas com sucesso"
         }
         
