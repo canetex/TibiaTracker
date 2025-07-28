@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import {
+  Box,
+  TextField,
+  Button,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+} from '@mui/material';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 const CharacterSearch = ({ onSearch, loading = false }) => {
   const [formData, setFormData] = useState({
@@ -15,7 +20,6 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const { toast } = useToast();
 
   // Configuração dos servidores e mundos
   const serverConfig = {
@@ -27,6 +31,7 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
         { value: 'gaia', label: 'Gaia' },
       ],
     },
+    // Adicionar outros servidores no futuro
     rubini: {
       label: 'Rubini',
       worlds: [],
@@ -49,7 +54,9 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
     },
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field) => (event) => {
+    const value = event.target.value;
+    
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
@@ -92,17 +99,12 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     
-    if (!validateForm()) {
-      toast({
-        title: "Erro de validação",
-        description: "Por favor, corrija os campos marcados",
-        variant: "destructive"
+    if (validateForm() && !loading) {
+      onSearch({
+        name: formData.name.trim(),
+        server: formData.server,
+        world: formData.world,
       });
-      return;
-    }
-
-    if (onSearch) {
-      onSearch(formData);
     }
   };
 
@@ -116,110 +118,99 @@ const CharacterSearch = ({ onSearch, loading = false }) => {
   const availableWorlds = currentServer?.worlds || [];
 
   return (
-    <Card className="tibia-card">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Search className="h-5 w-5" />
-          <span>Buscar Personagem</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Nome do Personagem */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome do Personagem</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Digite o nome do personagem"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                onKeyPress={handleKeyPress}
-                className={errors.name ? 'border-destructive' : ''}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
-              )}
-            </div>
+    <Box component="form" onSubmit={handleSubmit}>
+      <Grid container spacing={3} alignItems="start">
+        {/* Nome do Personagem */}
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label="Nome do Personagem"
+            value={formData.name}
+            onChange={handleInputChange('name')}
+            onKeyPress={handleKeyPress}
+            error={!!errors.name}
+            helperText={errors.name}
+            placeholder="Ex: Gates, Galado, Wild Warior"
+            disabled={loading}
+            autoComplete="off"
+          />
+        </Grid>
 
-            {/* Servidor */}
-            <div className="space-y-2">
-              <Label htmlFor="server">Servidor</Label>
-              <Select
-                value={formData.server}
-                onValueChange={(value) => handleInputChange('server', value)}
-                disabled={loading}
-              >
-                <SelectTrigger className={errors.server ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Selecione um servidor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(serverConfig).map(([key, config]) => (
-                    <SelectItem 
-                      key={key} 
-                      value={key}
-                      disabled={config.disabled}
-                    >
-                      {config.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.server && (
-                <p className="text-sm text-destructive">{errors.server}</p>
-              )}
-            </div>
-
-            {/* Mundo */}
-            <div className="space-y-2">
-              <Label htmlFor="world">Mundo</Label>
-              <Select
-                value={formData.world}
-                onValueChange={(value) => handleInputChange('world', value)}
-                disabled={loading || availableWorlds.length === 0}
-              >
-                <SelectTrigger className={errors.world ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Selecione um mundo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableWorlds.map((world) => (
-                    <SelectItem key={world.value} value={world.value}>
-                      {world.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.world && (
-                <p className="text-sm text-destructive">{errors.world}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Botão de Busca */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              variant="tibia"
+        {/* Servidor */}
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth error={!!errors.server}>
+            <InputLabel>Servidor</InputLabel>
+            <Select
+              value={formData.server}
+              onChange={handleInputChange('server')}
+              label="Servidor"
               disabled={loading}
-              className="min-w-[120px]"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Buscando...
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Buscar
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+              {Object.entries(serverConfig).map(([key, config]) => (
+                <MenuItem 
+                  key={key} 
+                  value={key}
+                  disabled={config.disabled}
+                >
+                  {config.label}
+                  {config.disabled && ' (Em breve)'}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.server && (
+              <Box sx={{ mt: 0.5, fontSize: '0.75rem', color: 'error.main' }}>
+                {errors.server}
+              </Box>
+            )}
+          </FormControl>
+        </Grid>
+
+        {/* Mundo */}
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth error={!!errors.world}>
+            <InputLabel>Mundo</InputLabel>
+            <Select
+              value={formData.world}
+              onChange={handleInputChange('world')}
+              label="Mundo"
+              disabled={loading || availableWorlds.length === 0}
+            >
+              {availableWorlds.map((world) => (
+                <MenuItem key={world.value} value={world.value}>
+                  {world.label}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.world && (
+              <Box sx={{ mt: 0.5, fontSize: '0.75rem', color: 'error.main' }}>
+                {errors.world}
+              </Box>
+            )}
+          </FormControl>
+        </Grid>
+
+        {/* Botão de Busca */}
+        <Grid item xs={12} md={2}>
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            size="large"
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+            disabled={loading}
+            sx={{ height: 56 }} // Mesma altura dos outros campos
+          >
+            {loading ? 'Verificando...' : 'Buscar Personagem'}
+          </Button>
+        </Grid>
+      </Grid>
+
+      {/* Dica para o usuário */}
+      <Box sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
+        💡 <strong>Dica:</strong> O botão "Buscar Personagem" primeiro verifica se o personagem já existe. 
+        Se existir, mostra os dados. Se não existir, adiciona automaticamente!
+      </Box>
+    </Box>
   );
 };
 

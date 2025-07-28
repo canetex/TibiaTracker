@@ -1,26 +1,33 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Heart, 
-  TrendingUp, 
-  BarChart3, 
-  RefreshCw, 
-  Users, 
-  Crown, 
-  Sword, 
-  Shield, 
-  Zap, 
-  Skull,
-  ExternalLink,
-  GitCompare
-} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
+  Box,
+  Chip,
+  Button,
+  IconButton,
+  Tooltip,
+  LinearProgress,
+  Grid,
+} from '@mui/material';
+import {
+  Star,
+  StarBorder,
+  Refresh,
+  Person,
+  Schedule,
+  Analytics,
+  OpenInNew,
+  Compare,
+  CompareOutlined,
+  PlayArrow,
+  Pause,
+} from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useFavorites } from '@/contexts/FavoritesContext';
-import { useToast } from '@/hooks/use-toast';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 const CharacterCard = ({ 
   character, 
@@ -29,54 +36,35 @@ const CharacterCard = ({
   onAddToComparison, 
   onRemoveFromComparison, 
   isInComparison = false,
-  onQuickFilter,
-  onToggleRecovery,
-  onManualScrape
+  onQuickFilter, // Nova prop para filtros rápidos
+  onToggleRecovery, // Nova prop para toggle recovery
+  onManualScrape // Nova prop para scraping manual
 }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [scrapingLoading, setScrapingLoading] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { toast } = useToast();
 
-  const vocationIcons = {
-    "Knight": Shield,
-    "Elite Knight": Shield,
-    "Paladin": Users,
-    "Royal Paladin": Users,
-    "Sorcerer": Zap,
-    "Master Sorcerer": Zap,
-    "Druid": Crown,
-    "Elder Druid": Crown,
-  };
-
-  const vocationColors = {
-    "Knight": "text-blue-600 dark:text-blue-400",
-    "Elite Knight": "text-blue-700 dark:text-blue-300",
-    "Paladin": "text-green-600 dark:text-green-400",
-    "Royal Paladin": "text-green-700 dark:text-green-300",
-    "Sorcerer": "text-purple-600 dark:text-purple-400",
-    "Master Sorcerer": "text-purple-700 dark:text-purple-300",
-    "Druid": "text-orange-600 dark:text-orange-400",
-    "Elder Druid": "text-orange-700 dark:text-orange-300",
-  };
+  // Log dos dados do personagem para debug
+  console.log(`[CHARACTER_CARD] Renderizando card para ${character.name}:`, {
+    id: character.id,
+    name: character.name,
+    last_experience: character.last_experience,
+    last_experience_date: character.last_experience_date,
+    previous_experience: character.previous_experience,
+    latest_snapshot: character.latest_snapshot ? {
+      experience: character.latest_snapshot.experience,
+      level: character.latest_snapshot.level
+    } : null,
+    total_exp_gained: character.total_exp_gained,
+    exp_gained: character.exp_gained
+  });
 
   const handleRefresh = async () => {
     if (onRefresh && !refreshing) {
       setRefreshing(true);
       try {
         await onRefresh(character.id);
-        toast({
-          title: "Atualizado!",
-          description: "Dados do personagem atualizados com sucesso",
-          variant: "success"
-        });
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao atualizar dados do personagem",
-          variant: "destructive"
-        });
       } finally {
         setRefreshing(false);
       }
@@ -85,11 +73,6 @@ const CharacterCard = ({
 
   const handleToggleFavorite = () => {
     toggleFavorite(character.id);
-    toast({
-      title: isFavorite(character.id) ? "Removido dos favoritos" : "Adicionado aos favoritos",
-      description: `${character.name} ${isFavorite(character.id) ? 'removido' : 'adicionado'} aos favoritos`,
-      variant: "success"
-    });
   };
 
   const handleViewCharts = () => {
@@ -101,18 +84,8 @@ const CharacterCard = ({
   const handleToggleComparison = () => {
     if (isInComparison) {
       onRemoveFromComparison?.(character.id);
-      toast({
-        title: "Removido da comparação",
-        description: `${character.name} removido da comparação`,
-        variant: "info"
-      });
     } else {
       onAddToComparison?.(character);
-      toast({
-        title: "Adicionado à comparação",
-        description: `${character.name} adicionado à comparação`,
-        variant: "success"
-      });
     }
   };
 
@@ -121,17 +94,6 @@ const CharacterCard = ({
       setRecoveryLoading(true);
       try {
         await onToggleRecovery(character.id);
-        toast({
-          title: "Recovery atualizado",
-          description: "Status de recovery alterado",
-          variant: "success"
-        });
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao alterar status de recovery",
-          variant: "destructive"
-        });
       } finally {
         setRecoveryLoading(false);
       }
@@ -143,32 +105,25 @@ const CharacterCard = ({
       setScrapingLoading(true);
       try {
         await onManualScrape(character.id);
-        toast({
-          title: "Scraping realizado",
-          description: "Dados atualizados via scraping manual",
-          variant: "success"
-        });
-      } catch (error) {
-        toast({
-          title: "Erro no scraping",
-          description: "Erro ao realizar scraping manual",
-          variant: "destructive"
-        });
       } finally {
         setScrapingLoading(false);
       }
     }
   };
 
-  const formatExperience = (exp) => {
-    if (exp >= 1000000000) return `${(exp / 1000000000).toFixed(1)}B`;
-    if (exp >= 1000000) return `${(exp / 1000000).toFixed(1)}M`;
-    if (exp >= 1000) return `${(exp / 1000).toFixed(1)}K`;
-    return exp.toString();
+  // Função para filtros rápidos via tags
+  const handleQuickFilter = (filterType, value) => {
+    console.log(`[CHARACTER_CARD] handleQuickFilter chamado: ${filterType} = ${value}`);
+    if (onQuickFilter) {
+      console.log(`[CHARACTER_CARD] Chamando onQuickFilter...`);
+      onQuickFilter(filterType, value);
+    } else {
+      console.log(`[CHARACTER_CARD] onQuickFilter não está definido`);
+    }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return 'Nunca';
     try {
       return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: ptBR });
     } catch {
@@ -176,175 +131,262 @@ const CharacterCard = ({
     }
   };
 
-  const getVocationIcon = (vocation) => {
-    return vocationIcons[vocation] || Sword;
-  };
-
   const getVocationColor = (vocation) => {
-    return vocationColors[vocation] || "text-foreground";
+    const colors = {
+      'Sorcerer': 'primary',
+      'Master Sorcerer': 'primary',
+      'Druid': 'success',
+      'Elder Druid': 'success',
+      'Paladin': 'warning',
+      'Royal Paladin': 'warning',
+      'Knight': 'error',
+      'Elite Knight': 'error',
+    };
+    return colors[vocation] || 'default';
   };
 
   const getTibiaUrl = (character) => {
-    return `https://www.tibia.com/community/?name=${encodeURIComponent(character.name)}`;
+    // Mapear servidores para URLs corretas
+    const serverUrls = {
+      'taleon': `https://${character.world}.taleon.online`,
+      'rubini': 'https://rubini.com.br',
+      // Adicionar outros servidores conforme necessário
+    };
+    
+    const baseUrl = serverUrls[character.server] || 'https://tibia.com';
+    return `${baseUrl}/characterprofile.php?name=${encodeURIComponent(character.name)}`;
   };
 
-  const VocationIcon = getVocationIcon(character.vocation);
-  const vocationColor = getVocationColor(character.vocation);
+  const latest = character.latest_snapshot;
 
   return (
-    <Card className="tibia-card group hover:shadow-[var(--shadow-hover)] transition-all duration-300">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
-                <VocationIcon className={`w-6 h-6 ${vocationColor}`} />
-              </div>
-              {character.is_online && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-background"></div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-foreground truncate">
-                {character.name}
-              </h3>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge variant="outline" className="text-xs">
-                  {character.vocation}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {character.world}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleToggleFavorite}
-              className="h-8 w-8"
-            >
-              {isFavorite(character.id) ? (
-                <Heart className="h-4 w-4 fill-current text-destructive" />
-              ) : (
-                <Heart className="h-4 w-4" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleToggleComparison}
-              className={`h-8 w-8 ${isInComparison ? 'bg-primary/10' : ''}`}
-            >
-              <GitCompare className={`h-4 w-4 ${isInComparison ? 'text-primary' : ''}`} />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Level and Experience */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Nível</span>
-            <span className="text-lg font-bold text-primary">
-              {character.latest_snapshot?.level || character.level || 'N/A'}
-            </span>
-          </div>
-          
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Experiência</span>
-              <span className="font-medium">
-                {formatExperience(character.latest_snapshot?.experience || character.experience || 0)}
-              </span>
-            </div>
-            
-            {character.exp_gained && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Ganho 24h</span>
-                <span className="text-success font-medium">
-                  +{formatExperience(character.exp_gained)}
-                </span>
-              </div>
+    <Card 
+      sx={{ 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: 4,
+        },
+        border: isInComparison ? '2px solid #1976d2' : 'none',
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            {/* Outfit Image or Fallback Icon */}
+            {character.outfit_image_url ? (
+              <img
+                src={character.outfit_image_url}
+                alt={`Outfit de ${character.name}`}
+                className="outfitImg"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            ) : (
+              <Person sx={{ mr: 1, color: 'primary.main' }} />
             )}
-          </div>
-        </div>
+            <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
+              {character.name}
+            </Typography>
+            <Tooltip title="Ver no Tibia">
+              <IconButton
+                component="a"
+                href={getTibiaUrl(character)}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                sx={{ ml: 1, color: 'primary.main' }}
+              >
+                <OpenInNew fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton
+              onClick={handleToggleFavorite}
+              size="small"
+              sx={{ color: isFavorite(character.id) ? 'error.main' : 'action.disabled' }}
+            >
+              {isFavorite(character.id) ? <Star /> : <StarBorder />}
+            </IconButton>
+            
+            {onAddToComparison && (
+              <Tooltip title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}>
+                <IconButton
+                  onClick={handleToggleComparison}
+                  size="small"
+                  sx={{ 
+                    color: isInComparison ? 'primary.main' : 'action.disabled',
+                    bgcolor: isInComparison ? 'primary.50' : 'transparent'
+                  }}
+                >
+                  {isInComparison ? <Compare /> : <CompareOutlined />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
 
-        {/* Status Badges */}
-        <div className="flex flex-wrap gap-2">
-          {character.is_online ? (
-            <Badge variant="online">Online</Badge>
-          ) : (
-            <Badge variant="offline">Offline</Badge>
+        {/* Server/World Info - Tags clicáveis para filtros rápidos */}
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+          <Chip 
+            label={`${character.server}/${character.world}`}
+            size="small"
+            color="primary"
+            variant="outlined"
+            onClick={() => handleQuickFilter('server', character.server)}
+            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
+          />
+          {character.vocation && (
+            <Chip 
+              label={character.vocation}
+              size="small"
+              color={getVocationColor(character.vocation)}
+              variant="outlined"
+              onClick={() => handleQuickFilter('vocation', character.vocation)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
+            />
           )}
-          
-          {character.recovery_active && (
-            <Badge variant="recovery">Recovery Ativo</Badge>
-          )}
-          
           {character.guild && (
-            <Badge variant="outline" className="text-xs">
-              {character.guild}
-            </Badge>
+            <Chip 
+              label={character.guild}
+              size="small"
+              color="secondary"
+              variant="outlined"
+              onClick={() => handleQuickFilter('guild', character.guild)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'secondary.50' } }}
+            />
           )}
-        </div>
-
-        {/* Last Update */}
-        {character.last_experience_date && (
-          <div className="text-xs text-muted-foreground">
-            Última atualização: {formatDate(character.last_experience_date)}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="h-8 px-2"
-            >
-              <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleViewCharts}
-              className="h-8 px-2"
-            >
-              <BarChart3 className="h-3 w-3" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.open(getTibiaUrl(character), '_blank')}
-              className="h-8 px-2"
-            >
-              <ExternalLink className="h-3 w-3" />
-            </Button>
-          </div>
           
-          {onToggleRecovery && (
-            <Button
-              variant="outline"
-              size="sm"
+          {/* Recovery Status Chip */}
+          <Tooltip 
+            title={
+              character.recovery_active 
+                ? "Recuperação Ativa - Clique para desativar scraping automático"
+                : "Recuperação Inativa - Clique para ativar scraping automático"
+            }
+          >
+            <Chip 
+              label={character.recovery_active ? "Recuperação Ativa" : "Recuperação Inativa"}
+              size="small"
+              color={character.recovery_active ? "success" : "warning"}
+              variant="outlined"
+              icon={character.recovery_active ? <PlayArrow /> : <Pause />}
               onClick={handleToggleRecovery}
               disabled={recoveryLoading}
-              className="h-8"
-            >
-              {character.recovery_active ? 'Desativar Recovery' : 'Ativar Recovery'}
-            </Button>
-          )}
-        </div>
+              sx={{ 
+                cursor: 'pointer',
+                '&:hover': { bgcolor: character.recovery_active ? 'success.50' : 'warning.50' }
+              }}
+            />
+          </Tooltip>
+        </Box>
+
+        {/* Stats Grid */}
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Level
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {(latest?.level || character.level || 0).toLocaleString('pt-BR')}
+              </Typography>
+            </Box>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                {character.last_experience_date 
+                  ? `Exp. Total (último dia - ${character.last_experience_date})`
+                  : 'Exp. Total (último dia)'
+                }
+              </Typography>
+              <Tooltip title={(!character.snapshots || character.snapshots.length === 0) ? 'Dados de experiência detalhados não disponíveis para este personagem filtrado.' : ''}>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {character.last_experience 
+                    ? character.last_experience.toLocaleString('pt-BR')
+                    : 'N/A'
+                  }
+                </Typography>
+              </Tooltip>
+            </Box>
+          </Grid>
+          
+          <Grid item xs={6}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Mortes
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {(latest?.deaths || character.deaths || 0).toLocaleString('pt-BR')}
+              </Typography>
+            </Box>
+          </Grid>
+          
+
+        </Grid>
+
+        {/* Experience Progress */}
+        {(() => {
+          const exp = latest?.experience || character.experience;
+          const totalGained = character.total_exp_gained || character.exp_gained || 0;
+          return exp ? (
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2" color="text.secondary">
+                Exp. Ganha (30 dias)
+              </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  +{totalGained.toLocaleString('pt-BR')}
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={Math.min(totalGained / 1000000 * 100, 100)}
+                sx={{ height: 6, borderRadius: 3 }}
+              />
+            </Box>
+          ) : null;
+        })()}
+
+        {/* Last Update */}
+        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+          <Schedule sx={{ fontSize: 16, mr: 0.5 }} />
+          <Typography variant="caption">
+            Atualizado: {formatDate(character.last_scraped_at)}
+          </Typography>
+        </Box>
       </CardContent>
+
+      {/* Actions */}
+      <CardActions sx={{ pt: 0, justifyContent: 'space-between' }}>
+        <Button
+          size="small"
+          startIcon={<Analytics />}
+          onClick={handleViewCharts}
+          variant="outlined"
+        >
+          Gráficos
+        </Button>
+        
+        {onRefresh && (
+          <Button
+            size="small"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outlined"
+          >
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
+          </Button>
+        )}
+      </CardActions>
     </Card>
   );
 };

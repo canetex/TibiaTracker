@@ -1,36 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Filter, 
-  X, 
-  ChevronDown, 
-  ChevronUp, 
-  TrendingUp, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Chip,
+  Grid,
+  IconButton,
+  Collapse,
+  Divider,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
+} from '@mui/material';
+import {
+  FilterList,
+  Clear,
+  ExpandMore,
+  ExpandLess,
+  TrendingUp,
   Star,
-  RotateCcw,
-  Users,
-  Globe
-} from 'lucide-react';
-import { useFavorites } from '@/contexts/FavoritesContext';
-import { useToast } from '@/hooks/use-toast';
+} from '@mui/icons-material';
+import { useFavorites } from '../contexts/FavoritesContext';
 
-const CharacterFilters = ({ 
-  filters: externalFilters = {}, 
-  onFilterChange, 
-  onClearFilters, 
-  onShowChart, 
-  filteredCount = 0 
-}) => {
+const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
   const [expanded, setExpanded] = useState(false);
   const { getFavoritesCount } = useFavorites();
-  const { toast } = useToast();
-  
   const [filters, setFilters] = useState({
     server: '',
     world: '',
@@ -41,12 +42,13 @@ const CharacterFilters = ({
     maxLevel: '',
     isFavorited: '',
     activityFilter: [],
-    recoveryActive: '',
+    recoveryActive: '', // Novo filtro para recovery
     limit: 'all',
   });
 
   // Sincroniza o estado local com o prop filters
   useEffect(() => {
+    console.log('[CHARACTER_FILTERS] externalFilters mudou:', externalFilters);
     setFilters({
       server: externalFilters.server || '',
       world: externalFilters.world || '',
@@ -57,7 +59,7 @@ const CharacterFilters = ({
       maxLevel: externalFilters.maxLevel || '',
       isFavorited: externalFilters.isFavorited || '',
       activityFilter: externalFilters.activityFilter || [],
-      recoveryActive: externalFilters.recoveryActive || '',
+      recoveryActive: externalFilters.recoveryActive || '', // Sincroniza o novo filtro
       limit: externalFilters.limit || 'all',
     });
   }, [externalFilters]);
@@ -65,23 +67,13 @@ const CharacterFilters = ({
   const handleFieldChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
-  };
-
-  const handleActivityFilterChange = (activity) => {
-    const newActivityFilter = filters.activityFilter.includes(activity)
-      ? filters.activityFilter.filter(a => a !== activity)
-      : [...filters.activityFilter, activity];
     
-    setFilters(prev => ({ ...prev, activityFilter: newActivityFilter }));
+    // Removido: aplicação automática do filtro de favoritos
+    // Agora todos os filtros são aplicados apenas ao clicar no botão "Filtrar"
   };
 
   const handleApplyFilters = () => {
     onFilterChange(filters);
-    toast({
-      title: "Filtros aplicados",
-      description: `${filteredCount} personagens encontrados`,
-      variant: "success"
-    });
   };
 
   const handleClearFilters = () => {
@@ -95,302 +87,328 @@ const CharacterFilters = ({
       maxLevel: '',
       isFavorited: '',
       activityFilter: [],
-      recoveryActive: '',
+      recoveryActive: '', // Limpa o novo filtro
       limit: 'all',
     };
     setFilters(clearedFilters);
     onClearFilters();
-    toast({
-      title: "Filtros limpos",
-      description: "Todos os filtros foram removidos",
-      variant: "info"
-    });
   };
 
+  // Função para lidar com tecla Enter
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
       handleApplyFilters();
     }
   };
 
+
+
+  const hasActiveFilters = Object.values(filters).some(value => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== '' && value !== 'all';
+  });
+
   const vocations = [
-    'Knight', 'Elite Knight', 'Paladin', 'Royal Paladin',
-    'Sorcerer', 'Master Sorcerer', 'Druid', 'Elder Druid'
+    'Sorcerer',
+    'Druid', 
+    'Paladin',
+    'Knight',
+    'Master Sorcerer',
+    'Elder Druid',
+    'Royal Paladin',
+    'Elite Knight'
   ];
 
   const servers = [
     { value: 'taleon', label: 'Taleon' },
     { value: 'rubini', label: 'Rubini' },
-    { value: 'deus_ot', label: 'DeusOT' },
-    { value: 'tibia', label: 'Tibia' },
-    { value: 'pegasus_ot', label: 'PegasusOT' }
   ];
 
   const worlds = [
     { value: 'san', label: 'San' },
     { value: 'aura', label: 'Aura' },
-    { value: 'gaia', label: 'Gaia' }
+    { value: 'gaia', label: 'Gaia' },
   ];
 
   const activityFilters = [
-    { value: 'active_today', label: 'Ativo Hoje' },
-    { value: 'active_yesterday', label: 'Ativo Ontem' },
-    { value: 'active_2days', label: 'Ativo 2 Dias' },
-    { value: 'active_3days', label: 'Ativo 3 Dias' }
+    { value: 'active_today', label: `Ativos Hoje (${new Date().toLocaleDateString('pt-BR')})` },
+    { value: 'active_yesterday', label: `Ativos Ontem (${new Date(Date.now() - 24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_2days', label: `Ativos Últimos 2 dias (${new Date(Date.now() - 2*24*60*60*1000).toLocaleDateString('pt-BR')})` },
+    { value: 'active_3days', label: `Ativos Últimos 3 dias (${new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('pt-BR')})` },
   ];
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value !== '' && value !== 'all' && 
-    (Array.isArray(value) ? value.length > 0 : true)
-  );
-
   return (
-    <Card className="tibia-card">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            <Filter className="h-5 w-5" />
-            <span>Filtros</span>
+    <Card sx={{ mb: 3 }}>
+      <CardContent>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FilterList sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+              Filtros
+            </Typography>
             {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2">
-                {filteredCount} encontrados
-              </Badge>
+              <Chip 
+                label="Ativo" 
+                size="small" 
+                color="primary" 
+                sx={{ ml: 1 }}
+              />
             )}
-          </CardTitle>
-          <div className="flex items-center space-x-2">
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
+              size="small"
+              startIcon={<FilterList />}
+              onClick={handleApplyFilters}
+              variant="contained"
+              color="primary"
             >
-              {expanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
+              Filtrar
             </Button>
-            {hasActiveFilters && (
+            
+            {filteredCount > 0 && (
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearFilters}
-                className="text-destructive hover:text-destructive"
+                size="small"
+                startIcon={<TrendingUp />}
+                onClick={onShowChart}
+                variant="outlined"
+                color="secondary"
               >
-                <X className="h-4 w-4" />
+                Gráfico ({filteredCount})
               </Button>
             )}
-          </div>
-        </div>
-      </CardHeader>
+            
+            {hasActiveFilters && (
+              <Button
+                size="small"
+                startIcon={<Clear />}
+                onClick={handleClearFilters}
+                variant="outlined"
+              >
+                Limpar
+              </Button>
+            )}
+            <IconButton
+              size="small"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </Box>
+        </Box>
 
-      <CardContent className={expanded ? 'block' : 'hidden'}>
-        <div className="space-y-6">
-          {/* Filtros Básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Busca */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Buscar</Label>
-              <Input
-                id="search"
-                placeholder="Nome do personagem"
-                value={filters.search}
-                onChange={(e) => handleFieldChange('search', e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
-
-            {/* Servidor */}
-            <div className="space-y-2">
-              <Label htmlFor="server">Servidor</Label>
+        {/* Filtros Básicos (sempre visíveis) */}
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Buscar por nome"
+              value={filters.search}
+              onChange={(e) => handleFieldChange('search', e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite o nome..."
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Servidor</InputLabel>
               <Select
                 value={filters.server}
-                onValueChange={(value) => handleFieldChange('server', value)}
+                onChange={(e) => handleFieldChange('server', e.target.value)}
+                onKeyPress={handleKeyPress}
+                label="Servidor"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os servidores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os servidores</SelectItem>
-                  {servers.map((server) => (
-                    <SelectItem key={server.value} value={server.value}>
-                      {server.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <MenuItem value="">Todos</MenuItem>
+                {servers.map((server) => (
+                  <MenuItem key={server.value} value={server.value}>
+                    {server.label}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-
-            {/* Mundo */}
-            <div className="space-y-2">
-              <Label htmlFor="world">Mundo</Label>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Mundo</InputLabel>
               <Select
                 value={filters.world}
-                onValueChange={(value) => handleFieldChange('world', value)}
+                onChange={(e) => handleFieldChange('world', e.target.value)}
+                onKeyPress={handleKeyPress}
+                label="Mundo"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os mundos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os mundos</SelectItem>
-                  {worlds.map((world) => (
-                    <SelectItem key={world.value} value={world.value}>
-                      {world.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <MenuItem value="">Todos</MenuItem>
+                {worlds.map((world) => (
+                  <MenuItem key={world.value} value={world.value}>
+                    {world.label}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-
-            {/* Vocação */}
-            <div className="space-y-2">
-              <Label htmlFor="vocation">Vocação</Label>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Vocação</InputLabel>
               <Select
                 value={filters.vocation}
-                onValueChange={(value) => handleFieldChange('vocation', value)}
+                onChange={(e) => handleFieldChange('vocation', e.target.value)}
+                onKeyPress={handleKeyPress}
+                label="Vocação"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as vocações" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as vocações</SelectItem>
-                  {vocations.map((vocation) => (
-                    <SelectItem key={vocation} value={vocation}>
-                      {vocation}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <MenuItem value="">Todas</MenuItem>
+                {vocations.map((vocation) => (
+                  <MenuItem key={vocation} value={vocation}>
+                    {vocation}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-          </div>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Guild"
+              value={filters.guild}
+              onChange={(e) => handleFieldChange('guild', e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite o nome da guild..."
+            />
+          </Grid>
+        </Grid>
 
-          {/* Filtros Avançados */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Nível Mínimo */}
-            <div className="space-y-2">
-              <Label htmlFor="minLevel">Nível Mínimo</Label>
-              <Input
-                id="minLevel"
+        {/* Filtros Avançados (colapsáveis) */}
+        <Collapse in={expanded}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            Filtros Avançados
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Level Mínimo"
                 type="number"
-                placeholder="1"
                 value={filters.minLevel}
                 onChange={(e) => handleFieldChange('minLevel', e.target.value)}
                 onKeyPress={handleKeyPress}
+                placeholder="0"
               />
-            </div>
-
-            {/* Nível Máximo */}
-            <div className="space-y-2">
-              <Label htmlFor="maxLevel">Nível Máximo</Label>
-              <Input
-                id="maxLevel"
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Level Máximo"
                 type="number"
-                placeholder="2000"
                 value={filters.maxLevel}
                 onChange={(e) => handleFieldChange('maxLevel', e.target.value)}
                 onKeyPress={handleKeyPress}
+                placeholder="9999"
               />
-            </div>
-
-            {/* Guild */}
-            <div className="space-y-2">
-              <Label htmlFor="guild">Guild</Label>
-              <Input
-                id="guild"
-                placeholder="Nome da guild"
-                value={filters.guild}
-                onChange={(e) => handleFieldChange('guild', e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
-
-            {/* Favoritos */}
-            <div className="space-y-2">
-              <Label htmlFor="isFavorited">Favoritos</Label>
-              <Select
-                value={filters.isFavorited}
-                onValueChange={(value) => handleFieldChange('isFavorited', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  <SelectItem value="true">Apenas favoritos</SelectItem>
-                  <SelectItem value="false">Apenas não favoritos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Filtros de Atividade */}
-          <div className="space-y-3">
-            <Label>Filtros de Atividade</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {activityFilters.map((activity) => (
-                <div key={activity.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={activity.value}
-                    checked={filters.activityFilter.includes(activity.value)}
-                    onCheckedChange={() => handleActivityFilterChange(activity.value)}
-                  />
-                  <Label htmlFor={activity.value} className="text-sm">
-                    {activity.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recovery Active */}
-          <div className="space-y-2">
-            <Label htmlFor="recoveryActive">Recovery Ativo</Label>
-            <Select
-              value={filters.recoveryActive}
-              onValueChange={(value) => handleFieldChange('recoveryActive', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                <SelectItem value="true">Apenas com recovery ativo</SelectItem>
-                <SelectItem value="false">Apenas sem recovery ativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Ações */}
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="tibia"
-                onClick={handleApplyFilters}
-                className="min-w-[120px]"
-              >
-                <Filter className="mr-2 h-4 w-4" />
-                Aplicar Filtros
-              </Button>
-              
-              {onShowChart && (
-                <Button
-                  variant="outline"
-                  onClick={onShowChart}
-                  className="min-w-[120px]"
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Favoritos</InputLabel>
+                <Select
+                  value={filters.isFavorited}
+                  onChange={(e) => handleFieldChange('isFavorited', e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  label="Favoritos"
+                  startAdornment={
+                    <Star sx={{ mr: 1, color: 'action.active' }} />
+                  }
                 >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Ver Gráficos
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{getFavoritesCount()} favoritos</span>
-              <Globe className="h-4 w-4 ml-2" />
-              <span>{filteredCount} encontrados</span>
-            </div>
-          </div>
-        </div>
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="true">
+                    Apenas Favoritos ({getFavoritesCount()})
+                  </MenuItem>
+                  <MenuItem value="false">Não Favoritos</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Atividade</InputLabel>
+                <Select
+                  multiple
+                  value={filters.activityFilter}
+                  onChange={(e) => handleFieldChange('activityFilter', e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  input={<OutlinedInput label="Atividade" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => {
+                        const filter = activityFilters.find(f => f.value === value);
+                        return (
+                          <Chip key={value} label={filter?.label || value} size="small" />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {activityFilters.map((filter) => (
+                    <MenuItem key={filter.value} value={filter.value}>
+                      <Checkbox checked={filters.activityFilter.indexOf(filter.value) > -1} />
+                      <ListItemText primary={filter.label} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Recovery Ativo</InputLabel>
+                <Select
+                  value={filters.recoveryActive}
+                  onChange={(e) => handleFieldChange('recoveryActive', e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  label="Recovery Ativo"
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="true">
+                    Apenas Recovery Ativo
+                  </MenuItem>
+                  <MenuItem value="false">Não Recovery Ativo</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Mostrar</InputLabel>
+                <Select
+                  value={filters.limit}
+                  onChange={(e) => handleFieldChange('limit', e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  label="Mostrar"
+                >
+                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="3">3 Personagens</MenuItem>
+                  <MenuItem value="10">10 Personagens</MenuItem>
+                  <MenuItem value="30">30 Personagens</MenuItem>
+                  <MenuItem value="60">60 Personagens</MenuItem>
+                  <MenuItem value="90">90 Personagens</MenuItem>
+                  <MenuItem value="150">150 Personagens</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Collapse>
       </CardContent>
     </Card>
   );
