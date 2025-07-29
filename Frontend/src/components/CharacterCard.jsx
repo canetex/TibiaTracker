@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Star, 
-  StarBorder, 
   RefreshCw, 
   User, 
   Clock, 
   BarChart3, 
   ExternalLink, 
   GitCompare, 
-  GitCompareOutline,
   Play,
   Pause
 } from 'lucide-react';
@@ -219,7 +217,7 @@ const CharacterCard = ({
               {isFavorite(character.id) ? (
                 <Star className="h-4 w-4 text-yellow-500 fill-current" />
               ) : (
-                <StarBorder className="h-4 w-4" />
+                <Star className="h-4 w-4" />
               )}
             </Button>
             
@@ -236,7 +234,7 @@ const CharacterCard = ({
                 {isInComparison ? (
                   <GitCompare className="h-4 w-4" />
                 ) : (
-                  <GitCompareOutline className="h-4 w-4" />
+                  <GitCompare className="h-4 w-4" />
                 )}
               </Button>
             )}
