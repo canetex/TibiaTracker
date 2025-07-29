@@ -37,7 +37,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copiar arquivos buildados do React
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Criar diretório para logs
 RUN mkdir -p /var/log/nginx
