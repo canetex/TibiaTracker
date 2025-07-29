@@ -1,33 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Grid,
-  Alert,
-  CircularProgress,
-  Chip,
-  Paper,
-} from '@mui/material';
-import {
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  TrendingUp,
-  Person,
-  Analytics,
-  FilterList,
-} from '@mui/icons-material';
+import { Search, RefreshCw, TrendingUp, User, BarChart3, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
-import CharacterCard from '../components/CharacterCard';
-import CharacterSearch from '../components/CharacterSearch';
-import CharacterChartsModal from '../components/CharacterChartsModal';
-import CharacterFilters from '../components/CharacterFilters';
-import ComparisonPanel from '../components/ComparisonPanel';
-import ComparisonChart from '../components/ComparisonChart';
-import { apiService } from '../services/api';
-import { useFavorites } from '../contexts/FavoritesContext';
+import CharacterCard from '@/components/CharacterCard';
+import CharacterSearch from '@/components/CharacterSearch';
+import CharacterChartsModal from '@/components/CharacterChartsModal';
+import CharacterFilters from '@/components/CharacterFilters';
+import ComparisonPanel from '@/components/ComparisonPanel';
+import ComparisonChart from '@/components/ComparisonChart';
+import { apiService } from '@/services/api';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 const Home = () => {
   const [searchLoading, setSearchLoading] = useState(false);
@@ -46,7 +32,7 @@ const Home = () => {
     maxLevel: '',
     isFavorited: '',
     activityFilter: [],
-    recoveryActive: '', // Adicionar campo recoveryActive
+    recoveryActive: '',
     limit: 'all',
   });
   const [filteredCharacters, setFilteredCharacters] = useState([]);
@@ -62,6 +48,7 @@ const Home = () => {
 
   // Contexto de favoritos
   const { isFavorite, favorites } = useFavorites();
+  const { toast } = useToast();
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -117,16 +104,6 @@ const Home = () => {
       setLoadingRecent(false);
     }
   };
-
-  // Função para aplicar filtros de favoritos no frontend (REMOVIDA - agora via API)
-  // const applyFavoritesFilter = (characters, isFavoritedFilter) => {
-  //   if (isFavoritedFilter === 'true') {
-  //     return characters.filter(character => isFavorite(character.id));
-  //   } else if (isFavoritedFilter === 'false') {
-  //     return characters.filter(character => !isFavorite(character.id));
-  //   }
-  //   return characters;
-  // };
 
   const handleFilterChange = async (newFilters) => {
     console.log('[FILTER] handleFilterChange chamado com:', newFilters);
@@ -215,7 +192,7 @@ const Home = () => {
       maxLevel: '',
       isFavorited: '',
       activityFilter: [],
-      recoveryActive: '', // Adicionar campo recoveryActive
+      recoveryActive: '',
       limit: 'all',
     };
     setFilters(clearedFilters);
@@ -255,6 +232,10 @@ const Home = () => {
   const handleAddToComparison = (character) => {
     if (!comparisonCharacters.some(c => c.id === character.id)) {
       setComparisonCharacters([...comparisonCharacters, character]);
+      toast({
+        title: "Adicionado à comparação",
+        description: `${character.name} foi adicionado ao painel de comparação.`,
+      });
     }
   };
 
@@ -300,8 +281,6 @@ const Home = () => {
     }
   };
 
-
-
   // Função para atualizar personagem
   const handleRefreshCharacter = async (characterId) => {
     try {
@@ -320,6 +299,10 @@ const Home = () => {
       }
       
       console.log(`[REFRESH] Personagem ${characterId} atualizado com sucesso`);
+      toast({
+        title: "Personagem atualizado",
+        description: "Os dados do personagem foram atualizados com sucesso.",
+      });
       
     } catch (err) {
       console.error('Erro ao atualizar personagem:', err);
@@ -349,6 +332,11 @@ const Home = () => {
         );
         setRecentCharacters(updatedCharacters);
         setFilteredCharacters(updatedCharacters);
+        
+        toast({
+          title: "Recovery alterado",
+          description: `Status de recovery foi ${response.recovery_active ? 'ativado' : 'desativado'}.`,
+        });
       }
     } catch (error) {
       console.error('Erro ao alterar recovery:', error);
@@ -380,28 +368,26 @@ const Home = () => {
   });
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header - Removido título duplicado */}
-
-
+    <div className="p-6 space-y-6">
       {/* Search Section */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <SearchIcon sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Search className="h-5 w-5 text-primary" />
+            <CardTitle className="text-xl font-semibold">
               Pesquisar Personagem
-            </Typography>
-          </Box>
-          
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
           <CharacterSearch 
             onSearch={handleCharacterSearch}
             loading={searchLoading}
           />
           
           {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
+            <Alert className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
         </CardContent>
@@ -418,109 +404,97 @@ const Home = () => {
 
       {/* Search Result */}
       {searchResult && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-            <Analytics sx={{ mr: 1 }} />
-            Resultado da Busca
-          </Typography>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <BarChart3 className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">Resultado da Busca</h2>
+          </div>
           <CharacterCard 
             character={searchResult} 
             onViewCharts={handleViewCharts}
             onRefresh={handleRefreshCharacter}
             onQuickFilter={handleQuickFilter}
           />
-        </Box>
+        </div>
       )}
 
       {/* Recent Characters */}
-      <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center' }}>
-            <TrendingUp sx={{ mr: 1 }} />
-            {hasActiveFilters ? 'Personagens Filtrados' : (searchResult ? 'Outros Recentes' : 'Personagens Recentes')}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <TrendingUp className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">
+              {hasActiveFilters ? 'Personagens Filtrados' : (searchResult ? 'Outros Recentes' : 'Personagens Recentes')}
+            </h2>
             {Object.keys(filters).length > 0 && (
-              <Chip 
-                label={`${filteredCharacters.length.toLocaleString('pt-BR')} de ${globalStats?.total_characters?.toLocaleString('pt-BR') || recentCharacters.length.toLocaleString('pt-BR')}`}
-                size="small"
-                color="primary"
-                sx={{ ml: 1 }}
-              />
+              <Badge variant="secondary">
+                {filteredCharacters.length.toLocaleString('pt-BR')} de {globalStats?.total_characters?.toLocaleString('pt-BR') || recentCharacters.length.toLocaleString('pt-BR')}
+              </Badge>
             )}
-          </Typography>
+          </div>
           
           <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
+            variant="outline"
+            size="sm"
             onClick={loadInitialData}
             disabled={loadingRecent}
-            size="small"
           >
+            <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
-        </Box>
+        </div>
 
         {loadingRecent ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
         ) : filteredCharacters.length > 0 ? (
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCharacters.map((character) => (
-              <Grid item xs={12} md={6} lg={4} key={character.id}>
-                <CharacterCard 
-                  character={character} 
-                  onViewCharts={handleViewCharts}
-                  onRefresh={handleRefreshCharacter}
-                  onAddToComparison={handleAddToComparison}
-                  onRemoveFromComparison={handleRemoveFromComparison}
-                  isInComparison={comparisonCharacters.some(c => c.id === character.id)}
-                  onQuickFilter={handleQuickFilter}
-                  onToggleRecovery={handleToggleRecovery}
-                  onManualScrape={handleManualScrape}
-                />
-              </Grid>
+              <CharacterCard 
+                key={character.id}
+                character={character} 
+                onViewCharts={handleViewCharts}
+                onRefresh={handleRefreshCharacter}
+                onAddToComparison={handleAddToComparison}
+                onRemoveFromComparison={handleRemoveFromComparison}
+                isInComparison={comparisonCharacters.some(c => c.id === character.id)}
+                onQuickFilter={handleQuickFilter}
+                onToggleRecovery={handleToggleRecovery}
+                onManualScrape={handleManualScrape}
+              />
             ))}
-          </Grid>
+          </div>
         ) : recentCharacters.length > 0 ? (
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 4, 
-              textAlign: 'center', 
-              bgcolor: 'grey.50',
-              border: '2px dashed',
-              borderColor: 'grey.300'
-            }}
-          >
-            <FilterList sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum personagem encontrado com os filtros aplicados
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tente ajustar os filtros ou limpar para ver todos
-            </Typography>
-          </Paper>
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Filter className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-medium text-muted-foreground">
+                  Nenhum personagem encontrado com os filtros aplicados
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Tente ajustar os filtros ou limpar para ver todos
+                </p>
+              </div>
+            </div>
+          </Card>
         ) : (
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 4, 
-              textAlign: 'center', 
-              bgcolor: 'grey.50',
-              border: '2px dashed',
-              borderColor: 'grey.300'
-            }}
-          >
-            <Person sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              Nenhum personagem encontrado
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Seja o primeiro a adicionar um personagem!
-            </Typography>
-          </Paper>
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <User className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-medium text-muted-foreground">
+                  Nenhum personagem encontrado
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Seja o primeiro a adicionar um personagem!
+                </p>
+              </div>
+            </div>
+          </Card>
         )}
-      </Box>
+      </div>
 
       {/* Modal de Gráficos */}
       <CharacterChartsModal
@@ -550,7 +524,7 @@ const Home = () => {
         open={filteredChartOpen}
         onClose={() => setFilteredChartOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

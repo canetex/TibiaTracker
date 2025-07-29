@@ -1,33 +1,25 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Box,
-  Chip,
-  Button,
-  IconButton,
-  Tooltip,
-  LinearProgress,
-  Grid,
-} from '@mui/material';
-import {
-  Star,
-  StarBorder,
-  Refresh,
-  Person,
-  Schedule,
-  Analytics,
-  OpenInNew,
-  Compare,
-  CompareOutlined,
-  PlayArrow,
-  Pause,
-} from '@mui/icons-material';
+import { 
+  Star, 
+  StarBorder, 
+  RefreshCw, 
+  User, 
+  Clock, 
+  BarChart3, 
+  ExternalLink, 
+  GitCompare, 
+  GitCompareOutline,
+  Play,
+  Pause
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useFavorites } from '../contexts/FavoritesContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CharacterCard = ({ 
   character, 
@@ -36,14 +28,15 @@ const CharacterCard = ({
   onAddToComparison, 
   onRemoveFromComparison, 
   isInComparison = false,
-  onQuickFilter, // Nova prop para filtros rápidos
-  onToggleRecovery, // Nova prop para toggle recovery
-  onManualScrape // Nova prop para scraping manual
+  onQuickFilter,
+  onToggleRecovery,
+  onManualScrape
 }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [scrapingLoading, setScrapingLoading] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { toast } = useToast();
 
   // Log dos dados do personagem para debug
   console.log(`[CHARACTER_CARD] Renderizando card para ${character.name}:`, {
@@ -65,6 +58,16 @@ const CharacterCard = ({
       setRefreshing(true);
       try {
         await onRefresh(character.id);
+        toast({
+          title: "Personagem atualizado",
+          description: "Os dados foram atualizados com sucesso.",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao atualizar",
+          description: "Não foi possível atualizar os dados do personagem.",
+          variant: "destructive",
+        });
       } finally {
         setRefreshing(false);
       }
@@ -73,6 +76,10 @@ const CharacterCard = ({
 
   const handleToggleFavorite = () => {
     toggleFavorite(character.id);
+    toast({
+      title: isFavorite(character.id) ? "Removido dos favoritos" : "Adicionado aos favoritos",
+      description: `${character.name} foi ${isFavorite(character.id) ? 'removido' : 'adicionado'} aos favoritos.`,
+    });
   };
 
   const handleViewCharts = () => {
@@ -84,6 +91,10 @@ const CharacterCard = ({
   const handleToggleComparison = () => {
     if (isInComparison) {
       onRemoveFromComparison?.(character.id);
+      toast({
+        title: "Removido da comparação",
+        description: `${character.name} foi removido do painel de comparação.`,
+      });
     } else {
       onAddToComparison?.(character);
     }
@@ -133,16 +144,16 @@ const CharacterCard = ({
 
   const getVocationColor = (vocation) => {
     const colors = {
-      'Sorcerer': 'primary',
-      'Master Sorcerer': 'primary',
-      'Druid': 'success',
-      'Elder Druid': 'success',
-      'Paladin': 'warning',
-      'Royal Paladin': 'warning',
-      'Knight': 'error',
-      'Elite Knight': 'error',
+      'Sorcerer': 'bg-blue-100 text-blue-800',
+      'Master Sorcerer': 'bg-blue-100 text-blue-800',
+      'Druid': 'bg-green-100 text-green-800',
+      'Elder Druid': 'bg-green-100 text-green-800',
+      'Paladin': 'bg-yellow-100 text-yellow-800',
+      'Royal Paladin': 'bg-yellow-100 text-yellow-800',
+      'Knight': 'bg-red-100 text-red-800',
+      'Elite Knight': 'bg-red-100 text-red-800',
     };
-    return colors[vocation] || 'default';
+    return colors[vocation] || 'bg-gray-100 text-gray-800';
   };
 
   const getTibiaUrl = (character) => {
@@ -160,233 +171,213 @@ const CharacterCard = ({
   const latest = character.latest_snapshot;
 
   return (
-    <Card 
-      sx={{ 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: 4,
-        },
-        border: isInComparison ? '2px solid #1976d2' : 'none',
-      }}
-    >
-      <CardContent sx={{ flexGrow: 1 }}>
+    <Card className={`h-full flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${
+      isInComparison ? 'ring-2 ring-primary' : ''
+    }`}>
+      <CardContent className="flex-1 p-4">
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center flex-1">
             {/* Outfit Image or Fallback Icon */}
             {character.outfit_image_url ? (
               <img
                 src={character.outfit_image_url}
                 alt={`Outfit de ${character.name}`}
-                className="outfitImg"
+                className="w-8 h-8 mr-2 rounded"
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             ) : (
-              <Person sx={{ mr: 1, color: 'primary.main' }} />
+              <User className="w-5 h-5 mr-2 text-primary" />
             )}
-            <Typography variant="h6" component="h3" noWrap sx={{ fontWeight: 600 }}>
+            <CardTitle className="text-lg font-semibold truncate">
               {character.name}
-            </Typography>
-            <Tooltip title="Ver no Tibia">
-              <IconButton
-                component="a"
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="ml-2 h-6 w-6 p-0"
+            >
+              <a
                 href={getTibiaUrl(character)}
                 target="_blank"
                 rel="noopener noreferrer"
-                size="small"
-                sx={{ ml: 1, color: 'primary.main' }}
+                title="Ver no Tibia"
               >
-                <OpenInNew fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
           
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleToggleFavorite}
-              size="small"
-              sx={{ color: isFavorite(character.id) ? 'error.main' : 'action.disabled' }}
+              className="h-8 w-8 p-0"
             >
-              {isFavorite(character.id) ? <Star /> : <StarBorder />}
-            </IconButton>
+              {isFavorite(character.id) ? (
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+              ) : (
+                <StarBorder className="h-4 w-4" />
+              )}
+            </Button>
             
             {onAddToComparison && (
-              <Tooltip title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}>
-                <IconButton
-                  onClick={handleToggleComparison}
-                  size="small"
-                  sx={{ 
-                    color: isInComparison ? 'primary.main' : 'action.disabled',
-                    bgcolor: isInComparison ? 'primary.50' : 'transparent'
-                  }}
-                >
-                  {isInComparison ? <Compare /> : <CompareOutlined />}
-                </IconButton>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToggleComparison}
+                className={`h-8 w-8 p-0 ${
+                  isInComparison ? 'bg-primary/10 text-primary' : ''
+                }`}
+                title={isInComparison ? "Remover da Comparação" : "Adicionar à Comparação"}
+              >
+                {isInComparison ? (
+                  <GitCompare className="h-4 w-4" />
+                ) : (
+                  <GitCompareOutline className="h-4 w-4" />
+                )}
+              </Button>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Server/World Info - Tags clicáveis para filtros rápidos */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-          <Chip 
-            label={`${character.server}/${character.world}`}
-            size="small"
-            color="primary"
-            variant="outlined"
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <Badge 
+            variant="outline"
+            className="cursor-pointer hover:bg-primary/10"
             onClick={() => handleQuickFilter('server', character.server)}
-            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
-          />
+          >
+            {character.server}/{character.world}
+          </Badge>
           {character.vocation && (
-            <Chip 
-              label={character.vocation}
-              size="small"
-              color={getVocationColor(character.vocation)}
-              variant="outlined"
+            <Badge 
+              variant="outline"
+              className={`cursor-pointer hover:bg-primary/10 ${getVocationColor(character.vocation)}`}
               onClick={() => handleQuickFilter('vocation', character.vocation)}
-              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.50' } }}
-            />
+            >
+              {character.vocation}
+            </Badge>
           )}
           {character.guild && (
-            <Chip 
-              label={character.guild}
-              size="small"
-              color="secondary"
-              variant="outlined"
+            <Badge 
+              variant="outline"
+              className="cursor-pointer hover:bg-secondary/10"
               onClick={() => handleQuickFilter('guild', character.guild)}
-              sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'secondary.50' } }}
-            />
+            >
+              {character.guild}
+            </Badge>
           )}
           
-          {/* Recovery Status Chip */}
-          <Tooltip 
+          {/* Recovery Status Badge */}
+          <Badge 
+            variant="outline"
+            className={`cursor-pointer ${
+              character.recovery_active 
+                ? 'border-green-200 text-green-700 hover:bg-green-50' 
+                : 'border-yellow-200 text-yellow-700 hover:bg-yellow-50'
+            }`}
+            onClick={handleToggleRecovery}
+            disabled={recoveryLoading}
             title={
               character.recovery_active 
                 ? "Recuperação Ativa - Clique para desativar scraping automático"
                 : "Recuperação Inativa - Clique para ativar scraping automático"
             }
           >
-            <Chip 
-              label={character.recovery_active ? "Recuperação Ativa" : "Recuperação Inativa"}
-              size="small"
-              color={character.recovery_active ? "success" : "warning"}
-              variant="outlined"
-              icon={character.recovery_active ? <PlayArrow /> : <Pause />}
-              onClick={handleToggleRecovery}
-              disabled={recoveryLoading}
-              sx={{ 
-                cursor: 'pointer',
-                '&:hover': { bgcolor: character.recovery_active ? 'success.50' : 'warning.50' }
-              }}
-            />
-          </Tooltip>
-        </Box>
+            {character.recovery_active ? (
+              <Play className="w-3 h-3 mr-1" />
+            ) : (
+              <Pause className="w-3 h-3 mr-1" />
+            )}
+            {character.recovery_active ? "Recuperação Ativa" : "Recuperação Inativa"}
+          </Badge>
+        </div>
 
         {/* Stats Grid */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={6}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Level
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {(latest?.level || character.level || 0).toLocaleString('pt-BR')}
-              </Typography>
-            </Box>
-          </Grid>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Level</p>
+            <p className="text-lg font-semibold">
+              {(latest?.level || character.level || 0).toLocaleString('pt-BR')}
+            </p>
+          </div>
           
-          <Grid item xs={6}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                {character.last_experience_date 
-                  ? `Exp. Total (último dia - ${character.last_experience_date})`
-                  : 'Exp. Total (último dia)'
-                }
-              </Typography>
-              <Tooltip title={(!character.snapshots || character.snapshots.length === 0) ? 'Dados de experiência detalhados não disponíveis para este personagem filtrado.' : ''}>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {character.last_experience 
-                    ? character.last_experience.toLocaleString('pt-BR')
-                    : 'N/A'
-                  }
-                </Typography>
-              </Tooltip>
-            </Box>
-          </Grid>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {character.last_experience_date 
+                ? `Exp. Total (último dia - ${character.last_experience_date})`
+                : 'Exp. Total (último dia)'
+              }
+            </p>
+            <p className="text-base font-medium">
+              {character.last_experience 
+                ? character.last_experience.toLocaleString('pt-BR')
+                : 'N/A'
+              }
+            </p>
+          </div>
           
-          <Grid item xs={6}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Mortes
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {(latest?.deaths || character.deaths || 0).toLocaleString('pt-BR')}
-              </Typography>
-            </Box>
-          </Grid>
-          
-
-        </Grid>
+          <div>
+            <p className="text-sm text-muted-foreground">Mortes</p>
+            <p className="text-base font-medium">
+              {(latest?.deaths || character.deaths || 0).toLocaleString('pt-BR')}
+            </p>
+          </div>
+        </div>
 
         {/* Experience Progress */}
         {(() => {
           const exp = latest?.experience || character.experience;
           const totalGained = character.total_exp_gained || character.exp_gained || 0;
           return exp ? (
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                              <Typography variant="body2" color="text.secondary">
-                Exp. Ganha (30 dias)
-              </Typography>
-                <Typography variant="body2" color="text.secondary">
+            <div className="mb-4">
+              <div className="flex justify-between mb-2">
+                <p className="text-sm text-muted-foreground">Exp. Ganha (30 dias)</p>
+                <p className="text-sm text-muted-foreground">
                   +{totalGained.toLocaleString('pt-BR')}
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
+                </p>
+              </div>
+              <Progress 
                 value={Math.min(totalGained / 1000000 * 100, 100)}
-                sx={{ height: 6, borderRadius: 3 }}
+                className="h-2"
               />
-            </Box>
+            </div>
           ) : null;
         })()}
 
         {/* Last Update */}
-        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-          <Schedule sx={{ fontSize: 16, mr: 0.5 }} />
-          <Typography variant="caption">
-            Atualizado: {formatDate(character.last_scraped_at)}
-          </Typography>
-        </Box>
+        <div className="flex items-center text-muted-foreground text-sm">
+          <Clock className="w-4 h-4 mr-1" />
+          <span>Atualizado: {formatDate(character.last_scraped_at)}</span>
+        </div>
       </CardContent>
 
       {/* Actions */}
-      <CardActions sx={{ pt: 0, justifyContent: 'space-between' }}>
+      <div className="flex justify-between p-4 pt-0">
         <Button
-          size="small"
-          startIcon={<Analytics />}
+          size="sm"
+          variant="outline"
           onClick={handleViewCharts}
-          variant="outlined"
         >
+          <BarChart3 className="w-4 h-4 mr-2" />
           Gráficos
         </Button>
         
         {onRefresh && (
           <Button
-            size="small"
-            startIcon={<Refresh />}
+            size="sm"
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
-            variant="outlined"
           >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Atualizando...' : 'Atualizar'}
           </Button>
         )}
-      </CardActions>
+      </div>
     </Card>
   );
 };

@@ -1,33 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { Filter, X, ChevronDown, ChevronUp, TrendingUp, Star } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  FormControl,
-  InputLabel,
   Select,
-  MenuItem,
-  TextField,
-  Button,
-  Chip,
-  Grid,
-  IconButton,
-  Collapse,
-  Divider,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-} from '@mui/material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
-  FilterList,
-  Clear,
-  ExpandMore,
-  ExpandLess,
-  TrendingUp,
-  Star,
-} from '@mui/icons-material';
-import { useFavorites } from '../contexts/FavoritesContext';
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onClearFilters, onShowChart, filteredCount = 0 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -42,7 +33,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
     maxLevel: '',
     isFavorited: '',
     activityFilter: [],
-    recoveryActive: '', // Novo filtro para recovery
+    recoveryActive: '',
     limit: 'all',
   });
 
@@ -59,7 +50,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
       maxLevel: externalFilters.maxLevel || '',
       isFavorited: externalFilters.isFavorited || '',
       activityFilter: externalFilters.activityFilter || [],
-      recoveryActive: externalFilters.recoveryActive || '', // Sincroniza o novo filtro
+      recoveryActive: externalFilters.recoveryActive || '',
       limit: externalFilters.limit || 'all',
     });
   }, [externalFilters]);
@@ -67,9 +58,6 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
   const handleFieldChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
-    
-    // Removido: aplicação automática do filtro de favoritos
-    // Agora todos os filtros são aplicados apenas ao clicar no botão "Filtrar"
   };
 
   const handleApplyFilters = () => {
@@ -87,7 +75,7 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
       maxLevel: '',
       isFavorited: '',
       activityFilter: [],
-      recoveryActive: '', // Limpa o novo filtro
+      recoveryActive: '',
       limit: 'all',
     };
     setFilters(clearedFilters);
@@ -100,8 +88,6 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
       handleApplyFilters();
     }
   };
-
-
 
   const hasActiveFilters = Object.values(filters).some(value => {
     if (Array.isArray(value)) {
@@ -140,275 +126,270 @@ const CharacterFilters = ({ filters: externalFilters = {}, onFilterChange, onCle
   ];
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
+    <Card className="mb-6">
+      <CardContent className="p-6">
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <FilterList sx={{ mr: 1, color: 'primary.main' }} />
-            <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Filter className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg font-semibold">
               Filtros
-            </Typography>
+            </CardTitle>
             {hasActiveFilters && (
-              <Chip 
-                label="Ativo" 
-                size="small" 
-                color="primary" 
-                sx={{ ml: 1 }}
-              />
+              <Badge variant="secondary">Ativo</Badge>
             )}
-          </Box>
+          </div>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <div className="flex gap-2">
             <Button
-              size="small"
-              startIcon={<FilterList />}
+              size="sm"
               onClick={handleApplyFilters}
-              variant="contained"
-              color="primary"
             >
+              <Filter className="mr-2 h-4 w-4" />
               Filtrar
             </Button>
             
             {filteredCount > 0 && (
               <Button
-                size="small"
-                startIcon={<TrendingUp />}
+                size="sm"
+                variant="outline"
                 onClick={onShowChart}
-                variant="outlined"
-                color="secondary"
               >
+                <TrendingUp className="mr-2 h-4 w-4" />
                 Gráfico ({filteredCount})
               </Button>
             )}
             
             {hasActiveFilters && (
               <Button
-                size="small"
-                startIcon={<Clear />}
+                size="sm"
+                variant="outline"
                 onClick={handleClearFilters}
-                variant="outlined"
               >
+                <X className="mr-2 h-4 w-4" />
                 Limpar
               </Button>
             )}
-            <IconButton
-              size="small"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-        </Box>
+            
+            <CollapsibleTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setExpanded(!expanded)}
+              >
+                {expanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+        </div>
 
         {/* Filtros Básicos (sempre visíveis) */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Buscar por nome"
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="search">Buscar por nome</Label>
+            <Input
+              id="search"
               value={filters.search}
               onChange={(e) => handleFieldChange('search', e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite o nome..."
             />
-          </Grid>
+          </div>
           
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Servidor</InputLabel>
-              <Select
-                value={filters.server}
-                onChange={(e) => handleFieldChange('server', e.target.value)}
-                onKeyPress={handleKeyPress}
-                label="Servidor"
-              >
-                <MenuItem value="">Todos</MenuItem>
+          <div className="space-y-2">
+            <Label htmlFor="server">Servidor</Label>
+            <Select
+              value={filters.server}
+              onValueChange={(value) => handleFieldChange('server', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
                 {servers.map((server) => (
-                  <MenuItem key={server.value} value={server.value}>
+                  <SelectItem key={server.value} value={server.value}>
                     {server.label}
-                  </MenuItem>
+                  </SelectItem>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Mundo</InputLabel>
-              <Select
-                value={filters.world}
-                onChange={(e) => handleFieldChange('world', e.target.value)}
-                onKeyPress={handleKeyPress}
-                label="Mundo"
-              >
-                <MenuItem value="">Todos</MenuItem>
+          <div className="space-y-2">
+            <Label htmlFor="world">Mundo</Label>
+            <Select
+              value={filters.world}
+              onValueChange={(value) => handleFieldChange('world', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
                 {worlds.map((world) => (
-                  <MenuItem key={world.value} value={world.value}>
+                  <SelectItem key={world.value} value={world.value}>
                     {world.label}
-                  </MenuItem>
+                  </SelectItem>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Vocação</InputLabel>
-              <Select
-                value={filters.vocation}
-                onChange={(e) => handleFieldChange('vocation', e.target.value)}
-                onKeyPress={handleKeyPress}
-                label="Vocação"
-              >
-                <MenuItem value="">Todas</MenuItem>
+          <div className="space-y-2">
+            <Label htmlFor="vocation">Vocação</Label>
+            <Select
+              value={filters.vocation}
+              onValueChange={(value) => handleFieldChange('vocation', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas</SelectItem>
                 {vocations.map((vocation) => (
-                  <MenuItem key={vocation} value={vocation}>
+                  <SelectItem key={vocation} value={vocation}>
                     {vocation}
-                  </MenuItem>
+                  </SelectItem>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Guild"
+          <div className="space-y-2">
+            <Label htmlFor="guild">Guild</Label>
+            <Input
+              id="guild"
               value={filters.guild}
               onChange={(e) => handleFieldChange('guild', e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite o nome da guild..."
             />
-          </Grid>
-        </Grid>
+          </div>
+        </div>
 
         {/* Filtros Avançados (colapsáveis) */}
-        <Collapse in={expanded}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Filtros Avançados
-          </Typography>
-          
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Level Mínimo"
-                type="number"
-                value={filters.minLevel}
-                onChange={(e) => handleFieldChange('minLevel', e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="0"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Level Máximo"
-                type="number"
-                value={filters.maxLevel}
-                onChange={(e) => handleFieldChange('maxLevel', e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="9999"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Favoritos</InputLabel>
-                <Select
-                  value={filters.isFavorited}
-                  onChange={(e) => handleFieldChange('isFavorited', e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  label="Favoritos"
-                  startAdornment={
-                    <Star sx={{ mr: 1, color: 'action.active' }} />
-                  }
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="true">
-                    Apenas Favoritos ({getFavoritesCount()})
-                  </MenuItem>
-                  <MenuItem value="false">Não Favoritos</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Atividade</InputLabel>
-                <Select
-                  multiple
-                  value={filters.activityFilter}
-                  onChange={(e) => handleFieldChange('activityFilter', e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  input={<OutlinedInput label="Atividade" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const filter = activityFilters.find(f => f.value === value);
-                        return (
-                          <Chip key={value} label={filter?.label || value} size="small" />
-                        );
-                      })}
-                    </Box>
-                  )}
-                >
-                  {activityFilters.map((filter) => (
-                    <MenuItem key={filter.value} value={filter.value}>
-                      <Checkbox checked={filters.activityFilter.indexOf(filter.value) > -1} />
-                      <ListItemText primary={filter.label} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Recovery Ativo</InputLabel>
-                <Select
-                  value={filters.recoveryActive}
-                  onChange={(e) => handleFieldChange('recoveryActive', e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  label="Recovery Ativo"
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="true">
-                    Apenas Recovery Ativo
-                  </MenuItem>
-                  <MenuItem value="false">Não Recovery Ativo</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Mostrar</InputLabel>
-                <Select
-                  value={filters.limit}
-                  onChange={(e) => handleFieldChange('limit', e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  label="Mostrar"
-                >
-                  <MenuItem value="all">Todos</MenuItem>
-                  <MenuItem value="3">3 Personagens</MenuItem>
-                  <MenuItem value="10">10 Personagens</MenuItem>
-                  <MenuItem value="30">30 Personagens</MenuItem>
-                  <MenuItem value="60">60 Personagens</MenuItem>
-                  <MenuItem value="90">90 Personagens</MenuItem>
-                  <MenuItem value="150">150 Personagens</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </Collapse>
+        <Collapsible open={expanded}>
+          <CollapsibleContent>
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-medium text-muted-foreground mb-4">
+                Filtros Avançados
+              </h4>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minLevel">Level Mínimo</Label>
+                  <Input
+                    id="minLevel"
+                    type="number"
+                    value={filters.minLevel}
+                    onChange={(e) => handleFieldChange('minLevel', e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxLevel">Level Máximo</Label>
+                  <Input
+                    id="maxLevel"
+                    type="number"
+                    value={filters.maxLevel}
+                    onChange={(e) => handleFieldChange('maxLevel', e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="9999"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="isFavorited">Favoritos</Label>
+                  <Select
+                    value={filters.isFavorited}
+                    onValueChange={(value) => handleFieldChange('isFavorited', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="true">
+                        Apenas Favoritos ({getFavoritesCount()})
+                      </SelectItem>
+                      <SelectItem value="false">Não Favoritos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="recoveryActive">Recovery Ativo</Label>
+                  <Select
+                    value={filters.recoveryActive}
+                    onValueChange={(value) => handleFieldChange('recoveryActive', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="true">
+                        Apenas Recovery Ativo
+                      </SelectItem>
+                      <SelectItem value="false">Não Recovery Ativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="limit">Mostrar</Label>
+                  <Select
+                    value={filters.limit}
+                    onValueChange={(value) => handleFieldChange('limit', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="3">3 Personagens</SelectItem>
+                      <SelectItem value="10">10 Personagens</SelectItem>
+                      <SelectItem value="30">30 Personagens</SelectItem>
+                      <SelectItem value="60">60 Personagens</SelectItem>
+                      <SelectItem value="90">90 Personagens</SelectItem>
+                      <SelectItem value="150">150 Personagens</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Atividade</Label>
+                  <div className="space-y-2">
+                    {activityFilters.map((filter) => (
+                      <div key={filter.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={filter.value}
+                          checked={filters.activityFilter.includes(filter.value)}
+                          onCheckedChange={(checked) => {
+                            const newActivityFilter = checked
+                              ? [...filters.activityFilter, filter.value]
+                              : filters.activityFilter.filter(v => v !== filter.value);
+                            handleFieldChange('activityFilter', newActivityFilter);
+                          }}
+                        />
+                        <Label htmlFor={filter.value} className="text-sm">
+                          {filter.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );

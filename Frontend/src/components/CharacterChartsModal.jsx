@@ -1,29 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { X, TrendingUp, BarChart3, Timeline } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  FormGroup,
-  Grid,
-  Card,
-  CardContent,
-  Alert,
-  CircularProgress,
-  Divider,
-  Chip,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  TrendingUp,
-  Analytics,
-  Timeline,
-} from '@mui/icons-material';
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   LineChart,
   Line,
@@ -35,7 +25,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { apiService } from '../services/api';
+import { apiService } from '@/services/api';
 
 const CharacterChartsModal = ({ open, onClose, character }) => {
   const [loading, setLoading] = useState(false);
@@ -181,288 +171,261 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="xl"
-      fullWidth
-      PaperProps={{
-        sx: { height: '90vh' }
-      }}
-    >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        pb: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* Imagem do outfit */}
-          {character?.outfit_image_url && (
-            <img
-              src={character.outfit_image_url}
-              alt={`Outfit de ${character.name}`}
-              className="outfitImg"
-              style={{ marginRight: 8 }}
-            />
-          )}
-          <Analytics sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h4" sx={{ 
-            fontSize: '2.5rem',
-            fontWeight: 600,
-            lineHeight: 1.2
-          }}>
-            Gráficos - {character?.name}
-          </Typography>
-        </Box>
-        <Button onClick={onClose} color="inherit">
-          <CloseIcon />
-        </Button>
-      </DialogTitle>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              {/* Imagem do outfit */}
+              {character?.outfit_image_url && (
+                <img
+                  src={character.outfit_image_url}
+                  alt={`Outfit de ${character.name}`}
+                  className="w-8 h-8 rounded"
+                />
+              )}
+              <BarChart3 className="h-6 w-6 text-primary" />
+              <DialogTitle className="text-2xl font-semibold">
+                Gráficos - {character?.name}
+              </DialogTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
 
-      <DialogContent sx={{ p: 3 }}>
-        {/* Controles */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <Timeline sx={{ mr: 1 }} />
-              Controles de Visualização
-            </Typography>
-            
-            <Grid container spacing={3}>
-              {/* Período */}
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Período
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {[7, 15, 30, 60, 90].map(days => (
-                    <Chip
-                      key={days}
-                      label={`${days} dias`}
-                      onClick={() => setTimeRange(days)}
-                      color={timeRange === days ? 'primary' : 'default'}
-                      variant={timeRange === days ? 'filled' : 'outlined'}
-                      size="small"
-                    />
-                  ))}
-                </Box>
-              </Grid>
+        <div className="space-y-6">
+          {/* Controles */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Timeline className="h-5 w-5" />
+                <CardTitle className="text-lg">Controles de Visualização</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* Período */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Período</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[7, 15, 30, 60, 90].map(days => (
+                      <Badge
+                        key={days}
+                        variant={timeRange === days ? "default" : "outline"}
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => setTimeRange(days)}
+                      >
+                        {days} dias
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
 
-              {/* Métricas */}
-              <Grid item xs={12} md={9}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Métricas para Exibir
-                </Typography>
-                <FormGroup row>
-                  <FormControlLabel
-                    control={
+                {/* Métricas */}
+                <div className="md:col-span-3 space-y-3">
+                  <Label className="text-sm font-medium">Métricas para Exibir</Label>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center space-x-2">
                       <Checkbox
+                        id="experience"
                         checked={chartOptions.experience}
-                        onChange={() => handleOptionChange('experience')}
-                        color="primary"
+                        onCheckedChange={() => handleOptionChange('experience')}
                       />
-                    }
-                    label="Experiência"
-                  />
-                  <FormControlLabel
-                    control={
+                      <Label htmlFor="experience" className="text-sm">
+                        Experiência
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <Checkbox
+                        id="level"
                         checked={chartOptions.level}
-                        onChange={() => handleOptionChange('level')}
-                        color="primary"
+                        onCheckedChange={() => handleOptionChange('level')}
                       />
-                    }
-                    label="Level"
-                  />
+                      <Label htmlFor="level" className="text-sm">
+                        Level
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                </FormGroup>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* Gráfico */}
-        <Card>
-          <CardContent>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Alert severity="error" sx={{ my: 2 }}>
-                {error}
-              </Alert>
-            ) : hasData ? (
-              <Box sx={{ height: '500px', width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return date.toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit'
-                        });
-                      }}
-                      tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
-                      axisLine={{ stroke: '#ffffff' }}
-                      tickLine={{ stroke: '#ffffff' }}
-                    />
-                    {/* Renderização condicional dos eixos Y */}
-                    {chartOptions.experience && chartOptions.level && (
-                      <>
-                        <YAxis 
-                          yAxisId="left"
-                          orientation="left"
-                          tickFormatter={formatExperience}
-                          tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
-                          axisLine={{ stroke: '#ffffff' }}
-                          tickLine={{ stroke: '#ffffff' }}
-                          label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
-                        />
+          {/* Gráfico */}
+          <Card>
+            <CardContent className="p-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : error ? (
+                <Alert>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              ) : hasData ? (
+                <div className="h-[500px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit'
+                          });
+                        }}
+                        tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      {/* Renderização condicional dos eixos Y */}
+                      {chartOptions.experience && chartOptions.level && (
+                        <>
+                          <YAxis 
+                            yAxisId="left"
+                            orientation="left"
+                            tickFormatter={formatExperience}
+                            tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                            axisLine={{ stroke: 'hsl(var(--border))' }}
+                            tickLine={{ stroke: 'hsl(var(--border))' }}
+                            label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))', fontSize: 14, fontWeight: 600 }}
+                          />
+                          <YAxis 
+                            yAxisId="right"
+                            orientation="right"
+                            type="number"
+                            domain={getLevelDomain()}
+                            allowDataOverflow={true}
+                            tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                            axisLine={{ stroke: 'hsl(var(--border))' }}
+                            tickLine={{ stroke: 'hsl(var(--border))' }}
+                            label={{ value: 'Level', angle: 90, position: 'insideRight', fill: 'hsl(var(--foreground))', fontSize: 14, fontWeight: 600 }}
+                          />
+                        </>
+                      )}
+                      {chartOptions.level && !chartOptions.experience && (
                         <YAxis 
                           yAxisId="right"
                           orientation="right"
                           type="number"
                           domain={getLevelDomain()}
                           allowDataOverflow={true}
-                          tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
-                          axisLine={{ stroke: '#ffffff' }}
-                          tickLine={{ stroke: '#ffffff' }}
-                          label={{ value: 'Level', angle: 90, position: 'insideRight', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
+                          tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
+                          label={{ value: 'Level', angle: 90, position: 'insideRight', fill: 'hsl(var(--foreground))', fontSize: 14, fontWeight: 600 }}
                         />
-                      </>
-                    )}
-                    {chartOptions.level && !chartOptions.experience && (
-                      <YAxis 
-                        yAxisId="right"
-                        orientation="right"
-                        type="number"
-                        domain={getLevelDomain()}
-                        allowDataOverflow={true}
-                        tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
-                        axisLine={{ stroke: '#ffffff' }}
-                        tickLine={{ stroke: '#ffffff' }}
-                        label={{ value: 'Level', angle: 90, position: 'insideRight', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
+                      )}
+                      {chartOptions.experience && !chartOptions.level && (
+                        <YAxis 
+                          yAxisId="left"
+                          orientation="left"
+                          tickFormatter={formatExperience}
+                          tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={{ stroke: 'hsl(var(--border))' }}
+                          label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))', fontSize: 14, fontWeight: 600 }}
+                        />
+                      )}
+                      <RechartsTooltip
+                        formatter={(value, name) => {
+                          if (name === 'Experiência') {
+                            return [formatExperience(value), name];
+                          }
+                          return [value, name];
+                        }}
+                        labelFormatter={(label) => {
+                          return formatDate(label);
+                        }}
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-background border border-border rounded-lg p-4 shadow-lg">
+                                <p className="font-semibold text-sm mb-2">
+                                  {formatDate(label)}
+                                </p>
+                                {payload.map((entry, index) => (
+                                  <div key={index} className="flex justify-between gap-4 text-sm">
+                                    <span>{entry.name}:</span>
+                                    <span className="font-semibold">
+                                      {entry.name === 'Experiência' 
+                                        ? formatExperience(entry.value)
+                                        : entry.value?.toLocaleString('pt-BR')
+                                      }
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
                       />
-                    )}
-                    {chartOptions.experience && !chartOptions.level && (
-                      <YAxis 
-                        yAxisId="left"
-                        orientation="left"
-                        tickFormatter={formatExperience}
-                        tick={{ fontSize: 12, fill: '#ffffff', fontWeight: 500 }}
-                        axisLine={{ stroke: '#ffffff' }}
-                        tickLine={{ stroke: '#ffffff' }}
-                        label={{ value: 'Experiência', angle: -90, position: 'insideLeft', fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
-                      />
-                    )}
-                    <RechartsTooltip
-                      formatter={(value, name) => {
-                        if (name === 'Experiência') {
-                          return [formatExperience(value), name];
-                        }
-                        return [value, name];
-                      }}
-                      labelFormatter={(label) => {
-                        return formatDate(label);
-                      }}
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <Box sx={{ 
-                              bgcolor: 'background.paper', 
-                              border: 1, 
-                              borderColor: 'divider', 
-                              borderRadius: 1, 
-                              p: 2,
-                              boxShadow: 3
-                            }}>
-                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-                                {formatDate(label)}
-                              </Typography>
-                              {payload.map((entry, index) => (
-                                <Typography key={index} variant="body2" sx={{ 
-                                  color: entry.color,
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  gap: 2
-                                }}>
-                                  <span>{entry.name}:</span>
-                                  <span style={{ fontWeight: 600 }}>
-                                    {entry.name === 'Experiência' 
-                                      ? formatExperience(entry.value)
-                                      : entry.value?.toLocaleString('pt-BR')
-                                    }
-                                  </span>
-                                </Typography>
-                              ))}
-                            </Box>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Legend />
-                    {chartOptions.experience && (
-                      <Line
-                        type="monotone"
-                        dataKey="experience"
-                        stroke="#1976d2"
-                        strokeWidth={2}
-                        dot={{ fill: '#1976d2', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                        yAxisId="left"
-                        name="Experiência"
-                      />
-                    )}
-                    {chartOptions.level && (
-                      <Line
-                        type="monotone"
-                        dataKey="level"
-                        stroke="#dc004e"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={{ fill: '#dc004e', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6 }}
-                        yAxisId="right"
-                        name="Level"
-                      />
-                    )}
-                  </LineChart>
-                </ResponsiveContainer>
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <TrendingUp sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  Nenhum dado disponível
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Selecione pelo menos uma métrica ou tente um período diferente
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Dados disponíveis apenas a partir de 03/07/2024
-                </Typography>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </DialogContent>
+                      <Legend />
+                      {chartOptions.experience && (
+                        <Line
+                          type="monotone"
+                          dataKey="experience"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                          yAxisId="left"
+                          name="Experiência"
+                        />
+                      )}
+                      {chartOptions.level && (
+                        <Line
+                          type="monotone"
+                          dataKey="level"
+                          stroke="hsl(var(--destructive))"
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          dot={{ fill: 'hsl(var(--destructive))', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6 }}
+                          yAxisId="right"
+                          name="Level"
+                        />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <TrendingUp className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                    Nenhum dado disponível
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Selecione pelo menos uma métrica ou tente um período diferente
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Dados disponíveis apenas a partir de 03/07/2024
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      <DialogActions sx={{ p: 3 }}>
-        <Button onClick={refreshCharacterData} disabled={loading}>
-          Atualizar Dados
-        </Button>
-        <Button onClick={onClose} variant="contained">
-          Fechar
-        </Button>
-      </DialogActions>
+        <DialogFooter>
+          <Button onClick={refreshCharacterData} disabled={loading}>
+            Atualizar Dados
+          </Button>
+          <Button onClick={onClose}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };
