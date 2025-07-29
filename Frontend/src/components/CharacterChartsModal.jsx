@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, TrendingUp, BarChart3, Timeline } from 'lucide-react';
+import { X, TrendingUp, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -205,7 +205,7 @@ const CharacterChartsModal = ({ open, onClose, character }) => {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-2">
-                <Timeline className="h-5 w-5" />
+                <BarChart3 className="h-5 w-5" />
                 <CardTitle className="text-lg">Controles de Visualização</CardTitle>
               </div>
             </CardHeader>
