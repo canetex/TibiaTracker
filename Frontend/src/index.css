@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base colors - HSL format for better control */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Primary - Tibia Orange theme */
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 30 100% 65%;
+    
+    /* Secondary */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    
+    /* Muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    
+    /* Destructive */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Border */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 25 95% 53%;
+    
+    /* Tibia-specific colors */
+    --tibia-orange: 25 95% 53%;
+    --tibia-gold: 45 93% 58%;
+    --tibia-blue: 210 84% 56%;
+    --tibia-green: 142 71% 45%;
+    
+    /* Vocation colors */
+    --sorcerer: 258 90% 66%;
+    --druid: 142 71% 45%;
+    --paladin: 45 93% 58%;
+    --knight: 0 84% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
+    --gradient-tibia: linear-gradient(135deg, hsl(var(--tibia-orange)), hsl(var(--tibia-gold)));
+    
+    /* Shadows */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+    --shadow-tibia: 0 8px 32px hsl(var(--tibia-orange) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 30 100% 65%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --primary-glow: 35 100% 70%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 30 100% 65%;
+    
+    /* Dark mode Tibia colors */
+    --tibia-orange: 30 100% 65%;
+    --tibia-gold: 50 100% 70%;
+    --tibia-blue: 210 84% 66%;
+    --tibia-green: 142 71% 55%;
+    
+    /* Dark mode vocation colors */
+    --sorcerer: 258 90% 76%;
+    --druid: 142 71% 55%;
+    --paladin: 50 100% 70%;
+    --knight: 0 84% 70%;
+    
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
+    --gradient-tibia: linear-gradient(135deg, hsl(var(--tibia-orange)), hsl(var(--tibia-gold)));
+    
+    /* Dark mode shadows */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.4);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.5);
+    --shadow-tibia: 0 8px 32px hsl(var(--tibia-orange) / 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* Custom component styles */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-elegant hover:-translate-y-1;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent;
+  }
+  
+  .btn-tibia {
+    @apply bg-gradient-tibia text-white font-semibold px-6 py-3 rounded-lg shadow-tibia transition-all duration-300 hover:shadow-glow hover:scale-105;
+  }
+  
+  .outfit-image {
+    @apply w-12 h-16 object-contain rounded border border-border bg-muted/50 transition-transform duration-200 hover:scale-105;
+  }
+  
+  /* Scrollbar styling */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--background));
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-primary rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-glow;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Global styles for better UX */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Loading animation */
+@keyframes loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading {
+  animation: loading 1s linear infinite;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
