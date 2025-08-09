@@ -36,6 +36,15 @@ module.exports = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -52,28 +61,18 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Tibia-specific colors
-        tibia: {
-          orange: "hsl(var(--tibia-orange))",
-          gold: "hsl(var(--tibia-gold))",
-          blue: "hsl(var(--tibia-blue))",
-          green: "hsl(var(--tibia-green))",
-        },
-        // Vocation colors
-        sorcerer: "hsl(var(--sorcerer))",
-        druid: "hsl(var(--druid))",
-        paladin: "hsl(var(--paladin))",
-        knight: "hsl(var(--knight))",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-secondary': 'var(--gradient-secondary)',
-        'gradient-tibia': 'var(--gradient-tibia)',
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-card': 'var(--gradient-card)',
       },
       boxShadow: {
-        'elegant': 'var(--shadow-elegant)',
-        'glow': 'var(--shadow-glow)',
+        'card': 'var(--shadow-card)',
+        'hover': 'var(--shadow-hover)',
         'tibia': 'var(--shadow-tibia)',
+        'gold': 'var(--shadow-gold)'
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -96,7 +95,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["Montserrat", "Roboto", "Helvetica", "Arial", "sans-serif"],
         display: ["Montserrat", "sans-serif"],
       },
       fontSize: {
