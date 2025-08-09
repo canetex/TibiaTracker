@@ -133,7 +133,7 @@
   .tibia-badge-offline { @apply inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs; }
   .tibia-badge-recovery { @apply inline-flex h-6 items-center rounded-full bg-[hsl(var(--warning))] text-[hsl(var(--foreground))] px-2 text-xs; }
   .tibia-stats-grid { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6; }
-  .gradient-text { @apply bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] bg-clip-text text-transparent; }
+  .gradient-text, .text-gradient { @apply bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] bg-clip-text text-transparent; }
 }
 
 @layer utilities {

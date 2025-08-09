@@ -72,7 +72,9 @@ module.exports = {
         'card': 'var(--shadow-card)',
         'hover': 'var(--shadow-hover)',
         'tibia': 'var(--shadow-tibia)',
-        'gold': 'var(--shadow-gold)'
+        'gold': 'var(--shadow-gold)',
+        'elegant': 'var(--shadow-card)',
+        'glow': 'var(--shadow-hover)'
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
