@@ -1,414 +1,229 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { Checkbox } from './ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
+import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { GitCompare, Search, Filter } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
+import { Search, Filter, Users } from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface Character {
-  id: string;
+  id: number;
   name: string;
   level: number;
   vocation: string;
   world: string;
-  experience: number;
+  server: string;
   guild?: string;
-  isOnline: boolean;
-  recoveryActive: boolean;
-  isFavorite: boolean;
-  deaths: number;
-  lastLogin: string;
-  experienceGained24h?: number;
-  levelProgress: number;
-  pvpType: "Optional PvP" | "Open PvP" | "Retro Open PvP" | "Hardcore PvP";
 }
 
 interface CharacterSelectionProps {
   characters: Character[];
-  onCompare: (selectedCharacters: Character[]) => void;
+  onCompare: (characters: Character[]) => void;
 }
-
-interface Filters {
-  search: string;
-  vocation: string;
-  world: string;
-  guild: string;
-  minLevel: string;
-  maxLevel: string;
-  isOnline: boolean;
-  recoveryActive: boolean;
-  isFavorite: boolean;
-}
-
-const vocations = [
-  'Elite Knight',
-  'Royal Paladin',
-  'Master Sorcerer',
-  'Elder Druid',
-];
-
-const worlds = [
-  'Antica',
-  'Secura',
-  'Monza',
-  'Premia',
-  'Celesta',
-];
 
 export function CharacterSelection({ characters, onCompare }: CharacterSelectionProps) {
-  const [selectedCharacters, setSelectedCharacters] = useState<Set<string>>(new Set());
-  const [filters, setFilters] = useState<Filters>({
-    search: '',
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
     vocation: '',
-    world: '',
-    guild: '',
+    server: '',
     minLevel: '',
     maxLevel: '',
-    isOnline: false,
-    recoveryActive: false,
-    isFavorite: false,
   });
-  const [filteredCharacters, setFilteredCharacters] = useState<Character[]>(characters);
-  const [showFilters, setShowFilters] = useState(false);
+  const [vocations, setVocations] = useState<string[]>([]);
+  const [servers, setServers] = useState<string[]>([]);
 
   useEffect(() => {
-    applyFilters();
-  }, [characters, filters]);
+    const loadFilters = async () => {
+      try {
+        const [vocationsData, serversData] = await Promise.all([
+          apiService.getVocations(),
+          apiService.getServers()
+        ]);
+        setVocations(vocationsData);
+        setServers(serversData);
+      } catch (error) {
+        console.error('Erro ao carregar filtros:', error);
+      }
+    };
+    loadFilters();
+  }, []);
 
-  const handleCharacterSelect = (id: string) => {
-    const newSelected = new Set(selectedCharacters);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedCharacters(newSelected);
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleCharacterSelect = (characterId: number) => {
+    setSelectedCharacters(prev =>
+      prev.includes(characterId)
+        ? prev.filter(id => id !== characterId)
+        : [...prev, characterId]
+    );
   };
 
   const handleSelectAll = () => {
-    if (selectedCharacters.size === filteredCharacters.length) {
-      setSelectedCharacters(new Set());
+    if (selectedCharacters.length === filteredCharacters.length) {
+      setSelectedCharacters([]);
     } else {
-      setSelectedCharacters(new Set(filteredCharacters.map(char => char.id)));
+      setSelectedCharacters(filteredCharacters.map(char => char.id));
     }
   };
 
   const handleCompare = () => {
-    const selectedChars = filteredCharacters.filter(char => selectedCharacters.has(char.id));
+    const selectedChars = characters.filter(char => selectedCharacters.includes(char.id));
     onCompare(selectedChars);
   };
 
-  const applyFilters = () => {
-    let filtered = [...characters];
+  const filteredCharacters = characters.filter(char => {
+    const matchesSearch = char.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVocation = !filters.vocation || char.vocation === filters.vocation;
+    const matchesServer = !filters.server || char.server === filters.server;
+    const matchesMinLevel = !filters.minLevel || char.level >= parseInt(filters.minLevel);
+    const matchesMaxLevel = !filters.maxLevel || char.level <= parseInt(filters.maxLevel);
 
-    // Search filter
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(char => 
-        char.name.toLowerCase().includes(searchTerm) ||
-        char.guild?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    // Vocation filter
-    if (filters.vocation) {
-      filtered = filtered.filter(char => char.vocation === filters.vocation);
-    }
-
-    // World filter
-    if (filters.world) {
-      filtered = filtered.filter(char => char.world === filters.world);
-    }
-
-    // Guild filter
-    if (filters.guild) {
-      filtered = filtered.filter(char => char.guild?.toLowerCase().includes(filters.guild.toLowerCase()));
-    }
-
-    // Level range filter
-    if (filters.minLevel) {
-      filtered = filtered.filter(char => char.level >= parseInt(filters.minLevel));
-    }
-    if (filters.maxLevel) {
-      filtered = filtered.filter(char => char.level <= parseInt(filters.maxLevel));
-    }
-
-    // Status filters
-    if (filters.isOnline) {
-      filtered = filtered.filter(char => char.isOnline);
-    }
-    if (filters.recoveryActive) {
-      filtered = filtered.filter(char => char.recoveryActive);
-    }
-    if (filters.isFavorite) {
-      filtered = filtered.filter(char => char.isFavorite);
-    }
-
-    setFilteredCharacters(filtered);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      search: '',
-      vocation: '',
-      world: '',
-      guild: '',
-      minLevel: '',
-      maxLevel: '',
-      isOnline: false,
-      recoveryActive: false,
-      isFavorite: false,
-    });
-    setShowFilters(false);
-  };
+    return matchesSearch && matchesVocation && matchesServer && matchesMinLevel && matchesMaxLevel;
+  });
 
   return (
-    <div className="space-y-4">
-      {/* Search and Filter Toggle */}
-      <div className="flex flex-col md:flex-row gap-2">
-        <div className="flex-1 flex gap-2">
-          <Input
-            placeholder="Buscar por nome ou guild..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="w-full"
-          />
-          <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)} className="md:hidden">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Desktop Filters */}
-        <div className="hidden md:flex gap-2 flex-wrap">
-          <Select
-            value={filters.vocation}
-            onValueChange={(value) => setFilters({ ...filters, vocation: value })}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Vocação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
-              {vocations.map((voc) => (
-                <SelectItem key={voc} value={voc}>{voc}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.world}
-            onValueChange={(value) => setFilters({ ...filters, world: value })}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Mundo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
-              {worlds.map((world) => (
-                <SelectItem key={world} value={world}>{world}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Input
-            placeholder="Guild"
-            value={filters.guild}
-            onChange={(e) => setFilters({ ...filters, guild: e.target.value })}
-            className="w-[150px]"
-          />
-
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="Level min"
-              value={filters.minLevel}
-              onChange={(e) => setFilters({ ...filters, minLevel: e.target.value })}
-              className="w-[100px]"
-            />
-            <Input
-              type="number"
-              placeholder="Level max"
-              value={filters.maxLevel}
-              onChange={(e) => setFilters({ ...filters, maxLevel: e.target.value })}
-              className="w-[100px]"
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.isOnline}
-                onCheckedChange={(checked) => setFilters({ ...filters, isOnline: checked as boolean })}
-              />
-              <span className="text-sm">Online</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.recoveryActive}
-                onCheckedChange={(checked) => setFilters({ ...filters, recoveryActive: checked as boolean })}
-              />
-              <span className="text-sm">Em recuperação</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.isFavorite}
-                onCheckedChange={(checked) => setFilters({ ...filters, isFavorite: checked as boolean })}
-              />
-              <span className="text-sm">Favoritos</span>
-            </label>
-          </div>
-
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="flex items-center gap-2"
-          >
-            <Filter className="h-4 w-4" />
-            Limpar
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Filters */}
-      {showFilters && (
-        <Card className="p-4 md:hidden">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <Select
-                value={filters.vocation}
-                onValueChange={(value) => setFilters({ ...filters, vocation: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Vocação" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
-                  {vocations.map((voc) => (
-                    <SelectItem key={voc} value={voc}>{voc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.world}
-                onValueChange={(value) => setFilters({ ...filters, world: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Mundo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  {worlds.map((world) => (
-                    <SelectItem key={world} value={world}>{world}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Input
-              placeholder="Guild"
-              value={filters.guild}
-              onChange={(e) => setFilters({ ...filters, guild: e.target.value })}
-            />
-
-            <div className="grid grid-cols-2 gap-2">
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <CardTitle className="text-lg font-medium">Personagens</CardTitle>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                type="number"
-                placeholder="Level min"
-                value={filters.minLevel}
-                onChange={(e) => setFilters({ ...filters, minLevel: e.target.value })}
-              />
-              <Input
-                type="number"
-                placeholder="Level max"
-                value={filters.maxLevel}
-                onChange={(e) => setFilters({ ...filters, maxLevel: e.target.value })}
+                placeholder="Buscar personagem..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="pl-9"
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={filters.isOnline}
-                  onCheckedChange={(checked) => setFilters({ ...filters, isOnline: checked as boolean })}
-                />
-                <span className="text-sm">Online</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={filters.recoveryActive}
-                  onCheckedChange={(checked) => setFilters({ ...filters, recoveryActive: checked as boolean })}
-                />
-                <span className="text-sm">Em recuperação</span>
-              </label>
-            </div>
-
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={filters.isFavorite}
-                onCheckedChange={(checked) => setFilters({ ...filters, isFavorite: checked as boolean })}
-              />
-              <span className="text-sm">Favoritos</span>
-            </label>
-
             <Button
               variant="outline"
-              onClick={clearFilters}
-              className="w-full flex items-center justify-center gap-2"
+              size="icon"
+              onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Limpar filtros
             </Button>
           </div>
-        </Card>
-      )}
-
-      {/* Selection controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleSelectAll}
-            className="text-sm flex-1 md:flex-none"
-          >
-            {selectedCharacters.size === filteredCharacters.length ? 'Deselect All' : 'Select All'}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {selectedCharacters.size} characters selected
-          </span>
         </div>
-        {selectedCharacters.size > 1 && (
-          <Button
-            onClick={handleCompare}
-            className="flex items-center gap-2 w-full md:w-auto"
-          >
-            <GitCompare className="h-4 w-4" />
-            Compare Selected
-          </Button>
-        )}
-      </div>
+      </CardHeader>
 
-      {/* Character grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-        {filteredCharacters.map((char) => (
-          <Card key={char.id} className={`tibia-card p-3 md:p-4 ${selectedCharacters.has(char.id) ? 'ring-2 ring-primary' : ''}`}>
-            <div className="flex items-center gap-3">
+      <CardContent>
+        {showFilters && (
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select
+              value={filters.vocation}
+              onValueChange={(value) => setFilters(prev => ({ ...prev, vocation: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Vocação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas</SelectItem>
+                {vocations.map(vocation => (
+                  <SelectItem key={vocation} value={vocation}>
+                    {vocation}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.server}
+              onValueChange={(value) => setFilters(prev => ({ ...prev, server: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Servidor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                {servers.map(server => (
+                  <SelectItem key={server} value={server}>
+                    {server}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="number"
+              placeholder="Level mínimo"
+              value={filters.minLevel}
+              onChange={(e) => setFilters(prev => ({ ...prev, minLevel: e.target.value }))}
+            />
+
+            <Input
+              type="number"
+              placeholder="Level máximo"
+              value={filters.maxLevel}
+              onChange={(e) => setFilters(prev => ({ ...prev, maxLevel: e.target.value }))}
+            />
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
               <Checkbox
-                checked={selectedCharacters.has(char.id)}
-                onCheckedChange={() => handleCharacterSelect(char.id)}
+                id="select-all"
+                checked={selectedCharacters.length === filteredCharacters.length && filteredCharacters.length > 0}
+                onCheckedChange={handleSelectAll}
               />
-              <div>
-                <h4 className="font-semibold text-foreground">{char.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  Level {char.level} {char.vocation}
-                </p>
-                <p className="text-xs text-muted-foreground">{char.world}</p>
-              </div>
+              <label
+                htmlFor="select-all"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Selecionar todos
+              </label>
             </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleCompare}
+              disabled={selectedCharacters.length === 0}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Comparar ({selectedCharacters.length})
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredCharacters.map((char) => (
+              <Card
+                key={char.id}
+                className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
+                  selectedCharacters.includes(char.id) ? 'ring-2 ring-primary' : ''
+                }`}
+                onClick={() => handleCharacterSelect(char.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedCharacters.includes(char.id)}
+                      onCheckedChange={() => handleCharacterSelect(char.id)}
+                    />
+                    <div>
+                      <p className="font-medium">{char.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Level {char.level} {char.vocation}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {char.server} • {char.world}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

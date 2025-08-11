@@ -4,12 +4,12 @@ const LOG_LEVEL: LogLevel = import.meta.env.MODE === 'development' ? 'debug' : '
 
 const logger = {
   debug: (...args: any[]) => {
-    if (LOG_LEVEL === 'debug') {
+    if (LOG_LEVEL === 'debug' && import.meta.env.MODE === 'development') {
       console.debug('[DEBUG]', ...args);
     }
   },
   info: (...args: any[]) => {
-    if (['debug', 'info'].includes(LOG_LEVEL)) {
+    if (['debug', 'info'].includes(LOG_LEVEL) && import.meta.env.MODE === 'development') {
       console.info('[INFO]', ...args);
     }
   },

@@ -58,18 +58,16 @@ export default function Dashboard(): JSX.Element {
         setError(null);
         const [chars, stats] = await Promise.all([
           apiService.getRecentCharacters(),
-          apiService.getCharacterStats()
+          apiService.getGlobalStats()
         ]);
         setCharacters(chars);
         setGlobalStats(stats);
       } catch (err) {
-        logger.error('Erro ao carregar dados iniciais:', err);
         setError('Erro ao carregar dados iniciais');
       } finally {
         setLoading(false);
       }
     };
-
     loadInitialData();
   }, []);
 
@@ -83,7 +81,6 @@ export default function Dashboard(): JSX.Element {
       setSelectedCharacters(chars);
       setIsComparisonOpen(true);
     } catch (err) {
-      logger.error('Erro ao carregar dados para comparação:', err);
       setError('Erro ao carregar dados para comparação');
     } finally {
       setLoading(false);
@@ -108,14 +105,14 @@ export default function Dashboard(): JSX.Element {
 
   if (error) {
     return (
-      <div className="text-center text-destructive p-4">
-        <p>{error}</p>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-destructive">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="container mx-auto px-4 md:px-6 space-y-6 py-6">
       <h1 className="text-2xl md:text-3xl font-bold gradient-text text-center md:text-left">Dashboard</h1>
       
       {/* Global Stats */}
@@ -161,6 +158,11 @@ export default function Dashboard(): JSX.Element {
         </Card>
       </div>
 
+      {/* Linearity Ranking */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
+        <LinearityPanel />
+      </div>
+
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
         <div className="space-y-6">
@@ -172,7 +174,6 @@ export default function Dashboard(): JSX.Element {
 
         <div className="space-y-6">
           <TopExpPanel />
-          <LinearityPanel />
         </div>
       </div>
 
