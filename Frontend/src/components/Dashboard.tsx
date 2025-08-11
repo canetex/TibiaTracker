@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CharacterSelection } from './CharacterSelection';
 import { ComparisonChart } from './ComparisonChart';
 import { Dialog, DialogContent } from './ui/dialog';
+import { Card } from './ui/card';
+import { Users, Activity, TrendingUp, BarChart3 } from 'lucide-react';
+import { apiService } from '../services/api';
+import logger from '../lib/logger';
 
 interface Character {
   id: string;
@@ -29,28 +33,134 @@ interface ChartDataPoint {
   deaths: number;
 }
 
+interface GlobalStats {
+  total_characters: number;
+  active_today: number;
+  total_exp_today: number;
+  total_servers: number;
+}
+
 export default function Dashboard(): JSX.Element {
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCompare = async (characters: Character[]) => {
-    // TODO: Fetch chart data for selected characters
-    setSelectedCharacters(characters);
-    setIsComparisonOpen(true);
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [chars, stats] = await Promise.all([
+          apiService.getRecentCharacters(),
+          apiService.getCharacterStats()
+        ]);
+        setCharacters(chars);
+        setGlobalStats(stats);
+      } catch (err) {
+        logger.error('Erro ao carregar dados iniciais:', err);
+        setError('Erro ao carregar dados iniciais');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  const handleCompare = async (chars: Character[]) => {
+    try {
+      setLoading(true);
+      const data = await Promise.all(
+        chars.map(char => apiService.getCharacterStats(char.id))
+      );
+      setChartData(data.flat());
+      setSelectedCharacters(chars);
+      setIsComparisonOpen(true);
+    } catch (err) {
+      logger.error('Erro ao carregar dados para comparação:', err);
+      setError('Erro ao carregar dados para comparação');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const formatExperience = (exp: number) => {
+    if (!exp || isNaN(exp)) return '0';
+    if (exp >= 1000000000) return `${(exp / 1000000000).toFixed(1)}B`;
+    if (exp >= 1000000) return `${(exp / 1000000).toFixed(1)}M`;
+    if (exp >= 1000) return `${(exp / 1000).toFixed(1)}K`;
+    return exp.toString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-destructive p-4">
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="tibia-card p-4">Card 1</div>
-        <div className="tibia-card p-4">Card 2</div>
-        <div className="tibia-card p-4">Card 3</div>
+      
+      {/* Global Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total de Personagens</p>
+              <p className="text-2xl font-bold">{globalStats?.total_characters || 0}</p>
+            </div>
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Ativos Hoje</p>
+              <p className="text-2xl font-bold">{globalStats?.active_today || 0}</p>
+            </div>
+            <Activity className="h-8 w-8 text-success" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Exp. Total Hoje</p>
+              <p className="text-2xl font-bold">{formatExperience(globalStats?.total_exp_today || 0)}</p>
+            </div>
+            <TrendingUp className="h-8 w-8 text-warning" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Servidores</p>
+              <p className="text-2xl font-bold">{globalStats?.total_servers || 0}</p>
+            </div>
+            <BarChart3 className="h-8 w-8 text-info" />
+          </div>
+        </Card>
       </div>
 
       <CharacterSelection
-        characters={[]} // TODO: Pass actual characters
+        characters={characters}
         onCompare={handleCompare}
       />
 
