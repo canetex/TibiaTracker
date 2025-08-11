@@ -52,7 +52,8 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
   }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const value = event.target.value || '';
+    setSearchTerm(value);
   };
 
   const handleCharacterSelect = (characterId: number) => {
@@ -76,15 +77,18 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
     onCompare(selectedChars);
   };
 
-  const filteredCharacters = characters.filter(char => {
-    const matchesSearch = char.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesVocation = !filters.vocation || char.vocation === filters.vocation;
-    const matchesServer = !filters.server || char.server === filters.server;
-    const matchesMinLevel = !filters.minLevel || char.level >= parseInt(filters.minLevel);
-    const matchesMaxLevel = !filters.maxLevel || char.level <= parseInt(filters.maxLevel);
+  const filteredCharacters = React.useMemo(() => {
+    return characters.filter(char => {
+      const searchValue = searchTerm.toLowerCase();
+      const matchesSearch = !searchValue || char.name.toLowerCase().includes(searchValue);
+      const matchesVocation = !filters.vocation || char.vocation === filters.vocation;
+      const matchesServer = !filters.server || char.server === filters.server;
+      const matchesMinLevel = !filters.minLevel || char.level >= parseInt(filters.minLevel);
+      const matchesMaxLevel = !filters.maxLevel || char.level <= parseInt(filters.maxLevel);
 
-    return matchesSearch && matchesVocation && matchesServer && matchesMinLevel && matchesMaxLevel;
-  });
+      return matchesSearch && matchesVocation && matchesServer && matchesMinLevel && matchesMaxLevel;
+    });
+  }, [characters, searchTerm, filters]);
 
   return (
     <Card>

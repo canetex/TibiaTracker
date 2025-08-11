@@ -26,10 +26,11 @@ from app.schemas.character import (
     CharacterSnapshot, CharacterSnapshotCreate, CharacterWithSnapshots,
     CharacterStats, CharacterIDsRequest, CharacterIDsResponse,
     ServerType, WorldType, VocationType,
-    CharacterFilter, TopExpResponse
+    CharacterFilter, TopExpResponse, LinearityResponse
 )
 from app.services.character import CharacterService
 from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -2321,5 +2322,176 @@ async def get_top_exp(
 
         return response
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/linearity", response_model=List[LinearityResponse])
+async def get_exp_linearity(
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=100),
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    guild: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+):
+    """
+    Get characters ranked by experience gain linearity.
+    Linearity is calculated as the sum of the absolute differences between
+    daily experience gain and the average daily gain.
+    A lower linearity index means more consistent experience gain.
+    """
+    try:
+        db = next(get_db())
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build base query to get daily experience for each character
+        query = db.query(
+            Character.id,
+            Character.name,
+            Character.level,
+            Character.vocation,
+            Character.world,
+            Character.server,
+            Character.guild,
+            func.date(CharacterSnapshot.created_at).label('date'),
+            func.max(CharacterSnapshot.experience).label('daily_exp')
+        ).join(
+            CharacterSnapshot,
+            Character.id == CharacterSnapshot.character_id
+        ).filter(
+            CharacterSnapshot.created_at.between(start_date, end_date)
+        ).group_by(
+            Character.id,
+            func.date(CharacterSnapshot.created_at)
+        )
+
+        # Apply filters
+        if server:
+            query = query.filter(Character.server == server)
+        if world:
+            query = query.filter(Character.world == world)
+        if vocation:
+            query = query.filter(Character.vocation == vocation)
+        if guild:
+            query = query.filter(Character.guild == guild)
+        if min_level:
+            query = query.filter(Character.level >= min_level)
+        if max_level:
+            query = query.filter(Character.level <= max_level)
+
+        results = query.all()
+
+        # Group results by character
+        char_data = {}
+        for result in results:
+            if result.id not in char_data:
+                char_data[result.id] = {
+                    'id': result.id,
+                    'name': result.name,
+                    'level': result.level,
+                    'vocation': result.vocation,
+                    'world': result.world,
+                    'server': result.server,
+                    'guild': result.guild,
+                    'daily_exp': []
+                }
+            char_data[result.id]['daily_exp'].append(result.daily_exp)
+
+        # Calculate linearity index for each character
+        linearity_data = []
+        for char_id, data in char_data.items():
+            if len(data['daily_exp']) > 1:
+                # Calculate daily gains
+                daily_gains = []
+                for i in range(1, len(data['daily_exp'])):
+                    gain = data['daily_exp'][i] - data['daily_exp'][i-1]
+                    daily_gains.append(gain)
+
+                if daily_gains:
+                    # Calculate average daily gain
+                    avg_gain = sum(daily_gains) / len(daily_gains)
+
+                    # Calculate linearity index
+                    if avg_gain > 0:
+                        # Calculate relative distance from average for each day
+                        relative_distances = [(gain/avg_gain - 1) for gain in daily_gains]
+                        # Get min and max distances
+                        min_distance = min(relative_distances)
+                        max_distance = max(relative_distances)
+                        # Linearity index is the range of relative distances
+                        linearity_index = max_distance - min_distance
+
+                        linearity_data.append({
+                            **data,
+                            'daily_gains': daily_gains,
+                            'average_gain': avg_gain,
+                            'linearity_index': linearity_index,
+                            'total_exp_gained': sum(daily_gains),
+                            'days_tracked': len(daily_gains),
+                            'min_gain': min(daily_gains),
+                            'max_gain': max(daily_gains)
+                        })
+
+        # Sort by linearity index (most linear first)
+        linearity_data.sort(key=lambda x: x['linearity_index'])
+        return linearity_data[:limit]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/filter-ids")
+async def get_filtered_character_ids(
+    search: Optional[str] = None,
+    guild: Optional[str] = None,
+    limit: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get filtered character IDs based on search criteria
+    """
+    try:
+        query = db.query(Character.id)
+
+        if search:
+            query = query.filter(Character.name.ilike(f"%{search}%"))
+        if guild:
+            query = query.filter(Character.guild.ilike(f"%{guild}%"))
+
+        if limit and limit.lower() != "all":
+            try:
+                limit_num = int(limit)
+                query = query.limit(limit_num)
+            except ValueError:
+                pass
+
+        character_ids = [str(row.id) for row in query.all()]
+        return {"character_ids": character_ids}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/")
+async def get_all_characters(
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100
+):
+    """
+    Get all characters with pagination
+    """
+    try:
+        query = db.query(Character)
+        total = query.count()
+        characters = query.offset(skip).limit(limit).all()
+        
+        return {
+            "total": total,
+            "characters": characters,
+            "skip": skip,
+            "limit": limit
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
