@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CharacterSelection } from './CharacterSelection';
 import { ComparisonChart } from './ComparisonChart';
+import { TopExpPanel } from './TopExpPanel';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Card } from './ui/card';
 import { Users, Activity, TrendingUp, BarChart3 } from 'lucide-react';
@@ -159,10 +160,19 @@ export default function Dashboard(): JSX.Element {
         </Card>
       </div>
 
-      <CharacterSelection
-        characters={characters}
-        onCompare={handleCompare}
-      />
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
+        <div className="space-y-6">
+          <CharacterSelection
+            characters={characters}
+            onCompare={handleCompare}
+          />
+        </div>
+
+        <div className="space-y-6">
+          <TopExpPanel />
+        </div>
+      </div>
 
       <Dialog open={isComparisonOpen} onOpenChange={setIsComparisonOpen}>
         <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-auto" description={`Comparando ${selectedCharacters.length} personagens`}>
