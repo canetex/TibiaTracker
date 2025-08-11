@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, AreaChart, Area } from 'recharts'
 import { apiService } from '../services/api'
 
+// Paleta fixa para comparação de personagens
 const PALETTE = ["#1565C0", "#FFA726", "#4CAF50", "#F44336", "#9C27B0", "#FF5722", "#607D8B", "#795548"]
 
 type Character = { id: number; name?: string }
@@ -18,6 +19,7 @@ function AxisProps() {
   return {
     stroke: 'hsl(var(--muted-foreground))',
     tick: { fontSize: 12, fill: 'hsl(var(--muted-foreground))' },
+    grid: { stroke: 'hsl(var(--muted-foreground) / 0.3)' }
   }
 }
 
@@ -59,7 +61,6 @@ export default function ComparisonChart({ characters }: Props): JSX.Element {
   }, [characters, days])
 
   const mergedBy = (key: 'level' | 'experience' | 'experienceGained') => {
-    // Assume todas as séries possuem mesmo número de pontos por dia
     const maxLen = Math.max(0, ...Object.values(series).map(arr => arr.length))
     const out: any[] = []
     for (let i = 0; i < maxLen; i++) {
@@ -88,7 +89,7 @@ export default function ComparisonChart({ characters }: Props): JSX.Element {
         {loading ? (
           <div className="h-[400px] grid place-items-center text-muted-foreground">Carregando...</div>
         ) : (
-          <Tabs defaultValue="level" className="w-full">
+          <Tabs defaultValue="level">
             <TabsList className="grid w-full grid-cols-3 sm:w-auto mb-4">
               <TabsTrigger value="level">Level</TabsTrigger>
               <TabsTrigger value="experience">Experiência</TabsTrigger>
@@ -98,13 +99,19 @@ export default function ComparisonChart({ characters }: Props): JSX.Element {
             <TabsContent value="level">
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dataLevel}>
+                  <LineChart data={dataLevel} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                     <XAxis dataKey="date" {...AxisProps()} />
                     <YAxis {...AxisProps()} />
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                     <Legend />
                     {characters.map((c, i) => (
-                      <Line key={c.id} type="monotone" dot={false} dataKey={c.name || `c${c.id}`} stroke={PALETTE[i % PALETTE.length]} />
+                      <Line 
+                        key={c.id} 
+                        type="monotone" 
+                        dot={false} 
+                        dataKey={c.name || `c${c.id}`} 
+                        stroke={PALETTE[i % PALETTE.length]} 
+                      />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>
@@ -114,13 +121,20 @@ export default function ComparisonChart({ characters }: Props): JSX.Element {
             <TabsContent value="experience">
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dataExp}>
+                  <AreaChart data={dataExp} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                     <XAxis dataKey="date" {...AxisProps()} />
                     <YAxis {...AxisProps()} />
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                     <Legend />
                     {characters.map((c, i) => (
-                      <Area key={c.id} type="monotone" dataKey={c.name || `c${c.id}`} stroke={PALETTE[i % PALETTE.length]} fill={PALETTE[i % PALETTE.length]} fillOpacity={0.2} />
+                      <Area 
+                        key={c.id} 
+                        type="monotone" 
+                        dataKey={c.name || `c${c.id}`} 
+                        stroke={PALETTE[i % PALETTE.length]} 
+                        fill={PALETTE[i % PALETTE.length]} 
+                        fillOpacity={0.2} 
+                      />
                     ))}
                   </AreaChart>
                 </ResponsiveContainer>
@@ -130,13 +144,17 @@ export default function ComparisonChart({ characters }: Props): JSX.Element {
             <TabsContent value="gained">
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataGained}>
+                  <BarChart data={dataGained} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                     <XAxis dataKey="date" {...AxisProps()} />
                     <YAxis {...AxisProps()} />
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                     <Legend />
                     {characters.map((c, i) => (
-                      <Bar key={c.id} dataKey={c.name || `c${c.id}`} fill={PALETTE[i % PALETTE.length]} />
+                      <Bar 
+                        key={c.id} 
+                        dataKey={c.name || `c${c.id}`} 
+                        fill={PALETTE[i % PALETTE.length]} 
+                      />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>

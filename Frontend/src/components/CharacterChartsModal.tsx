@@ -9,6 +9,7 @@ function AxisProps() {
   return {
     stroke: 'hsl(var(--muted-foreground))',
     tick: { fontSize: 12, fill: 'hsl(var(--muted-foreground))' },
+    grid: { stroke: 'hsl(var(--muted-foreground) / 0.3)' }
   }
 }
 
@@ -63,21 +64,23 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="max-w-6xl w-full max-h-[90vh] overflow-auto p-4">
         <Card className="tibia-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Gráficos - {character?.name || 'Personagem'}</CardTitle>
-            <div className="flex items-center gap-2">
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm"
-                value={days}
-                onChange={(e) => setDays(Number(e.target.value))}
-              >
-                <option value={7}>7 dias</option>
-                <option value={14}>14 dias</option>
-                <option value={30}>30 dias</option>
-                <option value={60}>60 dias</option>
-                <option value={90}>90 dias</option>
-              </select>
-              <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Gráficos - {character?.name || 'Personagem'}</CardTitle>
+              <div className="flex items-center gap-2">
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  value={days}
+                  onChange={(e) => setDays(Number(e.target.value))}
+                >
+                  <option value={7}>7 dias</option>
+                  <option value={14}>14 dias</option>
+                  <option value={30}>30 dias</option>
+                  <option value={60}>60 dias</option>
+                  <option value={90}>90 dias</option>
+                </select>
+                <Button variant="outline" onClick={onClose}>Fechar</Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -85,7 +88,7 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
             {loading ? (
               <div className="h-[400px] grid place-items-center text-muted-foreground">Carregando...</div>
             ) : (
-              <Tabs defaultValue="experience" className="w-full">
+              <Tabs defaultValue="experience">
                 <TabsList className="grid w-full grid-cols-4 sm:w-auto mb-4">
                   <TabsTrigger value="experience">Experiência</TabsTrigger>
                   <TabsTrigger value="level">Level</TabsTrigger>
@@ -99,15 +102,21 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                       <AreaChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                         <defs>
                           <linearGradient id="experienceGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={"hsl(var(--primary))"} stopOpacity={0.6} />
-                            <stop offset="95%" stopColor={"hsl(var(--primary))"} stopOpacity={0.1} />
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
                           </linearGradient>
                         </defs>
                         <XAxis dataKey="date" {...AxisProps()} />
                         <YAxis {...AxisProps()} />
-                        <Tooltip />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                         <Legend />
-                        <Area type="monotone" dataKey="experience" stroke={"hsl(var(--primary))"} fillOpacity={1} fill="url(#experienceGradient)" />
+                        <Area 
+                          type="monotone" 
+                          dataKey="experience" 
+                          stroke="hsl(var(--primary))" 
+                          fillOpacity={1} 
+                          fill="url(#experienceGradient)" 
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -119,9 +128,14 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                       <LineChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                         <XAxis dataKey="date" {...AxisProps()} />
                         <YAxis {...AxisProps()} />
-                        <Tooltip />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                         <Legend />
-                        <Line type="monotone" dataKey="level" stroke="hsl(var(--success))" dot={false} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="level" 
+                          stroke="hsl(var(--success))" 
+                          dot={false} 
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -133,9 +147,12 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                       <BarChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                         <XAxis dataKey="date" {...AxisProps()} />
                         <YAxis {...AxisProps()} />
-                        <Tooltip />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                         <Legend />
-                        <Bar dataKey="experienceGained" fill="hsl(var(--warning))" />
+                        <Bar 
+                          dataKey="experienceGained" 
+                          fill="hsl(var(--warning))" 
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -147,9 +164,12 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                       <BarChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                         <XAxis dataKey="date" {...AxisProps()} />
                         <YAxis {...AxisProps()} />
-                        <Tooltip />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                         <Legend />
-                        <Bar dataKey="deaths" fill="hsl(var(--destructive))" />
+                        <Bar 
+                          dataKey="deaths" 
+                          fill="hsl(var(--destructive))" 
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
