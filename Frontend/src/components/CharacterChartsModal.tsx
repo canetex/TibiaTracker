@@ -1,12 +1,32 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts'
-import { apiService } from '../services/api'
-import { Zap, Target, TrendingUp, Activity } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from './ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Zap, Target, TrendingUp, Activity } from 'lucide-react';
+import { AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { apiService } from '../services/api';
+import { formatNumber } from '../lib/utils';
 
-interface ChartData {
+interface Character {
+  id: string;
+  name: string;
+  level: number;
+  vocation: string;
+  world: string;
+  experience: number;
+  guild?: string;
+  isOnline: boolean;
+  recoveryActive: boolean;
+  isFavorite: boolean;
+  deaths: number;
+  lastLogin: string;
+  experienceGained24h?: number;
+  levelProgress: number;
+  pvpType: "Optional PvP" | "Open PvP" | "Retro Open PvP" | "Hardcore PvP";
+}
+
+interface ChartDataPoint {
   date: string;
   level: number;
   experience: number;
@@ -14,99 +34,79 @@ interface ChartData {
   deaths: number;
 }
 
-interface Props {
-  character: any;
+interface CharacterChartsModalProps {
+  character: Character;
   open: boolean;
   onClose: () => void;
 }
 
 const timeRanges = [
-  { value: "7d", label: "7 dias" },
-  { value: "30d", label: "30 dias" },
-  { value: "90d", label: "90 dias" },
-  { value: "1y", label: "1 ano" },
+  { value: '7', label: '7 dias' },
+  { value: '15', label: '15 dias' },
+  { value: '30', label: '30 dias' },
+  { value: '60', label: '60 dias' },
+  { value: '90', label: '90 dias' },
 ];
 
 const chartTypes = [
-  { value: "experience", label: "Experience", icon: Zap },
-  { value: "level", label: "Level", icon: Target },
-  { value: "daily", label: "Daily Gain", icon: TrendingUp },
-  { value: "deaths", label: "Deaths", icon: Activity },
+  { value: 'experience', label: 'Experiência', icon: <Zap className="h-4 w-4" /> },
+  { value: 'level', label: 'Level', icon: <Target className="h-4 w-4" /> },
+  { value: 'daily', label: 'Exp. Diária', icon: <TrendingUp className="h-4 w-4" /> },
+  { value: 'deaths', label: 'Mortes', icon: <Activity className="h-4 w-4" /> },
 ];
 
-export default function CharacterChartsModal({ character, open, onClose }: Props): JSX.Element | null {
-  const [days, setDays] = useState(30)
-  const [selectedChart, setSelectedChart] = useState("experience")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<Array<any>>([])
+export function CharacterChartsModal({ character, open, onClose }: CharacterChartsModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('30');
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
-    if (!open || !character?.id) return
-    let isMounted = true
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const stats = await apiService.getCharacterStats(character.id, days)
-        if (!isMounted) return
-        setData(Array.isArray(stats) ? stats : [])
-      } catch (err: any) {
-        if (!isMounted) return
-        setError('Erro ao carregar estatísticas do personagem')
-      } finally {
-        if (isMounted) setLoading(false)
-      }
+    if (open && character) {
+      loadChartData();
     }
-    fetchData()
-    return () => {
-      isMounted = false
+  }, [open, character, timeRange]);
+
+  const loadChartData = async () => {
+    try {
+      setLoading(true);
+      const [expData, levelData] = await Promise.all([
+        apiService.getCharacterExperienceData(character.id, parseInt(timeRange)),
+        apiService.getCharacterLevelData(character.id, parseInt(timeRange))
+      ]);
+      
+      const mergedData = expData.data.map((exp: any, index: number) => ({
+        date: exp.date,
+        experience: exp.experience,
+        experienceGained: exp.experience_gained,
+        level: levelData.data[index]?.level || 0,
+        deaths: levelData.data[index]?.deaths || 0,
+      }));
+
+      setChartData(mergedData);
+    } catch (error) {
+      console.error('Erro ao carregar dados dos gráficos:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [open, character?.id, days])
-
-  const chartData = useMemo(() => {
-    return (data || []).map((d) => ({
-      date: d.date || d.day || d.label,
-      level: d.level ?? d.latest_snapshot?.level ?? 0,
-      experience: d.experience ?? d.latest_snapshot?.experience ?? 0,
-      experienceGained: d.experienceGained ?? d.exp_gained ?? d.exp ?? 0,
-      deaths: d.deaths ?? 0,
-    }))
-  }, [data])
-
-  // Calculate statistics
-  const latestData = data[data.length - 1];
-  const oldestData = data[0];
-  const totalExpGained = latestData?.experience - oldestData?.experience || 0;
-  const levelGained = latestData?.level - oldestData?.level || 0;
-  const avgDailyExp = totalExpGained / data.length || 0;
-  const totalDeaths = data.reduce((sum, entry) => sum + (entry.deaths || 0), 0);
-
-  const formatExperience = (exp: number) => {
-    if (exp >= 1000000000) return `${(exp / 1000000000).toFixed(1)}B`;
-    if (exp >= 1000000) return `${(exp / 1000000).toFixed(1)}M`;
-    if (exp >= 1000) return `${(exp / 1000).toFixed(1)}K`;
-    return exp.toString();
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  const formatExperience = (exp: number) => {
+    return formatNumber(exp);
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <Card className="border shadow-lg">
+        <Card>
           <CardContent className="p-3">
-            <p className="font-medium">{formatDate(label)}</p>
-            {payload.map((entry: any, index: number) => (
-              <p key={index} style={{ color: entry.color }}>
-                {entry.name}: {
-                  entry.dataKey === "experience" || entry.dataKey === "experienceGained"
-                    ? formatExperience(entry.value)
-                    : entry.value
-                }
+            <p className="text-sm font-semibold">{formatDate(label)}</p>
+            {payload.map((item: any) => (
+              <p key={item.name} className="text-sm">
+                {item.name}: {formatExperience(item.value)}
               </p>
             ))}
           </CardContent>
@@ -116,103 +116,44 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
     return null;
   };
 
-  if (!open) return null;
-
-  if (loading) {
-    return (
-      <Card className="tibia-card">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80 bg-muted animate-pulse rounded" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-w-6xl w-full max-h-[90vh] overflow-auto p-4">
-        <Card className="tibia-card">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent
+        className="max-w-6xl max-h-[90vh] overflow-auto"
+        description={`Análise de progresso de ${character.name} nos últimos ${timeRange} dias`}
+      >
+        <div className="space-y-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="gradient-text">{character?.name || 'Personagem'}</CardTitle>
-                <p className="text-muted-foreground">Character Evolution Analysis</p>
-              </div>
-              
-              <div className="flex gap-2">
-                <select
-                  className="h-9 rounded-md border bg-background px-3 text-sm"
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
-                >
+            <CardTitle className="flex items-center justify-between">
+              <span>{character.name}</span>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
                   {timeRanges.map((range) => (
-                    <option key={range.value} value={range.value}>
+                    <SelectItem key={range.value} value={range.value}>
                       {range.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-                <Button variant="outline" onClick={onClose}>Fechar</Button>
-              </div>
-            </div>
-
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              <div className="bg-gradient-card p-4 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-warning" />
-                  <span className="text-sm font-medium">Total Exp</span>
-                </div>
-                <p className="text-2xl font-bold text-primary">
-                  +{formatExperience(totalExpGained)}
-                </p>
-              </div>
-
-              <div className="bg-gradient-card p-4 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium">Levels</span>
-                </div>
-                <p className="text-2xl font-bold text-success">+{levelGained}</p>
-              </div>
-
-              <div className="bg-gradient-card p-4 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-info" />
-                  <span className="text-sm font-medium">Avg Daily</span>
-                </div>
-                <p className="text-2xl font-bold text-info">
-                  {formatExperience(avgDailyExp)}
-                </p>
-              </div>
-
-              <div className="bg-gradient-card p-4 rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-destructive" />
-                  <span className="text-sm font-medium">Deaths</span>
-                </div>
-                <p className="text-2xl font-bold text-destructive">{totalDeaths}</p>
-              </div>
-            </div>
+                </SelectContent>
+              </Select>
+            </CardTitle>
           </CardHeader>
 
-          <CardContent>
-            <Tabs value={selectedChart} onValueChange={setSelectedChart}>
+          {loading ? (
+            <div className="flex items-center justify-center h-[400px]">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <Tabs defaultValue="experience">
               <TabsList className="grid w-full grid-cols-4">
-                {chartTypes.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <TabsTrigger key={type.value} value={type.value} className="flex items-center gap-1">
-                      <Icon className="h-3 w-3" />
-                      <span className="hidden sm:inline">{type.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
+                {chartTypes.map((type) => (
+                  <TabsTrigger key={type.value} value={type.value} className="flex items-center gap-2">
+                    {type.icon}
+                    {type.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
 
               <TabsContent value="experience" className="mt-6">
@@ -226,12 +167,12 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={formatDate}
                         className="text-muted-foreground"
                       />
-                      <YAxis 
+                      <YAxis
                         tickFormatter={formatExperience}
                         className="text-muted-foreground"
                       />
@@ -254,19 +195,22 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={formatDate}
                         className="text-muted-foreground"
                       />
-                      <YAxis className="text-muted-foreground" />
+                      <YAxis
+                        domain={['dataMin - 1', 'dataMax + 1']}
+                        className="text-muted-foreground"
+                      />
                       <Tooltip content={<CustomTooltip />} />
                       <Line
                         type="stepAfter"
                         dataKey="level"
                         stroke="hsl(var(--success))"
-                        strokeWidth={3}
-                        dot={{ fill: "hsl(var(--success))", strokeWidth: 2, r: 4 }}
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--success))", r: 4 }}
                         name="Level"
                       />
                     </LineChart>
@@ -279,12 +223,12 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={formatDate}
                         className="text-muted-foreground"
                       />
-                      <YAxis 
+                      <YAxis
                         tickFormatter={formatExperience}
                         className="text-muted-foreground"
                       />
@@ -292,8 +236,8 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                       <Bar
                         dataKey="experienceGained"
                         fill="hsl(var(--warning))"
-                        name="Daily Experience"
                         radius={[4, 4, 0, 0]}
+                        name="Exp. Diária"
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -305,27 +249,30 @@ export default function CharacterChartsModal({ character, open, onClose }: Props
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={formatDate}
                         className="text-muted-foreground"
                       />
-                      <YAxis className="text-muted-foreground" />
+                      <YAxis
+                        domain={[0, 'dataMax + 1']}
+                        className="text-muted-foreground"
+                      />
                       <Tooltip content={<CustomTooltip />} />
                       <Bar
                         dataKey="deaths"
                         fill="hsl(var(--destructive))"
-                        name="Deaths"
                         radius={[4, 4, 0, 0]}
+                        name="Mortes"
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 } 
