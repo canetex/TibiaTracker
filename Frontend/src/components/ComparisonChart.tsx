@@ -1,168 +1,266 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, BarChart, Bar, AreaChart, Area } from 'recharts'
-import { apiService } from '../services/api'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
-// Paleta fixa para comparação de personagens
-const PALETTE = ["#1565C0", "#FFA726", "#4CAF50", "#F44336", "#9C27B0", "#FF5722", "#607D8B", "#795548"]
-
-type Character = { id: number; name?: string }
-
-type Props = {
-  characters: Character[]
-  open: boolean
-  onClose: () => void
+interface Character {
+  id: string;
+  name: string;
+  level: number;
+  vocation: string;
+  world: string;
+  experience: number;
+  guild?: string;
+  isOnline: boolean;
+  recoveryActive: boolean;
+  isFavorite: boolean;
+  deaths: number;
+  lastLogin: string;
+  experienceGained24h?: number;
+  levelProgress: number;
+  pvpType: "Optional PvP" | "Open PvP" | "Retro Open PvP" | "Hardcore PvP";
 }
 
-function AxisProps() {
-  return {
-    stroke: 'hsl(var(--muted-foreground))',
-    tick: { fontSize: 12, fill: 'hsl(var(--muted-foreground))' },
-    grid: { stroke: 'hsl(var(--muted-foreground) / 0.3)' }
-  }
+interface ChartDataPoint {
+  date: string;
+  level: number;
+  experience: number;
+  experienceGained: number;
+  deaths: number;
 }
 
-export default function ComparisonChart({ characters }: Props): JSX.Element {
-  const [days] = useState(30)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [series, setSeries] = useState<Record<number, Array<any>>>({})
+interface ComparisonChartProps {
+  characters: Character[];
+  data: ChartDataPoint[];
+}
 
-  useEffect(() => {
-    let isMounted = true
-    const fetchAll = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const results = await Promise.all(
-          characters.map(async (c) => {
-            try {
-              const stats = await apiService.getCharacterStats(c.id, days)
-              return { id: c.id, data: Array.isArray(stats) ? stats : [] }
-            } catch {
-              return { id: c.id, data: [] }
-            }
-          })
-        )
-        if (!isMounted) return
-        const map: Record<number, Array<any>> = {}
-        results.forEach(({ id, data }) => { map[id] = data })
-        setSeries(map)
-      } catch (err: any) {
-        if (!isMounted) return
-        setError('Erro ao carregar dados para comparação')
-      } finally {
-        if (isMounted) setLoading(false)
-      }
+const colors = ["#1565C0", "#FFA726", "#4CAF50", "#F44336", "#9C27B0", "#FF5722", "#607D8B", "#795548"];
+
+export function ComparisonChart({ characters, data }: ComparisonChartProps) {
+  const formatExperience = (exp: number) => {
+    if (exp >= 1000000000) return `${(exp / 1000000000).toFixed(1)}B`;
+    if (exp >= 1000000) return `${(exp / 1000000).toFixed(1)}M`;
+    if (exp >= 1000) return `${(exp / 1000).toFixed(1)}K`;
+    return exp.toString();
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <Card className="border shadow-lg">
+          <CardContent className="p-3">
+            <p className="font-medium">{formatDate(label)}</p>
+            {payload.map((entry: any, index: number) => (
+              <p key={index} style={{ color: entry.color }}>
+                {entry.name}: {
+                  entry.name.includes('experience') 
+                    ? formatExperience(entry.value)
+                    : entry.value.toLocaleString()
+                }
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+      );
     }
-    if (characters?.length) fetchAll()
-    return () => { isMounted = false }
-  }, [characters, days])
-
-  const mergedBy = (key: 'level' | 'experience' | 'experienceGained') => {
-    const maxLen = Math.max(0, ...Object.values(series).map(arr => arr.length))
-    const out: any[] = []
-    for (let i = 0; i < maxLen; i++) {
-      const row: any = { date: undefined }
-      characters.forEach((c) => {
-        const d = series[c.id]?.[i] || {}
-        row.date = row.date || d.date || d.day || d.label
-        const level = d.level ?? d.latest_snapshot?.level ?? 0
-        const exp = d.experience ?? d.latest_snapshot?.experience ?? 0
-        const gained = d.experienceGained ?? d.exp_gained ?? d.exp ?? 0
-        row[c.name || `c${c.id}`] = key === 'level' ? level : key === 'experience' ? exp : gained
-      })
-      out.push(row)
-    }
-    return out
-  }
-
-  const dataLevel = useMemo(() => mergedBy('level'), [series, characters])
-  const dataExp = useMemo(() => mergedBy('experience'), [series, characters])
-  const dataGained = useMemo(() => mergedBy('experienceGained'), [series, characters])
+    return null;
+  };
 
   return (
-    <Card className="tibia-card">
-      <CardContent className="p-4">
-        {error && <div className="text-destructive mb-4">{error}</div>}
-        {loading ? (
-          <div className="h-[400px] grid place-items-center text-muted-foreground">Carregando...</div>
-        ) : (
-          <Tabs defaultValue="level">
-            <TabsList className="grid w-full grid-cols-3 sm:w-auto mb-4">
-              <TabsTrigger value="level">Level</TabsTrigger>
-              <TabsTrigger value="experience">Experiência</TabsTrigger>
-              <TabsTrigger value="gained">Exp. Diária</TabsTrigger>
-            </TabsList>
+    <div className="space-y-6">
+      {/* Character Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {characters.map((char, index) => (
+          <Card key={char.id} className="tibia-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-4 h-4 rounded-full" 
+                  style={{ backgroundColor: colors[index % colors.length] }}
+                />
+                <div>
+                  <h4 className="font-semibold text-foreground">{char.name}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Level {char.level} {char.vocation}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{char.world}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-            <TabsContent value="level">
+      {/* Charts */}
+      <Tabs defaultValue="level" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="level">Level Comparison</TabsTrigger>
+          <TabsTrigger value="experience">Experience Comparison</TabsTrigger>
+          <TabsTrigger value="experienceGained">Daily Experience</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="level" className="space-y-4">
+          <Card className="tibia-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Level Evolution Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dataLevel} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-                    <XAxis dataKey="date" {...AxisProps()} />
-                    <YAxis {...AxisProps()} />
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <LineChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={formatDate}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    {characters.map((c, i) => (
-                      <Line 
-                        key={c.id} 
-                        type="monotone" 
-                        dot={false} 
-                        dataKey={c.name || `c${c.id}`} 
-                        stroke={PALETTE[i % PALETTE.length]} 
+                    {characters.map((char, index) => (
+                      <Line
+                        key={char.id}
+                        type="monotone"
+                        dataKey="level"
+                        stroke={colors[index % colors.length]}
+                        strokeWidth={3}
+                        name={`${char.name} Level`}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
                       />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="experience">
+        <TabsContent value="experience" className="space-y-4">
+          <Card className="tibia-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Experience Evolution Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dataExp} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-                    <XAxis dataKey="date" {...AxisProps()} />
-                    <YAxis {...AxisProps()} />
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <AreaChart data={data}>
+                    <defs>
+                      {characters.map((char, index) => (
+                        <linearGradient
+                          key={char.id}
+                          id={`gradient-${char.id}`}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor={colors[index % colors.length]}
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor={colors[index % colors.length]}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={formatDate}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      tickFormatter={formatExperience}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    {characters.map((c, i) => (
-                      <Area 
-                        key={c.id} 
-                        type="monotone" 
-                        dataKey={c.name || `c${c.id}`} 
-                        stroke={PALETTE[i % PALETTE.length]} 
-                        fill={PALETTE[i % PALETTE.length]} 
-                        fillOpacity={0.2} 
+                    {characters.map((char, index) => (
+                      <Area
+                        key={char.id}
+                        type="monotone"
+                        dataKey="experience"
+                        stroke={colors[index % colors.length]}
+                        fill={`url(#gradient-${char.id})`}
+                        name={`${char.name} Experience`}
+                        strokeWidth={2}
                       />
                     ))}
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="gained">
+        <TabsContent value="experienceGained" className="space-y-4">
+          <Card className="tibia-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Daily Experience Gain Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataGained} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-                    <XAxis dataKey="date" {...AxisProps()} />
-                    <YAxis {...AxisProps()} />
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                  <BarChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={formatDate}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      tickFormatter={formatExperience}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    {characters.map((c, i) => (
-                      <Bar 
-                        key={c.id} 
-                        dataKey={c.name || `c${c.id}`} 
-                        fill={PALETTE[i % PALETTE.length]} 
+                    {characters.map((char, index) => (
+                      <Bar
+                        key={char.id}
+                        dataKey="experienceGained"
+                        fill={colors[index % colors.length]}
+                        name={`${char.name} Daily Exp`}
+                        radius={[4, 4, 0, 0]}
+                        opacity={0.8}
                       />
                     ))}
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
-  )
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 } 
