@@ -5,9 +5,9 @@ Rotas da API para gerenciamento de personagens
 Endpoints para CRUD de personagens e seus snapshots históricos.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Request, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, and_, or_, exists
+from sqlalchemy import select, func, desc, and_, or_, exists, text
 from sqlalchemy.orm import selectinload, aliased
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -25,7 +25,8 @@ from app.schemas.character import (
     CharacterBase, CharacterCreate, CharacterUpdate, Character,
     CharacterSnapshot, CharacterSnapshotCreate, CharacterWithSnapshots,
     CharacterStats, CharacterIDsRequest, CharacterIDsResponse,
-    ServerType, WorldType, VocationType
+    ServerType, WorldType, VocationType,
+    CharacterFilter, TopExpResponse
 )
 from app.services.character import CharacterService
 from app.services.scraping import scrape_character_data, get_supported_servers, get_server_info, is_server_supported, is_world_supported
@@ -2226,4 +2227,99 @@ async def get_character_level_chart(
             "level_end": level_end,
             "snapshots_count": len(snapshots)
         }
-    } 
+    }
+
+
+@router.get("/top-exp", response_model=List[TopExpResponse])
+async def get_top_exp(
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=100),
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    guild: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+):
+    """
+    Get top characters by experience gained in a period.
+    """
+    try:
+        db = next(get_db())
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build base query
+        query = db.query(
+            Character.id,
+            Character.name,
+            Character.level,
+            Character.vocation,
+            Character.world,
+            Character.server,
+            Character.guild,
+            func.max(CharacterSnapshot.experience).label('end_exp'),
+            func.min(CharacterSnapshot.experience).label('start_exp'),
+            func.max(CharacterSnapshot.level).label('end_level'),
+            func.min(CharacterSnapshot.level).label('start_level'),
+        ).join(
+            CharacterSnapshot,
+            Character.id == CharacterSnapshot.character_id
+        ).filter(
+            CharacterSnapshot.created_at.between(start_date, end_date)
+        ).group_by(
+            Character.id
+        )
+
+        # Apply filters
+        if server:
+            query = query.filter(Character.server == server)
+        if world:
+            query = query.filter(Character.world == world)
+        if vocation:
+            query = query.filter(Character.vocation == vocation)
+        if guild:
+            query = query.filter(Character.guild == guild)
+        if min_level:
+            query = query.filter(Character.level >= min_level)
+        if max_level:
+            query = query.filter(Character.level <= max_level)
+
+        # Calculate experience gained and order by it
+        query = query.having(
+            func.max(CharacterSnapshot.experience) > func.min(CharacterSnapshot.experience)
+        ).order_by(
+            desc(func.max(CharacterSnapshot.experience) - func.min(CharacterSnapshot.experience))
+        ).limit(limit)
+
+        results = query.all()
+
+        # Format response
+        response = []
+        for result in results:
+            exp_gained = result.end_exp - result.start_exp
+            levels_gained = result.end_level - result.start_level
+            avg_exp_per_day = exp_gained / days
+
+            response.append({
+                "id": result.id,
+                "name": result.name,
+                "level": result.level,
+                "vocation": result.vocation,
+                "world": result.world,
+                "server": result.server,
+                "guild": result.guild,
+                "experienceGained": exp_gained,
+                "levelsGained": levels_gained,
+                "averageExpPerDay": avg_exp_per_day,
+                "startLevel": result.start_level,
+                "endLevel": result.end_level,
+                "startExp": result.start_exp,
+                "endExp": result.end_exp,
+                "period": days
+            })
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
