@@ -113,48 +113,48 @@ export default function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
+    <div className="space-y-6 p-4 md:p-6">
+      <h1 className="text-2xl md:text-3xl font-bold gradient-text text-center md:text-left">Dashboard</h1>
       
       {/* Global Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <Card className="p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total de Personagens</p>
-              <p className="text-2xl font-bold">{globalStats?.total_characters || 0}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Total de Personagens</p>
+              <p className="text-lg md:text-2xl font-bold">{globalStats?.total_characters || 0}</p>
             </div>
-            <Users className="h-8 w-8 text-primary" />
+            <Users className="h-6 w-6 md:h-8 md:w-8 text-primary" />
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Ativos Hoje</p>
-              <p className="text-2xl font-bold">{globalStats?.active_today || 0}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Ativos Hoje</p>
+              <p className="text-lg md:text-2xl font-bold">{globalStats?.active_today || 0}</p>
             </div>
-            <Activity className="h-8 w-8 text-success" />
+            <Activity className="h-6 w-6 md:h-8 md:w-8 text-success" />
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Exp. Total Hoje</p>
-              <p className="text-2xl font-bold">{formatExperience(globalStats?.total_exp_today || 0)}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Exp. Total Hoje</p>
+              <p className="text-lg md:text-2xl font-bold">{formatExperience(globalStats?.total_exp_today || 0)}</p>
             </div>
-            <TrendingUp className="h-8 w-8 text-warning" />
+            <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-warning" />
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-3 md:p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Servidores</p>
-              <p className="text-2xl font-bold">{globalStats?.total_servers || 0}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Servidores</p>
+              <p className="text-lg md:text-2xl font-bold">{globalStats?.total_servers || 0}</p>
             </div>
-            <BarChart3 className="h-8 w-8 text-info" />
+            <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-info" />
           </div>
         </Card>
       </div>
@@ -165,7 +165,7 @@ export default function Dashboard(): JSX.Element {
       />
 
       <Dialog open={isComparisonOpen} onOpenChange={setIsComparisonOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-auto" description={`Comparando ${selectedCharacters.length} personagens`}>
           <ComparisonChart
             characters={selectedCharacters}
             data={chartData}
