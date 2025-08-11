@@ -222,6 +222,11 @@ export const apiService = {
     }
   },
 
+  // Alias de compatibilidade com telas antigas
+  async toggleRecoveryStatus(characterId) {
+    return this.toggleRecovery(characterId);
+  },
+
   async manualScrape(characterId) {
     try {
       const response = await api.post(`/characters/${characterId}/manual-scrape`);
@@ -340,7 +345,7 @@ export const apiService = {
       Object.entries(params).forEach(([key, value]) => {
         if (Array.isArray(value)) {
           value.forEach((v) => searchParams.append(key, v));
-        } else if (value !== undefined && value !== null) {
+        } else if (value !== undefined && value !== null && value !== '') {
           searchParams.append(key, value);
         }
       });
@@ -380,6 +385,39 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('[API] Erro em getCharactersByIds:', error);
+      throw error;
+    }
+  },
+
+  // ============================================================================
+  // COMPATIBILIDADES / HELPERS
+  // ============================================================================
+
+  /**
+   * Compatibilidade com telas antigas: buscar todos os personagens
+   */
+  async getAllCharacters() {
+    try {
+      // Usa a rota de listagem (sem filtros) para retornar todos
+      return await this.listCharacters({});
+    } catch (error) {
+      console.error('[API] Erro em getAllCharacters:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Compatibilidade com telas antigas: aplicar filtros e retornar personagens
+   */
+  async getFilteredCharacters(filters = {}) {
+    try {
+      const ids = await this.filterCharacterIds(filters);
+      if (Array.isArray(ids) && ids.length > 0) {
+        return await this.getCharactersByIds(ids);
+      }
+      return [];
+    } catch (error) {
+      console.error('[API] Erro em getFilteredCharacters:', error);
       throw error;
     }
   },
