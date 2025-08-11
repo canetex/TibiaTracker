@@ -216,6 +216,19 @@ const apiService = {
       handleError(error);
     }
   },
+
+  async getLinearity(days = 30, filters = {}) {
+    try {
+      logger.debug(`[API] getLinearity chamado com período de ${days} dias`);
+      const params = new URLSearchParams({ days: days.toString(), ...filters });
+      const response = await api.get(`/characters/linearity?${params}`);
+      logger.debug('[API] getLinearity resposta:', response.data);
+      return response.data;
+    } catch (error) {
+      logger.error('[API] Erro em getLinearity:', error);
+      handleError(error);
+    }
+  },
 };
 
 export { api, apiService }; 

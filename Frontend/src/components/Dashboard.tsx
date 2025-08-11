@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CharacterSelection } from './CharacterSelection';
 import { ComparisonChart } from './ComparisonChart';
 import { TopExpPanel } from './TopExpPanel';
+import { LinearityPanel } from './LinearityPanel';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Card } from './ui/card';
 import { Users, Activity, TrendingUp, BarChart3 } from 'lucide-react';
@@ -171,6 +172,7 @@ export default function Dashboard(): JSX.Element {
 
         <div className="space-y-6">
           <TopExpPanel />
+          <LinearityPanel />
         </div>
       </div>
 
