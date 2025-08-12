@@ -766,13 +766,13 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         )
         active_today = result.scalar()
         
-        # Calculate total experience gained today
+        # Calculate total experience gained today using snapshots from today
+        today = datetime.utcnow().date()
         result = await db.execute(
-            select(CharacterModel.experience_gained_24h)
-            .where(CharacterModel.experience_gained_24h.isnot(None))
+            select(func.sum(CharacterSnapshotModel.experience))
+            .where(CharacterSnapshotModel.exp_date == today)
         )
-        exp_values = result.scalars().all()
-        total_exp_today = sum(exp for exp in exp_values if exp)
+        total_exp_today = result.scalar() or 0
         
         # Get unique servers
         result = await db.execute(select(func.count(CharacterModel.server.distinct())))
