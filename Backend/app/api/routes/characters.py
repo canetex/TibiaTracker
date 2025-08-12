@@ -759,20 +759,34 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(func.count(CharacterModel.id)))
         total_characters = result.scalar()
         
-        # Count active characters (those scraped recently)
+        # Count active characters (those scraped recently - within last 24 hours)
         result = await db.execute(
             select(func.count(CharacterModel.id))
             .where(CharacterModel.last_scraped_at >= func.now() - text("interval '24 hours'"))
         )
         active_today = result.scalar()
         
-        # Calculate total experience gained today using snapshots from today
+        # Calculate total experience gained today by comparing snapshots
+        # Get today's date and yesterday's date
         today = datetime.utcnow().date()
+        yesterday = today - timedelta(days=1)
+        
+        # Get total experience from today's snapshots
         result = await db.execute(
             select(func.sum(CharacterSnapshotModel.experience))
             .where(CharacterSnapshotModel.exp_date == today)
         )
-        total_exp_today = result.scalar() or 0
+        today_exp = result.scalar() or 0
+        
+        # Get total experience from yesterday's snapshots
+        result = await db.execute(
+            select(func.sum(CharacterSnapshotModel.experience))
+            .where(CharacterSnapshotModel.exp_date == yesterday)
+        )
+        yesterday_exp = result.scalar() or 0
+        
+        # Calculate the difference (experience gained today)
+        total_exp_today = today_exp - yesterday_exp if today_exp > yesterday_exp else 0
         
         # Get unique servers
         result = await db.execute(select(func.count(CharacterModel.server.distinct())))
