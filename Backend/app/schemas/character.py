@@ -306,4 +306,23 @@ class TopExpResponse(BaseModel):
     period: int
 
     class Config:
+        orm_mode = True
+
+class LinearityResponse(BaseModel):
+    id: int
+    name: str
+    level: int
+    vocation: str
+    world: str
+    server: str
+    guild: Optional[str] = None
+    daily_gains: List[int]
+    average_gain: float
+    linearity_index: float
+    total_exp_gained: int
+    days_tracked: int
+    min_gain: int
+    max_gain: int
+
+    class Config:
         orm_mode = True 
