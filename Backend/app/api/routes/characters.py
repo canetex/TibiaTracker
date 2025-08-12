@@ -524,7 +524,7 @@ async def scrape_character_with_history(
 ):
     """Fazer scraping e salvar histórico completo de experiência"""
     
-    logger.info(f"[SCRAPE-WITH-HISTORY] Iniciando scraping com histórico para {character_name} em {server}/{world}")
+
     
     try:
         # Verificar se já existe
@@ -538,10 +538,7 @@ async def scrape_character_with_history(
         result = await db.execute(existing_query)
         existing_character = result.scalar_one_or_none()
         
-        logger.info(f"[SCRAPE-WITH-HISTORY] Personagem existente: {existing_character.id if existing_character else 'NÃO'}")
-        
-        # Fazer scraping
-        logger.info(f"[SCRAPE-WITH-HISTORY] Iniciando scraping...")
+
         scrape_result = await scrape_character_data(server, world, character_name)
         
         if not scrape_result.success:
@@ -556,18 +553,16 @@ async def scrape_character_with_history(
             )
         
         scraped_data = scrape_result.data
-        logger.info(f"[SCRAPE-WITH-HISTORY] Scraping concluído com sucesso")
+
         
         # Extrair histórico completo de experiência
         history_data = scraped_data.get('experience_history', [])
-        logger.info(f"[SCRAPE-WITH-HISTORY] Personagem {character_name}: {len(history_data)} entradas de histórico encontradas")
-        logger.info(f"[SCRAPE-WITH-HISTORY] Dados completos do scraping: {list(scraped_data.keys())}")
-        logger.info(f"[SCRAPE-WITH-HISTORY] experience_history: {history_data}")
+
         
         character = existing_character
         if not character:
             # Criar personagem se não existe
-            logger.info(f"[SCRAPE-WITH-HISTORY] Criando novo personagem...")
+
             character = CharacterModel(
                 name=scraped_data['name'],
                 server=server.lower(),
@@ -584,10 +579,10 @@ async def scrape_character_with_history(
             
             db.add(character)
             await db.flush()  # Para obter o ID
-            logger.info(f"[SCRAPE-WITH-HISTORY] Novo personagem criado com ID: {character.id}")
+
         else:
             # Atualizar personagem existente
-            logger.info(f"[SCRAPE-WITH-HISTORY] Atualizando personagem existente ID: {character.id}")
+
             character.level = scraped_data['level']
             character.vocation = scraped_data['vocation']
             character.residence = scraped_data.get('residence')
@@ -599,9 +594,9 @@ async def scrape_character_with_history(
         
         # Criar/atualizar snapshots para cada entrada do histórico
         if history_data:
-            logger.info(f"[SCRAPE-WITH-HISTORY] Processando {len(history_data)} entradas de histórico...")
+
             for i, entry in enumerate(history_data):
-                logger.info(f"[SCRAPE-WITH-HISTORY] Processando entrada {i+1}/{len(history_data)}: {entry}")
+
                 
                 # Verificar se entry['date'] é válido
                 if not entry.get('date'):
@@ -1003,55 +998,26 @@ async def filter_character_ids(
     Filtrar personagens e retornar apenas os IDs que correspondem aos critérios.
     Lógica: AND entre campos diferentes, OR entre múltiplas opções do mesmo campo.
     """
-    # Log completo dos parâmetros recebidos
-    logger.info(f"[FILTER-IDS] === INÍCIO DA FUNÇÃO ===")
-    logger.info(f"[FILTER-IDS] server: {server} (tipo: {type(server)})")
-    logger.info(f"[FILTER-IDS] world: {world} (tipo: {type(world)})")
-    logger.info(f"[FILTER-IDS] guild: {guild} (tipo: {type(guild)})")
-    logger.info(f"[FILTER-IDS] min_level: {min_level} (tipo: {type(min_level)})")
-    logger.info(f"[FILTER-IDS] max_level: {max_level} (tipo: {type(max_level)})")
-    logger.info(f"[FILTER-IDS] vocation: {vocation} (tipo: {type(vocation)})")
-    logger.info(f"[FILTER-IDS] activity_filter: {activity_filter} (tipo: {type(activity_filter)})")
-    logger.info(f"[FILTER-IDS] is_favorited: {is_favorited} (tipo: {type(is_favorited)})")
-    logger.info(f"[FILTER-IDS] favorite_ids: {favorite_ids} (tipo: {type(favorite_ids)})")
-    logger.info(f"[FILTER-IDS] recovery_active: {recovery_active} (tipo: {type(recovery_active)})")
-    logger.info(f"[FILTER-IDS] limit: {limit} (tipo: {type(limit)})")
+
     
-    # Log da URL completa se request estiver disponível
+    # Pegar min_level e max_level diretamente dos query_params se disponível
     if request:
-        logger.info(f"[FILTER-IDS] URL completa: {request.url}")
-        logger.info(f"[FILTER-IDS] Query params: {dict(request.query_params)}")
-        
-        # Pegar min_level e max_level diretamente dos query_params
         if 'min_level' in request.query_params:
             try:
                 min_level = int(request.query_params['min_level'])
-                logger.info(f"[FILTER-IDS] min_level extraído dos query_params: {min_level}")
             except ValueError:
-                logger.warning(f"[FILTER-IDS] min_level inválido nos query_params: {request.query_params['min_level']}")
                 min_level = None
         
         if 'max_level' in request.query_params:
             try:
                 max_level = int(request.query_params['max_level'])
-                logger.info(f"[FILTER-IDS] max_level extraído dos query_params: {max_level}")
             except ValueError:
-                logger.warning(f"[FILTER-IDS] max_level inválido nos query_params: {request.query_params['max_level']}")
                 max_level = None
         
-        # Verificar parâmetros de favoritos nos query_params
-        if 'is_favorited' in request.query_params:
-            logger.info(f"[FILTER-IDS] is_favorited nos query_params: {request.query_params['is_favorited']}")
-        
         if 'favorite_ids' in request.query_params:
-            logger.info(f"[FILTER-IDS] favorite_ids nos query_params: {request.query_params.getlist('favorite_ids')}")
-            # Tentar converter para lista de inteiros
             try:
-                favorite_ids_from_params = [int(id_str) for id_str in request.query_params.getlist('favorite_ids')]
-                logger.info(f"[FILTER-IDS] favorite_ids convertidos: {favorite_ids_from_params}")
-                favorite_ids = favorite_ids_from_params
-            except ValueError as e:
-                logger.error(f"[FILTER-IDS] Erro ao converter favorite_ids: {e}")
+                favorite_ids = [int(id_str) for id_str in request.query_params.getlist('favorite_ids')]
+            except ValueError:
                 favorite_ids = []
     
     # Converter min_level e max_level para inteiros se necessário
@@ -1059,9 +1025,7 @@ async def filter_character_ids(
         if isinstance(min_level, str) and min_level.strip():
             try:
                 min_level = int(min_level)
-                logger.info(f"[FILTER-IDS] min_level convertido para: {min_level}")
             except ValueError:
-                logger.warning(f"[FILTER-IDS] min_level inválido: {min_level}")
                 min_level = None
         elif not isinstance(min_level, int):
             min_level = None
@@ -1070,9 +1034,7 @@ async def filter_character_ids(
         if isinstance(max_level, str) and max_level.strip():
             try:
                 max_level = int(max_level)
-                logger.info(f"[FILTER-IDS] max_level convertido para: {max_level}")
             except ValueError:
-                logger.warning(f"[FILTER-IDS] max_level inválido: {max_level}")
                 max_level = None
         elif not isinstance(max_level, int):
             max_level = None
@@ -1101,25 +1063,14 @@ async def filter_character_ids(
 
     # Filtro de favoritos
     if is_favorited is not None and is_favorited != '':
-        logger.info(f"[FILTER-IDS] Aplicando filtro de favoritos: is_favorited={is_favorited}")
         if is_favorited.lower() == 'true':
             # Apenas favoritos do frontend (cookie)
             if favorite_ids:
-                logger.info(f"[FILTER-IDS] Filtrando apenas favoritos. IDs: {favorite_ids}")
                 conditions.append(CharacterModel.id.in_(favorite_ids))
-            else:
-                logger.warning(f"[FILTER-IDS] is_favorited=true mas favorite_ids está vazio!")
         elif is_favorited.lower() == 'false':
             # Apenas não favoritos do frontend (cookie)
             if favorite_ids:
-                logger.info(f"[FILTER-IDS] Filtrando apenas não favoritos. IDs: {favorite_ids}")
                 conditions.append(~CharacterModel.id.in_(favorite_ids))
-            else:
-                logger.warning(f"[FILTER-IDS] is_favorited=false mas favorite_ids está vazio!")
-        else:
-            logger.warning(f"[FILTER-IDS] Valor inválido para is_favorited: {is_favorited}")
-    else:
-        logger.info(f"[FILTER-IDS] Nenhum filtro de favoritos aplicado")
 
     # Filtro de vocação (OR se múltiplas opções)
     if vocation:
@@ -1131,10 +1082,8 @@ async def filter_character_ids(
 
     # Filtros de level da tabela principal
     if min_level is not None:
-        logger.info(f"[FILTER-IDS] Aplicando filtro min_level >= {min_level}")
         conditions.append(CharacterModel.level >= min_level)
     if max_level is not None:
-        logger.info(f"[FILTER-IDS] Aplicando filtro max_level <= {max_level}")
         conditions.append(CharacterModel.level <= max_level)
 
     # Filtros que dependem do snapshot mais recente
@@ -1181,7 +1130,7 @@ async def filter_character_ids(
     result = await db.execute(query)
     character_ids = [row[0] for row in result.fetchall()]
     
-    logger.info(f"[FILTER-IDS] IDs encontrados após filtros básicos: {len(character_ids)}")
+
 
     # Se há filtros de atividade, fazer uma segunda consulta para filtrar por snapshots
     if activity_filter and character_ids:
@@ -1218,10 +1167,7 @@ async def filter_character_ids(
             activity_result = await db.execute(activity_query)
             active_character_ids = [row[0] for row in activity_result.fetchall()]
             character_ids = [cid for cid in character_ids if cid in active_character_ids]
-            logger.info(f"[FILTER-IDS] IDs após filtro de atividade: {len(character_ids)}")
 
-    logger.info(f"[FILTER-IDS] Retornando {len(character_ids)} IDs")
-    logger.info(f"[FILTER-IDS] === FIM DA FUNÇÃO ===")
     return CharacterIDsResponse(
         ids=character_ids
     )
@@ -1794,9 +1740,7 @@ async def refresh_character_data(
         scraped_data = scrape_result.data
         history_data = scraped_data.get('experience_history', [])
         
-        logger.info(f"[REFRESH] Personagem {character.name}: {len(history_data)} entradas de histórico encontradas")
-        logger.info(f"[REFRESH] Dados completos do scraping: {scraped_data.keys()}")
-        logger.info(f"[REFRESH] experience_history: {history_data}")
+
         
         # Atualizar dados do personagem
         character.level = scraped_data['level']
@@ -1810,9 +1754,9 @@ async def refresh_character_data(
         
         # Processar histórico se disponível
         if history_data:
-            logger.info(f"[REFRESH] Processando {len(history_data)} entradas de histórico...")
+    
             for i, entry in enumerate(history_data, 1):
-                logger.debug(f"[REFRESH] Processando entrada {i}/{len(history_data)}: {entry['date_text']} ({entry['date']}) = {entry['experience_gained']:,}")
+        
                 
                 # Verificar se entry['date'] é válido
                 if not entry.get('date'):
@@ -1833,7 +1777,7 @@ async def refresh_character_data(
                 
                 if existing_snapshot:
                     # Atualizar snapshot existente
-                    logger.debug(f"[REFRESH] Atualizando snapshot existente para {entry['date_text']}")
+    
                     existing_snapshot.experience = max(0, entry['experience_gained'])  # Garantir que não seja negativo
                     existing_snapshot.level = scraped_data['level']
                     existing_snapshot.vocation = scraped_data['vocation']
@@ -1848,7 +1792,7 @@ async def refresh_character_data(
                     snapshots_updated += 1
                 else:
                     # Criar novo snapshot
-                    logger.debug(f"[REFRESH] Criando novo snapshot para {entry['date_text']}")
+    
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
                         level=scraped_data['level'],
@@ -1934,7 +1878,7 @@ async def refresh_character_data(
             character.guild = latest_snapshot.guild  # Pode ser None!
             await db.flush()  # Força a persistência imediata
             await db.commit()
-            logger.info(f"[REFRESH] Guild do personagem {character.id} atualizada para: {latest_snapshot.guild}")
+    
 
         return {
             "success": True,

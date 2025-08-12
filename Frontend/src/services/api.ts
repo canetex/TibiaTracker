@@ -116,7 +116,15 @@ export const apiService = {
 
   async getFilteredCharacters(filters = {}) {
     try {
-      const params = new URLSearchParams(filters as Record<string, string>);
+      // Converter chaves camelCase para snake_case e remover valores vazios/undefined/null
+      const params = new URLSearchParams();
+      Object.entries(filters as Record<string, any>).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          // Converter camelCase para snake_case
+          const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+          params.append(snakeKey, String(value));
+        }
+      });
       const response = await api.get(`/characters/filter?${params}`);
       return response.data;
     } catch (error) {
