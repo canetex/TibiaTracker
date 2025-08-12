@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
@@ -7,7 +7,7 @@ import { apiService } from '../services/api';
 import { formatNumber } from '../lib/utils';
 
 interface LinearityCharacter {
-  id: string;
+  id: number;
   name: string;
   level: number;
   vocation: string;
@@ -39,6 +39,10 @@ export function LinearityPanel({ onCharacterClick }: LinearityPanelProps) {
   const [period, setPeriod] = useState('30');
   const [loading, setLoading] = useState(false);
   const [characters, setCharacters] = useState<LinearityCharacter[]>([]);
+
+  useEffect(() => {
+    loadLinearity();
+  }, []);
 
   const loadLinearity = async () => {
     try {

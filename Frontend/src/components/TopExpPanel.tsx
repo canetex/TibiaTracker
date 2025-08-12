@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
@@ -7,21 +7,15 @@ import { apiService } from '../services/api';
 import { formatNumber } from '../lib/utils';
 
 interface TopExpCharacter {
-  id: string;
+  id: number;
   name: string;
   level: number;
   vocation: string;
   world: string;
   server: string;
   guild?: string;
-  experienceGained: number;
-  levelsGained: number;
-  averageExpPerDay: number;
-  startLevel: number;
-  endLevel: number;
-  startExp: number;
-  endExp: number;
-  period: number;
+  total_exp_gained: number;
+  days_tracked: number;
 }
 
 interface TopExpPanelProps {
@@ -40,6 +34,10 @@ export function TopExpPanel({ onCharacterClick }: TopExpPanelProps) {
   const [period, setPeriod] = useState('30');
   const [loading, setLoading] = useState(false);
   const [characters, setCharacters] = useState<TopExpCharacter[]>([]);
+
+  useEffect(() => {
+    loadTopExp();
+  }, []);
 
   const loadTopExp = async () => {
     try {
@@ -105,7 +103,7 @@ export function TopExpPanel({ onCharacterClick }: TopExpPanelProps) {
                   <div>
                     <h4 className="font-semibold text-foreground">{char.name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Level {char.startLevel} → {char.endLevel} ({char.levelsGained > 0 ? '+' : ''}{char.levelsGained})
+                      Level {char.level}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {char.vocation} • {char.world}
@@ -114,10 +112,10 @@ export function TopExpPanel({ onCharacterClick }: TopExpPanelProps) {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-primary">
-                      +{formatNumber(char.experienceGained)}
+                      +{formatNumber(char.total_exp_gained)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatNumber(char.averageExpPerDay)}/dia
+                      {formatNumber(char.total_exp_gained / char.days_tracked)}/dia
                     </p>
                   </div>
                 </div>
