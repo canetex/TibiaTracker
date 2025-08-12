@@ -175,8 +175,6 @@ class Character(CharacterBase):
     recovery_active: bool = True
     created_at: datetime
     updated_at: datetime
-    is_online: bool = False
-    last_experience_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True
