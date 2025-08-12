@@ -892,8 +892,30 @@ async def get_top_exp_characters(
     Get characters with most experience gained over specified days
     """
     try:
-        query = select(CharacterModel)
-        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build base query to get daily experience for each character
+        query = select(
+            CharacterModel.id,
+            CharacterModel.name,
+            CharacterModel.level,
+            CharacterModel.vocation,
+            CharacterModel.world,
+            CharacterModel.server,
+            CharacterModel.guild,
+            func.date(CharacterSnapshotModel.created_at).label('date'),
+            func.max(CharacterSnapshotModel.experience).label('daily_exp')
+        ).join(
+            CharacterSnapshotModel,
+            CharacterModel.id == CharacterSnapshotModel.character_id
+        ).where(
+            CharacterSnapshotModel.created_at.between(start_date, end_date)
+        ).group_by(
+            CharacterModel.id,
+            func.date(CharacterSnapshotModel.created_at)
+        )
+
         # Apply filters
         if server:
             query = query.where(CharacterModel.server == server)
@@ -907,39 +929,89 @@ async def get_top_exp_characters(
             query = query.where(CharacterModel.level >= min_level)
         if max_level:
             query = query.where(CharacterModel.level <= max_level)
-        
-        # Filter by experience gained in last X days
-        query = query.where(CharacterModel.experience_gained_24h.isnot(None))
-        
-        # Order by experience gained and limit results
-        query = query.order_by(CharacterModel.experience_gained_24h.desc()).limit(limit)
-        
+
         result = await db.execute(query)
-        characters = result.scalars().all()
-        
-        return characters
+        results = result.all()
+
+        # Group results by character and calculate total experience gained
+        char_data = {}
+        for row in results:
+            if row.id not in char_data:
+                char_data[row.id] = {
+                    'id': row.id,
+                    'name': row.name,
+                    'level': row.level,
+                    'vocation': row.vocation,
+                    'world': row.world,
+                    'server': row.server,
+                    'guild': row.guild,
+                    'daily_exp': []
+                }
+            char_data[row.id]['daily_exp'].append(row.daily_exp)
+
+        # Calculate total experience gained for each character
+        exp_data = []
+        for char_id, data in char_data.items():
+            if len(data['daily_exp']) > 1:
+                # Calculate total experience gained
+                total_exp_gained = data['daily_exp'][-1] - data['daily_exp'][0]
+                if total_exp_gained > 0:
+                    exp_data.append({
+                        **data,
+                        'total_exp_gained': total_exp_gained,
+                        'days_tracked': len(data['daily_exp'])
+                    })
+
+        # Sort by total experience gained and limit results
+        exp_data.sort(key=lambda x: x['total_exp_gained'], reverse=True)
+        return exp_data[:limit]
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/linearity")
-async def get_linearity_ranking(
+@router.get("/linearity", response_model=List[LinearityResponse])
+async def get_exp_linearity(
     days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=100),
     server: Optional[str] = None,
     world: Optional[str] = None,
     vocation: Optional[str] = None,
     guild: Optional[str] = None,
     min_level: Optional[int] = None,
     max_level: Optional[int] = None,
-    limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get characters ranked by experience linearity over specified days
+    Get characters ranked by experience gain linearity.
+    Linearity is calculated as the sum of the absolute differences between
+    daily experience gain and the average daily gain.
+    A lower linearity index means more consistent experience gain.
     """
     try:
-        query = select(CharacterModel)
-        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build base query to get daily experience for each character
+        query = select(
+            CharacterModel.id,
+            CharacterModel.name,
+            CharacterModel.level,
+            CharacterModel.vocation,
+            CharacterModel.world,
+            CharacterModel.server,
+            CharacterModel.guild,
+            func.date(CharacterSnapshotModel.created_at).label('date'),
+            func.max(CharacterSnapshotModel.experience).label('daily_exp')
+        ).join(
+            CharacterSnapshotModel,
+            CharacterModel.id == CharacterSnapshotModel.character_id
+        ).where(
+            CharacterSnapshotModel.created_at.between(start_date, end_date)
+        ).group_by(
+            CharacterModel.id,
+            func.date(CharacterSnapshotModel.created_at)
+        )
+
         # Apply filters
         if server:
             query = query.where(CharacterModel.server == server)
@@ -953,18 +1025,65 @@ async def get_linearity_ranking(
             query = query.where(CharacterModel.level >= min_level)
         if max_level:
             query = query.where(CharacterModel.level <= max_level)
-        
-        # Filter by experience gained in last X days
-        query = query.where(CharacterModel.experience_gained_24h.isnot(None))
-        
-        # Order by experience gained and limit results
-        query = query.order_by(CharacterModel.experience_gained_24h.desc()).limit(limit)
-        
+
         result = await db.execute(query)
-        characters = result.scalars().all()
-        
-        return characters
-        
+        results = result.all()
+
+        # Group results by character
+        char_data = {}
+        for row in results:
+            if row.id not in char_data:
+                char_data[row.id] = {
+                    'id': row.id,
+                    'name': row.name,
+                    'level': row.level,
+                    'vocation': row.vocation,
+                    'world': row.world,
+                    'server': row.server,
+                    'guild': row.guild,
+                    'daily_exp': []
+                }
+            char_data[row.id]['daily_exp'].append(row.daily_exp)
+
+        # Calculate linearity index for each character
+        linearity_data = []
+        for char_id, data in char_data.items():
+            if len(data['daily_exp']) > 1:
+                # Calculate daily gains
+                daily_gains = []
+                for i in range(1, len(data['daily_exp'])):
+                    gain = data['daily_exp'][i] - data['daily_exp'][i-1]
+                    daily_gains.append(gain)
+
+                if daily_gains:
+                    # Calculate average daily gain
+                    avg_gain = sum(daily_gains) / len(daily_gains)
+
+                    # Calculate linearity index
+                    if avg_gain > 0:
+                        # Calculate relative distance from average for each day
+                        relative_distances = [(gain/avg_gain - 1) for gain in daily_gains]
+                        # Get min and max distances
+                        min_distance = min(relative_distances)
+                        max_distance = max(relative_distances)
+                        # Linearity index is the range of relative distances
+                        linearity_index = max_distance - min_distance
+
+                        linearity_data.append({
+                            **data,
+                            'daily_gains': daily_gains,
+                            'average_gain': avg_gain,
+                            'linearity_index': linearity_index,
+                            'total_exp_gained': sum(daily_gains),
+                            'days_tracked': len(daily_gains),
+                            'min_gain': min(daily_gains),
+                            'max_gain': max(daily_gains)
+                        })
+
+        # Sort by linearity index (most linear first)
+        linearity_data.sort(key=lambda x: x['linearity_index'])
+        return linearity_data[:limit]
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2101,96 +2220,95 @@ async def get_character_level_chart(
 
 
 @router.get("/top-exp", response_model=List[TopExpResponse])
-async def get_top_exp(
+async def get_top_exp_characters(
     days: int = Query(30, ge=1, le=365),
-    limit: int = Query(10, ge=1, le=100),
     server: Optional[str] = None,
     world: Optional[str] = None,
     vocation: Optional[str] = None,
     guild: Optional[str] = None,
     min_level: Optional[int] = None,
     max_level: Optional[int] = None,
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
 ):
     """
-    Get top characters by experience gained in a period.
+    Get characters with most experience gained over specified days
     """
     try:
-        db = next(get_db())
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-        # Build base query
-        query = db.query(
-            Character.id,
-            Character.name,
-            Character.level,
-            Character.vocation,
-            Character.world,
-            Character.server,
-            Character.guild,
-            func.max(CharacterSnapshot.experience).label('end_exp'),
-            func.min(CharacterSnapshot.experience).label('start_exp'),
-            func.max(CharacterSnapshot.level).label('end_level'),
-            func.min(CharacterSnapshot.level).label('start_level'),
+        # Build base query to get daily experience for each character
+        query = select(
+            CharacterModel.id,
+            CharacterModel.name,
+            CharacterModel.level,
+            CharacterModel.vocation,
+            CharacterModel.world,
+            CharacterModel.server,
+            CharacterModel.guild,
+            func.date(CharacterSnapshotModel.created_at).label('date'),
+            func.max(CharacterSnapshotModel.experience).label('daily_exp')
         ).join(
-            CharacterSnapshot,
-            Character.id == CharacterSnapshot.character_id
-        ).filter(
-            CharacterSnapshot.created_at.between(start_date, end_date)
+            CharacterSnapshotModel,
+            CharacterModel.id == CharacterSnapshotModel.character_id
+        ).where(
+            CharacterSnapshotModel.created_at.between(start_date, end_date)
         ).group_by(
-            Character.id
+            CharacterModel.id,
+            func.date(CharacterSnapshotModel.created_at)
         )
 
         # Apply filters
         if server:
-            query = query.filter(Character.server == server)
+            query = query.where(CharacterModel.server == server)
         if world:
-            query = query.filter(Character.world == world)
+            query = query.where(CharacterModel.world == world)
         if vocation:
-            query = query.filter(Character.vocation == vocation)
+            query = query.where(CharacterModel.vocation == vocation)
         if guild:
-            query = query.filter(Character.guild == guild)
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
         if min_level:
-            query = query.filter(Character.level >= min_level)
+            query = query.where(CharacterModel.level >= min_level)
         if max_level:
-            query = query.filter(Character.level <= max_level)
+            query = query.where(CharacterModel.level <= max_level)
 
-        # Calculate experience gained and order by it
-        query = query.having(
-            func.max(CharacterSnapshot.experience) > func.min(CharacterSnapshot.experience)
-        ).order_by(
-            desc(func.max(CharacterSnapshot.experience) - func.min(CharacterSnapshot.experience))
-        ).limit(limit)
+        result = await db.execute(query)
+        results = result.all()
 
-        results = query.all()
+        # Group results by character and calculate total experience gained
+        char_data = {}
+        for row in results:
+            if row.id not in char_data:
+                char_data[row.id] = {
+                    'id': row.id,
+                    'name': row.name,
+                    'level': row.level,
+                    'vocation': row.vocation,
+                    'world': row.world,
+                    'server': row.server,
+                    'guild': row.guild,
+                    'daily_exp': []
+                }
+            char_data[row.id]['daily_exp'].append(row.daily_exp)
 
-        # Format response
-        response = []
-        for result in results:
-            exp_gained = result.end_exp - result.start_exp
-            levels_gained = result.end_level - result.start_level
-            avg_exp_per_day = exp_gained / days
+        # Calculate total experience gained for each character
+        exp_data = []
+        for char_id, data in char_data.items():
+            if len(data['daily_exp']) > 1:
+                # Calculate total experience gained
+                total_exp_gained = data['daily_exp'][-1] - data['daily_exp'][0]
+                if total_exp_gained > 0:
+                    exp_data.append({
+                        **data,
+                        'total_exp_gained': total_exp_gained,
+                        'days_tracked': len(data['daily_exp'])
+                    })
 
-            response.append({
-                "id": result.id,
-                "name": result.name,
-                "level": result.level,
-                "vocation": result.vocation,
-                "world": result.world,
-                "server": result.server,
-                "guild": result.guild,
-                "experienceGained": exp_gained,
-                "levelsGained": levels_gained,
-                "averageExpPerDay": avg_exp_per_day,
-                "startLevel": result.start_level,
-                "endLevel": result.end_level,
-                "startExp": result.start_exp,
-                "endExp": result.end_exp,
-                "period": days
-            })
-
-        return response
-
+        # Sort by total experience gained and limit results
+        exp_data.sort(key=lambda x: x['total_exp_gained'], reverse=True)
+        return exp_data[:limit]
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2204,6 +2322,7 @@ async def get_exp_linearity(
     guild: Optional[str] = None,
     min_level: Optional[int] = None,
     max_level: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get characters ranked by experience gain linearity.
@@ -2212,62 +2331,62 @@ async def get_exp_linearity(
     A lower linearity index means more consistent experience gain.
     """
     try:
-        db = next(get_db())
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
         # Build base query to get daily experience for each character
-        query = db.query(
-            Character.id,
-            Character.name,
-            Character.level,
-            Character.vocation,
-            Character.world,
-            Character.server,
-            Character.guild,
-            func.date(CharacterSnapshot.created_at).label('date'),
-            func.max(CharacterSnapshot.experience).label('daily_exp')
+        query = select(
+            CharacterModel.id,
+            CharacterModel.name,
+            CharacterModel.level,
+            CharacterModel.vocation,
+            CharacterModel.world,
+            CharacterModel.server,
+            CharacterModel.guild,
+            func.date(CharacterSnapshotModel.created_at).label('date'),
+            func.max(CharacterSnapshotModel.experience).label('daily_exp')
         ).join(
-            CharacterSnapshot,
-            Character.id == CharacterSnapshot.character_id
-        ).filter(
-            CharacterSnapshot.created_at.between(start_date, end_date)
+            CharacterSnapshotModel,
+            CharacterModel.id == CharacterSnapshotModel.character_id
+        ).where(
+            CharacterSnapshotModel.created_at.between(start_date, end_date)
         ).group_by(
-            Character.id,
-            func.date(CharacterSnapshot.created_at)
+            CharacterModel.id,
+            func.date(CharacterSnapshotModel.created_at)
         )
 
         # Apply filters
         if server:
-            query = query.filter(Character.server == server)
+            query = query.where(CharacterModel.server == server)
         if world:
-            query = query.filter(Character.world == world)
+            query = query.where(CharacterModel.world == world)
         if vocation:
-            query = query.filter(Character.vocation == vocation)
+            query = query.where(CharacterModel.vocation == vocation)
         if guild:
-            query = query.filter(Character.guild == guild)
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
         if min_level:
-            query = query.filter(Character.level >= min_level)
+            query = query.where(CharacterModel.level >= min_level)
         if max_level:
-            query = query.filter(Character.level <= max_level)
+            query = query.where(CharacterModel.level <= max_level)
 
-        results = query.all()
+        result = await db.execute(query)
+        results = result.all()
 
         # Group results by character
         char_data = {}
-        for result in results:
-            if result.id not in char_data:
-                char_data[result.id] = {
-                    'id': result.id,
-                    'name': result.name,
-                    'level': result.level,
-                    'vocation': result.vocation,
-                    'world': result.world,
-                    'server': result.server,
-                    'guild': result.guild,
+        for row in results:
+            if row.id not in char_data:
+                char_data[row.id] = {
+                    'id': row.id,
+                    'name': row.name,
+                    'level': row.level,
+                    'vocation': row.vocation,
+                    'world': row.world,
+                    'server': row.server,
+                    'guild': row.guild,
                     'daily_exp': []
                 }
-            char_data[result.id]['daily_exp'].append(result.daily_exp)
+            char_data[row.id]['daily_exp'].append(row.daily_exp)
 
         # Calculate linearity index for each character
         linearity_data = []
@@ -2316,18 +2435,18 @@ async def get_filtered_character_ids(
     search: Optional[str] = None,
     guild: Optional[str] = None,
     limit: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get filtered character IDs based on search criteria
     """
     try:
-        query = db.query(Character.id)
+        query = select(CharacterModel.id)
 
         if search:
-            query = query.filter(Character.name.ilike(f"%{search}%"))
+            query = query.where(CharacterModel.name.ilike(f"%{search}%"))
         if guild:
-            query = query.filter(Character.guild.ilike(f"%{guild}%"))
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
 
         if limit and limit.lower() != "all":
             try:
@@ -2336,7 +2455,8 @@ async def get_filtered_character_ids(
             except ValueError:
                 pass
 
-        character_ids = [str(row.id) for row in query.all()]
+        result = await db.execute(query)
+        character_ids = [str(row.id) for row in result.scalars().all()]
         return {"character_ids": character_ids}
 
     except Exception as e:
@@ -2352,31 +2472,32 @@ async def get_filtered_characters(
     min_level: Optional[int] = None,
     max_level: Optional[int] = None,
     limit: Optional[int] = 100,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get filtered characters based on search criteria
     """
     try:
-        query = db.query(Character)
+        query = select(CharacterModel)
 
         if search:
-            query = query.filter(Character.name.ilike(f"%{search}%"))
+            query = query.where(CharacterModel.name.ilike(f"%{search}%"))
         if guild:
-            query = query.filter(Character.guild.ilike(f"%{guild}%"))
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
         if server:
-            query = query.filter(Character.server == server)
+            query = query.where(CharacterModel.server == server)
         if world:
-            query = query.filter(Character.world == world)
+            query = query.where(CharacterModel.world == world)
         if vocation:
-            query = query.filter(Character.vocation == vocation)
+            query = query.where(CharacterModel.vocation == vocation)
         if min_level:
-            query = query.filter(Character.level >= min_level)
+            query = query.where(CharacterModel.level >= min_level)
         if max_level:
-            query = query.filter(Character.level <= max_level)
+            query = query.where(CharacterModel.level <= max_level)
 
         query = query.limit(limit)
-        characters = query.all()
+        result = await db.execute(query)
+        characters = result.scalars().all()
         
         return characters
 
@@ -2387,15 +2508,19 @@ async def get_filtered_characters(
 async def get_all_characters(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get all characters with pagination
     """
     try:
-        query = db.query(Character)
-        total = query.count()
-        characters = query.offset(skip).limit(limit).all()
+        result = await db.execute(select(func.count(CharacterModel.id)))
+        total = result.scalar()
+        
+        result = await db.execute(
+            select(CharacterModel).offset(skip).limit(limit)
+        )
+        characters = result.scalars().all()
         
         return {
             "total": total,
