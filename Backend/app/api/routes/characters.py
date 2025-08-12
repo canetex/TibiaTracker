@@ -762,7 +762,7 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         # Count active characters (those scraped recently)
         result = await db.execute(
             select(func.count(CharacterModel.id))
-            .where(CharacterModel.last_scraped_at >= func.now() - func.interval('24 hours'))
+            .where(CharacterModel.last_scraped_at >= func.now() - text("interval '24 hours'"))
         )
         active_today = result.scalar()
         
