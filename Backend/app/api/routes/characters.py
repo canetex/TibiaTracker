@@ -2473,11 +2473,52 @@ async def get_filtered_character_ids(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/filter")
+async def get_filtered_characters(
+    search: Optional[str] = None,
+    guild: Optional[str] = None,
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+    limit: Optional[int] = 100,
+    db: Session = Depends(get_db)
+):
+    """
+    Get filtered characters based on search criteria
+    """
+    try:
+        query = db.query(Character)
+
+        if search:
+            query = query.filter(Character.name.ilike(f"%{search}%"))
+        if guild:
+            query = query.filter(Character.guild.ilike(f"%{guild}%"))
+        if server:
+            query = query.filter(Character.server == server)
+        if world:
+            query = query.filter(Character.world == world)
+        if vocation:
+            query = query.filter(Character.vocation == vocation)
+        if min_level:
+            query = query.filter(Character.level >= min_level)
+        if max_level:
+            query = query.filter(Character.level <= max_level)
+
+        query = query.limit(limit)
+        characters = query.all()
+        
+        return characters
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/")
 async def get_all_characters(
-    db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    db: Session = Depends(get_db)
 ):
     """
     Get all characters with pagination

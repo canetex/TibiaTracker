@@ -112,6 +112,16 @@ export const apiService = {
     } catch (error) {
       handleError(error);
     }
+  },
+
+  async getFilteredCharacters(filters = {}) {
+    try {
+      const params = new URLSearchParams(filters as Record<string, string>);
+      const response = await api.get(`/characters/filter?${params}`);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
   }
 };
 
