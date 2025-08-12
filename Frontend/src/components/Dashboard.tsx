@@ -101,12 +101,12 @@ export default function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6 space-y-6">
+    <div className="container mx-auto max-w-7xl px-6 md:px-8 lg:px-12 py-8 space-y-8">
       <h1 className="text-2xl md:text-3xl font-bold gradient-text text-center md:text-left">Dashboard</h1>
       
       {/* Global Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <Card className="p-3 md:p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <Card className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Total de Personagens</p>
@@ -116,7 +116,7 @@ export default function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        <Card className="p-3 md:p-4">
+        <Card className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Ativos Hoje</p>
@@ -126,7 +126,7 @@ export default function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        <Card className="p-3 md:p-4">
+        <Card className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Exp. Total Hoje</p>
@@ -136,7 +136,7 @@ export default function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        <Card className="p-3 md:p-4">
+        <Card className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Servidores</p>
@@ -148,7 +148,7 @@ export default function Dashboard(): JSX.Element {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr,350px] gap-8">
         <div className="space-y-6">
           <CharacterSelection
             characters={characters}

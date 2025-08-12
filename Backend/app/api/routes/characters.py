@@ -617,8 +617,7 @@ async def scrape_character_with_history(
                 
                 if existing_snapshot:
                     # SOBRESCREVER dados existentes com informações mais recentes
-                    logger.info(f"[SCRAPE-WITH-HISTORY] Atualizando snapshot existente para {entry['date']}: "
-                              f"experiência {existing_snapshot.experience:,} → {entry['experience_gained']:,}")
+
                     
                     existing_snapshot.level = scraped_data['level']
                     existing_snapshot.experience = max(0, entry['experience_gained'])  # Garantir que não seja negativo
@@ -642,8 +641,7 @@ async def scrape_character_with_history(
                     snapshots_updated += 1  # Contar como atualizado
                 else:
                     # Criar novo snapshot para esta data
-                    logger.info(f"[SCRAPE-WITH-HISTORY] Criando novo snapshot para {entry['date']}: "
-                              f"experiência {entry['experience_gained']:,}")
+
                     
                     snapshot = CharacterSnapshotModel(
                         character_id=character.id,
@@ -672,7 +670,7 @@ async def scrape_character_with_history(
                     snapshots_created += 1
         else:
             # Se não há histórico, criar snapshot apenas atual
-            logger.info(f"[SCRAPE-WITH-HISTORY] Nenhum histórico encontrado, criando snapshot atual...")
+
             snapshot = CharacterSnapshotModel(
                 character_id=character.id,
                 level=scraped_data['level'],
@@ -699,11 +697,11 @@ async def scrape_character_with_history(
             snapshots_created = 1
             snapshots_updated = 0
         
-        logger.info(f"[SCRAPE-WITH-HISTORY] Salvando no banco de dados...")
+
         await db.commit()
         await db.refresh(character)
         
-        logger.info(f"[SCRAPE-WITH-HISTORY] Concluído! Snapshots criados: {snapshots_created}, atualizados: {snapshots_updated}")
+
         
         return {
             "success": True,

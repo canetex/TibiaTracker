@@ -35,6 +35,9 @@ class Character(Base):
     residence = Column(String(255))
     guild = Column(String(255), nullable=True)
     
+    # Novos campos de experiência
+    experience_gained_24h = Column(BigInteger, default=0, nullable=True)
+    
     # Status e configurações
     is_active = Column(Boolean, default=True, index=True)
     is_public = Column(Boolean, default=True)

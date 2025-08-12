@@ -124,6 +124,7 @@ export function ComparisonChart({ characters, data }: ComparisonChartProps) {
                   fill={`url(#gradient-${char.id})`}
                   stackId="1"
                   yAxisId="left"
+                  strokeWidth={2}
                 />
               ))}
             </AreaChart>
@@ -164,9 +165,9 @@ export function ComparisonChart({ characters, data }: ComparisonChartProps) {
                   dataKey={`level_${char.id}`}
                   name={char.name}
                   stroke={colors[index % colors.length]}
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  dot={{ fill: colors[index % colors.length], r: 4 }}
+                  strokeWidth={3}
+                  strokeDasharray="8 4"
+                  dot={{ fill: colors[index % colors.length], r: 5, strokeWidth: 2 }}
                   yAxisId="left"
                 />
               ))}

@@ -152,6 +152,7 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
                         dataKey="experience"
                         stroke="hsl(var(--primary))"
                         fill="url(#experienceGradient)"
+                        strokeWidth={2}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -182,9 +183,9 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
                         type="stepAfter"
                         dataKey="level"
                         stroke="hsl(var(--success))"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={{ fill: "hsl(var(--success))", r: 4 }}
+                        strokeWidth={3}
+                        strokeDasharray="8 4"
+                        dot={{ fill: "hsl(var(--success))", r: 5, strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -200,6 +201,12 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
                     <AreaChart data={experienceData}>
+                      <defs>
+                        <linearGradient id="dailyGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                       <XAxis
                         dataKey="date"
@@ -215,8 +222,8 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
                         type="monotone"
                         dataKey="daily_experience"
                         stroke="hsl(var(--warning))"
-                        fill="hsl(var(--warning))"
-                        fillOpacity={0.2}
+                        fill="url(#dailyGradient)"
+                        strokeWidth={2}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -248,6 +255,7 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
                         dataKey="activity"
                         stroke="hsl(var(--info))"
                         strokeWidth={2}
+                        strokeDasharray="4 2"
                         dot={{ fill: "hsl(var(--info))", r: 4 }}
                       />
                     </LineChart>

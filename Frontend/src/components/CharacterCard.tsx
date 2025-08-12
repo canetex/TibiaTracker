@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Heart, RefreshCw, User } from 'lucide-react';
 import { formatNumber, getVocationColor, getTibiaUrl } from '../lib/utils';
+import outfitDummy from '../assets/outfit-dummy.gif';
 
 interface CharacterCardProps {
   character: {
@@ -57,9 +58,10 @@ export function CharacterCard({
                   onError={handleImageError}
                 />
               ) : (
-                <AvatarFallback>
-                  <User className="h-8 w-8" />
-                </AvatarFallback>
+                <AvatarImage
+                  src={outfitDummy}
+                  alt={`${character.name} - Outfit padrão`}
+                />
               )}
             </Avatar>
             {character.isOnline && (
