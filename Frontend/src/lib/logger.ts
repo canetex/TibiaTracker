@@ -1,17 +1,14 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-const LOG_LEVEL: LogLevel = import.meta.env.MODE === 'development' ? 'debug' : 'error';
+// Desabilitar completamente logs de debug
+const LOG_LEVEL: LogLevel = 'error';
 
 const logger = {
   debug: (...args: any[]) => {
-    if (LOG_LEVEL === 'debug' && import.meta.env.MODE === 'development') {
-      console.debug('[DEBUG]', ...args);
-    }
+    // Desabilitado completamente
   },
   info: (...args: any[]) => {
-    if (['debug', 'info'].includes(LOG_LEVEL) && import.meta.env.MODE === 'development') {
-      console.info('[INFO]', ...args);
-    }
+    // Desabilitado completamente
   },
   warn: (...args: any[]) => {
     if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) {

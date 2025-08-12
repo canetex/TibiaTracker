@@ -116,6 +116,8 @@ export const apiService = {
 
   async getFilteredCharacters(filters = {}) {
     try {
+      console.log('🔍 DEBUG - Filtros recebidos:', filters);
+      
       // Converter chaves camelCase para snake_case e remover valores vazios/undefined/null
       const params = new URLSearchParams();
       Object.entries(filters as Record<string, any>).forEach(([key, value]) => {
@@ -125,9 +127,13 @@ export const apiService = {
           params.append(snakeKey, String(value));
         }
       });
+      
+      console.log('🔍 DEBUG - Parâmetros convertidos:', params.toString());
       const response = await api.get(`/characters/filter?${params}`);
+      console.log('🔍 DEBUG - Resposta da API:', response.data);
       return response.data;
     } catch (error) {
+      console.error('🔍 DEBUG - Erro na API:', error);
       handleError(error);
     }
   }
