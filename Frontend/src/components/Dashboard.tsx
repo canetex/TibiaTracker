@@ -10,29 +10,13 @@ import { apiService } from '../services/api';
 import logger from '../lib/logger';
 
 interface Character {
-  id: string;
+  id: number;
   name: string;
   level: number;
   vocation: string;
   world: string;
-  experience: number;
+  server: string;
   guild?: string;
-  isOnline: boolean;
-  recoveryActive: boolean;
-  isFavorite: boolean;
-  deaths: number;
-  lastLogin: string;
-  experienceGained24h?: number;
-  levelProgress: number;
-  pvpType: "Optional PvP" | "Open PvP" | "Retro Open PvP" | "Hardcore PvP";
-}
-
-interface ChartDataPoint {
-  date: string;
-  level: number;
-  experience: number;
-  experienceGained: number;
-  deaths: number;
 }
 
 interface GlobalStats {
@@ -40,6 +24,11 @@ interface GlobalStats {
   active_today: number;
   total_exp_today: number;
   total_servers: number;
+}
+
+interface ChartDataPoint {
+  date: string;
+  [key: string]: any;
 }
 
 export default function Dashboard(): JSX.Element {
@@ -158,11 +147,6 @@ export default function Dashboard(): JSX.Element {
         </Card>
       </div>
 
-      {/* Linearity Ranking */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
-        <LinearityPanel />
-      </div>
-
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px] gap-6">
         <div className="space-y-6">
@@ -174,6 +158,7 @@ export default function Dashboard(): JSX.Element {
 
         <div className="space-y-6">
           <TopExpPanel />
+          <LinearityPanel />
         </div>
       </div>
 
