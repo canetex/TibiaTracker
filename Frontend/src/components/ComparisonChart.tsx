@@ -102,15 +102,15 @@ export function ComparisonChart({ characters, data }: ComparisonChartProps) {
                 className="text-xs text-muted-foreground"
               />
               <YAxis
+                yAxisId="left"
                 tickFormatter={formatNumber}
                 className="text-xs text-muted-foreground"
-                yAxisId="left"
               />
               <YAxis
-                tickFormatter={formatNumber}
-                className="text-xs text-muted-foreground"
                 yAxisId="right"
                 orientation="right"
+                tickFormatter={formatNumber}
+                className="text-xs text-muted-foreground"
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
@@ -145,15 +145,15 @@ export function ComparisonChart({ characters, data }: ComparisonChartProps) {
                 className="text-xs text-muted-foreground"
               />
               <YAxis
+                yAxisId="left"
                 tickFormatter={(value) => Math.floor(value)}
                 className="text-xs text-muted-foreground"
-                yAxisId="left"
               />
               <YAxis
-                tickFormatter={(value) => `${Math.floor((value % 1) * 100)}%`}
-                className="text-xs text-muted-foreground"
                 yAxisId="right"
                 orientation="right"
+                tickFormatter={(value) => `${Math.floor((value % 1) * 100)}%`}
+                className="text-xs text-muted-foreground"
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />

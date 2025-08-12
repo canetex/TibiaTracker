@@ -112,7 +112,7 @@ export default function Dashboard(): JSX.Element {
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-6 space-y-6 py-6">
+    <div className="container mx-auto max-w-7xl px-4 md:px-6 py-6 space-y-6">
       <h1 className="text-2xl md:text-3xl font-bold gradient-text text-center md:text-left">Dashboard</h1>
       
       {/* Global Stats */}
