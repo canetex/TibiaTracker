@@ -129,9 +129,24 @@ export const apiService = {
       });
       
       console.log('🔍 DEBUG - Parâmetros convertidos:', params.toString());
-      const response = await api.get(`/characters/filter?${params}`);
-      console.log('🔍 DEBUG - Resposta da API:', response.data);
-      return response.data;
+      
+      // Usar o endpoint filter-ids para obter IDs primeiro
+      const response = await api.get(`/characters/filter-ids?${params}`);
+      console.log('🔍 DEBUG - Resposta da API (filter-ids):', response.data);
+      
+      // Se não há IDs, retornar array vazio
+      if (!response.data || !response.data.ids || !Array.isArray(response.data.ids)) {
+        console.log('🔍 DEBUG - Nenhum ID retornado ou formato inválido');
+        return [];
+      }
+      
+      // Agora buscar os personagens pelos IDs
+      const characterResponse = await api.post('/characters/by-ids', {
+        ids: response.data.ids
+      });
+      
+      console.log('🔍 DEBUG - Resposta da API (by-ids):', characterResponse.data);
+      return characterResponse.data || [];
     } catch (error) {
       console.error('🔍 DEBUG - Erro na API:', error);
       handleError(error);

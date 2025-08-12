@@ -1125,7 +1125,7 @@ async def filter_character_ids(
     is_favorited: Optional[str] = Query(None, description='Filtrar por favoritos (true, false, ou omitir para todos)'),
     favorite_ids: Optional[List[int]] = Query(None, description='Lista de IDs favoritos do usuário (frontend)'),
     recovery_active: Optional[str] = Query(None, description='Filtrar por recovery ativo (true, false, ou omitir para todos)'),
-    limit: Optional[int] = Query(1000, ge=1, le=10000),
+    limit: Optional[str] = Query("1000", description="Limite de resultados ou 'all' para todos"),
     db: AsyncSession = Depends(get_db),
     request: Request = None
 ):
@@ -1259,7 +1259,14 @@ async def filter_character_ids(
             query = query.where(and_(*conditions))
 
     # Limite
-    query = query.limit(limit)
+    if limit != "all":
+        try:
+            limit_num = int(limit)
+            if limit_num > 0:
+                query = query.limit(limit_num)
+        except (ValueError, TypeError):
+            # Se não conseguir converter para int, usar limite padrão
+            query = query.limit(1000)
 
     # Executar query
     result = await db.execute(query)
