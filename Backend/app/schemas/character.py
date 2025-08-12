@@ -232,52 +232,11 @@ class GlobalStats(BaseModel):
     max_level: int
     min_level: int
     total_experience_gained: int
-    total_deaths: int 
+    total_deaths: int
 
-class CharacterBase(BaseModel):
-    name: str
-    level: int
-    vocation: str
-    world: str
-    server: str
-    guild: Optional[str] = None
-    is_online: bool = False
-    recovery_active: bool = False
-    is_favorited: bool = False
-    deaths: int = 0
-    last_login: Optional[datetime] = None
-    experience_gained_24h: Optional[int] = None
-    level_progress: Optional[float] = None
-    pvp_type: str = "Optional PvP"
-
-class CharacterCreate(CharacterBase):
-    pass
-
-class CharacterUpdate(BaseModel):
-    name: Optional[str] = None
-    level: Optional[int] = None
-    vocation: Optional[str] = None
-    world: Optional[str] = None
-    server: Optional[str] = None
-    guild: Optional[str] = None
-    is_online: Optional[bool] = None
-    recovery_active: Optional[bool] = None
-    is_favorited: Optional[bool] = None
-    deaths: Optional[int] = None
-    last_login: Optional[datetime] = None
-    experience_gained_24h: Optional[int] = None
-    level_progress: Optional[float] = None
-    pvp_type: Optional[str] = None
-
-class CharacterResponse(CharacterBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        orm_mode = True
 
 class CharacterFilter(BaseModel):
+    """Schema para filtros de personagens"""
     server: Optional[str] = None
     world: Optional[str] = None
     vocation: Optional[str] = None
@@ -288,7 +247,9 @@ class CharacterFilter(BaseModel):
     recovery_active: Optional[bool] = None
     is_favorited: Optional[bool] = None
 
+
 class TopExpResponse(BaseModel):
+    """Schema para resposta de top experiência"""
     id: int
     name: str
     level: int
@@ -296,19 +257,15 @@ class TopExpResponse(BaseModel):
     world: str
     server: str
     guild: Optional[str] = None
-    experienceGained: int
-    levelsGained: int
-    averageExpPerDay: float
-    startLevel: int
-    endLevel: int
-    startExp: int
-    endExp: int
-    period: int
+    total_exp_gained: int
+    days_tracked: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 class LinearityResponse(BaseModel):
+    """Schema para resposta de linearidade"""
     id: int
     name: str
     level: int
@@ -325,4 +282,4 @@ class LinearityResponse(BaseModel):
     max_gain: int
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 
