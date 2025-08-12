@@ -742,311 +742,238 @@ async def scrape_character_with_history(
 
 @router.get("/recent")
 async def get_recent_characters(
-    limit: int = Query(10, ge=1, le=100, description="Número máximo de personagens"),
+    limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    """Obter personagens adicionados recentemente"""
+    """
+    Get recent characters
+    """
     try:
         result = await db.execute(
-            select(CharacterModel)
-            .where(CharacterModel.is_active == True)
-            .order_by(desc(CharacterModel.last_scraped_at))
-            .limit(limit)
+            select(CharacterModel).order_by(CharacterModel.last_experience_date.desc()).limit(limit)
         )
         characters = result.scalars().all()
-        
-        # Converter para formato do frontend
-        response_data = []
-        for char in characters:
-            # Obter último snapshot
-            snapshot_result = await db.execute(
-                select(CharacterSnapshotModel)
-                .where(CharacterSnapshotModel.character_id == char.id)
-                .order_by(desc(CharacterSnapshotModel.scraped_at))
-                .limit(1)
-            )
-            latest_snapshot = snapshot_result.scalar_one_or_none()
-            
-            # Contar total de snapshots
-            count_result = await db.execute(
-                select(func.count(CharacterSnapshotModel.id))
-                .where(CharacterSnapshotModel.character_id == char.id)
-            )
-            total_snapshots = count_result.scalar()
-            
-            # Calcular estatísticas de experiência usando a nova função
-            all_snapshots_result = await db.execute(
-                select(CharacterSnapshotModel)
-                .where(CharacterSnapshotModel.character_id == char.id)
-            )
-            all_snapshots = all_snapshots_result.scalars().all()
-            
-            # Calcular estatísticas de experiência
-            exp_stats = calculate_experience_stats(all_snapshots, days=30)
-
-            char_data = {
-                "id": char.id,
-                "name": char.name,
-                "server": char.server,
-                "world": char.world,
-                "level": char.level,
-                "vocation": char.vocation,
-                "guild": char.guild,
-                "outfit_image_url": char.outfit_image_url,
-                "last_scraped_at": char.last_scraped_at,
-                "recovery_active": char.recovery_active,
-                "total_snapshots": total_snapshots,
-                "total_exp_gained": exp_stats['total_exp_gained'],
-                "average_daily_exp": exp_stats['average_daily_exp'],
-                "last_experience": exp_stats['last_experience'],
-                "last_experience_date": exp_stats['last_experience_date'],
-                "exp_gained": exp_stats['exp_gained'],
-                "latest_snapshot": None
-            }
-            if latest_snapshot:
-                char_data["latest_snapshot"] = {
-                    "level": latest_snapshot.level,
-                    "experience": latest_snapshot.experience,
-                    "deaths": latest_snapshot.deaths,
-                    "charm_points": latest_snapshot.charm_points,
-                    "bosstiary_points": latest_snapshot.bosstiary_points,
-                    "achievement_points": latest_snapshot.achievement_points,
-                    "scraped_at": latest_snapshot.scraped_at
-                }
-
-            response_data.append(char_data)
-        
-        return response_data
-        
+        return characters
     except Exception as e:
-        logger.error(f"Erro ao obter personagens recentes: {e}")
-        return []
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/stats/global")
 async def get_global_stats(db: AsyncSession = Depends(get_db)):
-    """Obter estatísticas globais da plataforma"""
+    """
+    Get global statistics
+    """
     try:
-        # Total de personagens
-        total_chars_result = await db.execute(
-            select(func.count(CharacterModel.id)).where(CharacterModel.is_active == True)
+        result = await db.execute(select(func.count(CharacterModel.id)))
+        total_characters = result.scalar()
+        
+        result = await db.execute(select(func.count(CharacterModel.id)).where(CharacterModel.is_online == True))
+        active_today = result.scalar()
+        
+        # Calculate total experience gained today
+        result = await db.execute(
+            select(CharacterModel.experience_gained_24h)
+            .where(CharacterModel.experience_gained_24h.isnot(None))
         )
-        total_characters = total_chars_result.scalar() or 0
-
-        # Total de snapshots
-        total_snapshots_result = await db.execute(
-            select(func.count(CharacterSnapshotModel.id))
-        )
-        total_snapshots = total_snapshots_result.scalar() or 0
-
-        # Personagens favoritados
-        favorited_result = await db.execute(
-            select(func.count(CharacterModel.id))
-            .where(CharacterModel.is_active == True)
-        )
-        favorited_characters = favorited_result.scalar() or 0
-
-        # Personagens por servidor
-        server_stats_result = await db.execute(
-            select(CharacterModel.server, func.count(CharacterModel.id))
-            .where(CharacterModel.is_active == True)
-            .group_by(CharacterModel.server)
-        )
-        server_stats = {server: count for server, count in server_stats_result.fetchall()}
-
+        exp_values = result.scalars().all()
+        total_exp_today = sum(exp for exp in exp_values if exp)
+        
+        # Get unique servers
+        result = await db.execute(select(func.count(CharacterModel.server.distinct())))
+        servers = result.scalar()
+        
         return {
             "total_characters": total_characters,
-            "total_snapshots": total_snapshots,
-            "favorited_characters": favorited_characters,
-            "characters_by_server": server_stats,
-            "last_updated": datetime.utcnow().isoformat()
+            "active_today": active_today,
+            "total_exp_today": total_exp_today,
+            "servers": servers
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/filter")
+async def get_filtered_characters(
+    search: Optional[str] = None,
+    guild: Optional[str] = None,
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+    limit: Optional[int] = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get filtered characters based on search criteria
+    """
+    try:
+        query = select(CharacterModel)
+
+        if search:
+            query = query.where(CharacterModel.name.ilike(f"%{search}%"))
+        if guild:
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
+        if server:
+            query = query.where(CharacterModel.server == server)
+        if world:
+            query = query.where(CharacterModel.world == world)
+        if vocation:
+            query = query.where(CharacterModel.vocation == vocation)
+        if min_level:
+            query = query.where(CharacterModel.level >= min_level)
+        if max_level:
+            query = query.where(CharacterModel.level <= max_level)
+
+        query = query.limit(limit)
+        result = await db.execute(query)
+        characters = result.scalars().all()
+        
+        return characters
 
     except Exception as e:
-        logger.error(f"Erro ao obter estatísticas globais: {e}")
-        return {
-            "total_characters": 0,
-            "total_snapshots": 0,
-            "favorited_characters": 0,
-            "characters_by_server": {},
-            "last_updated": datetime.utcnow().isoformat()
-        }
-
-
-@router.get("")
-@limiter.limit("30/minute")  # Máximo 30 listagens por minuto
-async def list_characters(
-    request: Request,
-    skip: int = Query(0, ge=0, description="Número de registros a pular"),
-    limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
-    server: Optional[str] = Query(None, description="Filtrar por servidor"),
-    world: Optional[str] = Query(None, description="Filtrar por world"),
-    is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
-    search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
-    guild: Optional[str] = Query(None, description="Filtrar por guild"),
-    activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
-    db: AsyncSession = Depends(get_db)
-):
-    # Validar inputs opcionais
-    if server:
-        server = validate_server_name(server)
-    if world:
-        world = validate_world_name(world)
-    if search:
-        search = validate_search_query(search)
-    """Listar personagens com filtros e paginação"""
-    
-    query = select(CharacterModel)
-    
-    # Aplicar filtros básicos
-    filters = []
-    if server:
-        filters.append(CharacterModel.server == server)
-    if world:
-        filters.append(CharacterModel.world == world)
-    if is_active is not None:
-        filters.append(CharacterModel.is_active == is_active)
-
-    if search:
-        filters.append(CharacterModel.name.ilike(f"%{search}%"))
-    if guild:
-        filters.append(CharacterModel.guild.ilike(f"%{guild}%"))
-    
-    # Aplicar filtro de atividade se especificado
-    if activity_filter:
-        from datetime import datetime, timedelta
-        
-        # Calcular a data baseada no filtro
-        today = datetime.utcnow().date()
-        
-        if activity_filter == 'active_today':
-            target_date = today
-        elif activity_filter == 'active_yesterday':
-            target_date = today - timedelta(days=1)
-        elif activity_filter == 'active_2days':
-            target_date = today - timedelta(days=2)
-        elif activity_filter == 'active_3days':
-            target_date = today - timedelta(days=3)
-        else:
-            # Filtro inválido, ignorar
-            target_date = None
-        
-        if target_date:
-            # Subconsulta para encontrar personagens com experiência > 0 na data específica
-            # Converter target_date para datetime com timezone para comparação correta
-            target_datetime_start = datetime.combine(target_date, datetime.min.time())
-            target_datetime_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time())
-            
-            subquery = select(CharacterSnapshotModel.character_id).where(
-                and_(
-                    CharacterSnapshotModel.scraped_at >= target_datetime_start,
-                    CharacterSnapshotModel.scraped_at < target_datetime_end,
-                    CharacterSnapshotModel.experience.is_not(None)
-                )
-            ).distinct()
-            
-            filters.append(CharacterModel.id.in_(subquery))
-    
-    if filters:
-        query = query.where(and_(*filters))
-    
-    # Contar total
-    count_query = select(func.count(CharacterModel.id)).where(and_(*filters)) if filters else select(func.count(CharacterModel.id))
-    result = await db.execute(count_query)
-    total = result.scalar()
-    
-    # Aplicar paginação e ordenação
-    query = query.order_by(CharacterModel.name).offset(skip).limit(limit)
-    
-    result = await db.execute(query)
-    characters = result.scalars().all()
-    
-    # Converter para schema resumido
-    character_summaries = []
-    for char in characters:
-        # Contar snapshots para cada personagem
-        snapshot_count_query = select(func.count(CharacterSnapshotModel.id)).where(CharacterSnapshotModel.character_id == char.id)
-        snapshot_result = await db.execute(snapshot_count_query)
-        snapshots_count = snapshot_result.scalar()
-        
-        # Buscar snapshots para calcular última experiência
-        snapshots_query = select(CharacterSnapshotModel).where(CharacterSnapshotModel.character_id == char.id)
-        snapshots_result = await db.execute(snapshots_query)
-        snapshots = snapshots_result.scalars().all()
-        
-        # Calcular última experiência válida
-        last_experience, last_experience_date = calculate_last_experience_data(snapshots)
-        
-        # Adicionar dados calculados ao character
-        char_dict = {
-            **char.__dict__,
-            'snapshots_count': snapshots_count,
-            'last_experience': last_experience,
-            'last_experience_date': last_experience_date
-        }
-        
-        character_summaries.append(char_dict)
-    
-    return {
-        "characters": character_summaries,
-        "total": total,
-        "page": skip // limit + 1,
-        "per_page": limit
-    }
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/")
-async def list_characters_alias(
-    skip: int = Query(0, ge=0, description="Número de registros a pular"),
-    limit: int = Query(50, ge=1, le=1000, description="Número máximo de registros"),
-    server: Optional[str] = Query(None, description="Filtrar por servidor"),
-    world: Optional[str] = Query(None, description="Filtrar por world"),
-    is_active: Optional[bool] = Query(None, description="Filtrar por personagens ativos"),
-    search: Optional[str] = Query(None, description="Buscar por nome do personagem"),
-    guild: Optional[str] = Query(None, description="Filtrar por guild"),
-    activity_filter: Optional[str] = Query(None, description="Filtrar por atividade (active_today, active_yesterday, active_2days, active_3days)"),
+async def get_all_characters(
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db)
 ):
-    """Listar personagens com filtros e paginação (alias com barra para compatibilidade)"""
-    
-    # Chamamos a função principal
-    return await list_characters(skip, limit, server, world, is_active, search, guild, activity_filter, db)
+    """
+    Get all characters with pagination
+    """
+    try:
+        result = await db.execute(select(func.count(CharacterModel.id)))
+        total = result.scalar()
+        
+        result = await db.execute(
+            select(CharacterModel).offset(skip).limit(limit)
+        )
+        characters = result.scalars().all()
+        
+        return {
+            "total": total,
+            "characters": characters,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/vocations")
+async def get_vocations(db: AsyncSession = Depends(get_db)):
+    """
+    Get all unique vocations
+    """
+    try:
+        result = await db.execute(select(CharacterModel.vocation).distinct())
+        vocations = result.scalars().all()
+        return [v for v in vocations if v]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/", response_model=Character)
-async def create_character(
-    character_data: CharacterCreate,
+@router.get("/servers")
+async def get_servers(db: AsyncSession = Depends(get_db)):
+    """
+    Get all unique servers
+    """
+    try:
+        result = await db.execute(select(CharacterModel.server).distinct())
+        servers = result.scalars().all()
+        return [s for s in servers if s]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/top-exp")
+async def get_top_exp_characters(
+    days: int = Query(30, ge=1, le=365),
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    guild: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+    limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    """Criar novo personagem"""
-    
-    # Verificar se já existe personagem com o mesmo nome/servidor/world
-    existing_query = select(CharacterModel).where(
-        and_(
-            CharacterModel.name == character_data.name,
-            CharacterModel.server == character_data.server,
-            CharacterModel.world == character_data.world
-        )
-    )
-    result = await db.execute(existing_query)
-    existing_character = result.scalar_one_or_none()
-    
-    if existing_character:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Personagem '{character_data.name}' já existe no servidor '{character_data.server}' world '{character_data.world}'"
-        )
-    
-    # Criar novo personagem
-    character = CharacterModel(**character_data.dict())
-    db.add(character)
-    await db.commit()
-    await db.refresh(character)
-    
-    return character
+    """
+    Get characters with most experience gained over specified days
+    """
+    try:
+        query = select(CharacterModel)
+        
+        # Apply filters
+        if server:
+            query = query.where(CharacterModel.server == server)
+        if world:
+            query = query.where(CharacterModel.world == world)
+        if vocation:
+            query = query.where(CharacterModel.vocation == vocation)
+        if guild:
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
+        if min_level:
+            query = query.where(CharacterModel.level >= min_level)
+        if max_level:
+            query = query.where(CharacterModel.level <= max_level)
+        
+        # Filter by experience gained in last X days
+        query = query.where(CharacterModel.experience_gained_24h.isnot(None))
+        
+        # Order by experience gained and limit results
+        query = query.order_by(CharacterModel.experience_gained_24h.desc()).limit(limit)
+        
+        result = await db.execute(query)
+        characters = result.scalars().all()
+        
+        return characters
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-# ===== ENDPOINTS DE FILTRAGEM =====
+@router.get("/linearity")
+async def get_linearity_ranking(
+    days: int = Query(30, ge=1, le=365),
+    server: Optional[str] = None,
+    world: Optional[str] = None,
+    vocation: Optional[str] = None,
+    guild: Optional[str] = None,
+    min_level: Optional[int] = None,
+    max_level: Optional[int] = None,
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get characters ranked by experience linearity over specified days
+    """
+    try:
+        query = select(CharacterModel)
+        
+        # Apply filters
+        if server:
+            query = query.where(CharacterModel.server == server)
+        if world:
+            query = query.where(CharacterModel.world == world)
+        if vocation:
+            query = query.where(CharacterModel.vocation == vocation)
+        if guild:
+            query = query.where(CharacterModel.guild.ilike(f"%{guild}%"))
+        if min_level:
+            query = query.where(CharacterModel.level >= min_level)
+        if max_level:
+            query = query.where(CharacterModel.level <= max_level)
+        
+        # Filter by experience gained in last X days
+        query = query.where(CharacterModel.experience_gained_24h.isnot(None))
+        
+        # Order by experience gained and limit results
+        query = query.order_by(CharacterModel.experience_gained_24h.desc()).limit(limit)
+        
+        result = await db.execute(query)
+        characters = result.scalars().all()
+        
+        return characters
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/filter-ids", response_model=CharacterIDsResponse)
 async def filter_character_ids(
