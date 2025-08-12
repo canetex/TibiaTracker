@@ -743,7 +743,7 @@ async def get_recent_characters(
     """
     try:
         result = await db.execute(
-            select(CharacterModel).order_by(CharacterModel.last_experience_date.desc()).limit(limit)
+            select(CharacterModel).order_by(CharacterModel.last_scraped_at.desc().nulls_last()).limit(limit)
         )
         characters = result.scalars().all()
         return characters
@@ -759,7 +759,11 @@ async def get_global_stats(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(func.count(CharacterModel.id)))
         total_characters = result.scalar()
         
-        result = await db.execute(select(func.count(CharacterModel.id)).where(CharacterModel.is_online == True))
+        # Count active characters (those scraped recently)
+        result = await db.execute(
+            select(func.count(CharacterModel.id))
+            .where(CharacterModel.last_scraped_at >= func.now() - func.interval('24 hours'))
+        )
         active_today = result.scalar()
         
         # Calculate total experience gained today
