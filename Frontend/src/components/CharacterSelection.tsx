@@ -29,11 +29,15 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
   const [filters, setFilters] = useState({
     vocation: '',
     server: '',
+    guild: '',
     minLevel: '',
     maxLevel: '',
   });
   const [vocations, setVocations] = useState<string[]>([]);
   const [servers, setServers] = useState<string[]>([]);
+  const [guilds, setGuilds] = useState<string[]>([]);
+  const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([]);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -44,12 +48,55 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
         ]);
         setVocations(vocationsData);
         setServers(serversData);
+        // Para guilds, vamos extrair das vocações existentes por enquanto
+        // Em uma implementação futura, podemos criar um endpoint específico para guilds
+        setGuilds([]);
       } catch (error) {
         console.error('Erro ao carregar filtros:', error);
       }
     };
     loadFilters();
   }, []);
+
+  // Aplicar filtros via API quando necessário
+  const applyFilters = async () => {
+    try {
+      setIsFiltering(true);
+      const activeFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '')
+      );
+      
+      if (Object.keys(activeFilters).length === 0) {
+        // Se não há filtros ativos, usar todos os personagens
+        setFilteredCharacters(characters);
+        return;
+      }
+
+      // Aplicar filtros via API
+      const filteredData = await apiService.getFilteredCharacters(activeFilters);
+      setFilteredCharacters(filteredData);
+    } catch (error) {
+      console.error('Erro ao aplicar filtros:', error);
+      // Em caso de erro, usar filtros locais como fallback
+      setFilteredCharacters(characters);
+    } finally {
+      setIsFiltering(false);
+    }
+  };
+
+  // Aplicar filtros quando os filtros mudarem
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      applyFilters();
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [filters]);
+
+  // Inicializar com todos os personagens
+  useEffect(() => {
+    setFilteredCharacters(characters);
+  }, [characters]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value || '';
@@ -76,19 +123,6 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
     const selectedChars = characters.filter(char => selectedCharacters.includes(char.id));
     onCompare(selectedChars);
   };
-
-  const filteredCharacters = React.useMemo(() => {
-    return characters.filter(char => {
-      const searchValue = searchTerm.toLowerCase();
-      const matchesSearch = !searchValue || char.name.toLowerCase().includes(searchValue);
-      const matchesVocation = !filters.vocation || char.vocation === filters.vocation;
-      const matchesServer = !filters.server || char.server === filters.server;
-      const matchesMinLevel = !filters.minLevel || char.level >= parseInt(filters.minLevel);
-      const matchesMaxLevel = !filters.maxLevel || char.level <= parseInt(filters.maxLevel);
-
-      return matchesSearch && matchesVocation && matchesServer && matchesMinLevel && matchesMaxLevel;
-    });
-  }, [characters, searchTerm, filters]);
 
   return (
     <Card>
@@ -154,6 +188,12 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
             </Select>
 
             <Input
+              placeholder="Guild"
+              value={filters.guild}
+              onChange={(e) => setFilters(prev => ({ ...prev, guild: e.target.value }))}
+            />
+
+            <Input
               type="number"
               placeholder="Level mínimo"
               value={filters.minLevel}
@@ -185,16 +225,23 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
               </label>
             </div>
 
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleCompare}
-              disabled={selectedCharacters.length === 0}
-              className="flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              Comparar ({selectedCharacters.length})
-            </Button>
+            <div className="flex items-center gap-2">
+              {isFiltering && (
+                <div className="text-sm text-muted-foreground">
+                  Aplicando filtros...
+                </div>
+              )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleCompare}
+                disabled={selectedCharacters.length === 0}
+                className="flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Comparar ({selectedCharacters.length})
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

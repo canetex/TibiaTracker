@@ -46,7 +46,7 @@ export default function Dashboard(): JSX.Element {
         setLoading(true);
         setError(null);
         const [chars, stats] = await Promise.all([
-          apiService.getRecentCharacters(),
+          apiService.getAllCharacters(),
           apiService.getGlobalStats()
         ]);
         setCharacters(chars);

@@ -114,6 +114,15 @@ export const apiService = {
     }
   },
 
+  async getAllCharacters() {
+    try {
+      const response = await api.get('/characters/');
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
   async getFilteredCharacters(filters = {}) {
     try {
       // Converter chaves camelCase para snake_case e remover valores vazios/undefined/null
