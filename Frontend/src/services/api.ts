@@ -116,10 +116,9 @@ export const apiService = {
 
   async getAllCharacters() {
     try {
-      const response = await api.get('/characters/');
-      // O endpoint retorna um objeto com { data: [...], skip: 0, limit: 100 }
-      // Precisamos retornar apenas o array de personagens
-      return response.data.data || response.data || [];
+      const response = await api.get('/characters/recent?limit=100');
+      // O endpoint retorna um array direto de personagens
+      return response.data || [];
     } catch (error) {
       handleError(error);
     }
