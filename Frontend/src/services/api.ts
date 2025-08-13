@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000,
 });
 
@@ -116,8 +116,6 @@ export const apiService = {
 
   async getFilteredCharacters(filters = {}) {
     try {
-      console.log('🔍 DEBUG - Filtros recebidos:', filters);
-      
       // Converter chaves camelCase para snake_case e remover valores vazios/undefined/null
       const params = new URLSearchParams();
       Object.entries(filters as Record<string, any>).forEach(([key, value]) => {
@@ -128,15 +126,11 @@ export const apiService = {
         }
       });
       
-      console.log('🔍 DEBUG - Parâmetros convertidos:', params.toString());
-      
       // Usar o endpoint filter-ids para obter IDs primeiro
       const response = await api.get(`/characters/filter-ids?${params}`);
-      console.log('🔍 DEBUG - Resposta da API (filter-ids):', response.data);
       
       // Se não há IDs, retornar array vazio
       if (!response.data || !response.data.ids || !Array.isArray(response.data.ids)) {
-        console.log('🔍 DEBUG - Nenhum ID retornado ou formato inválido');
         return [];
       }
       
@@ -145,10 +139,8 @@ export const apiService = {
         ids: response.data.ids
       });
       
-      console.log('🔍 DEBUG - Resposta da API (by-ids):', characterResponse.data);
       return characterResponse.data || [];
     } catch (error) {
-      console.error('🔍 DEBUG - Erro na API:', error);
       handleError(error);
     }
   }
