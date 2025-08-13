@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { formatNumber, formatDate, getVocationColor, getTibiaUrl } from '../lib/utils';
+import outfitDummy from '../assets/outfit-dummy.gif';
 
 const CharacterCard = ({ 
   character, 
@@ -97,18 +98,14 @@ const CharacterCard = ({
         {/* Header with Avatar and Name */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            {character.outfit_image_url ? (
-              <img
-                src={character.outfit_image_url}
-                alt={`Outfit de ${character.name}`}
-                className="outfit-image"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-            ) : (
-              <div className="w-12 h-16 bg-muted rounded border flex items-center justify-center">
-                <User className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
+            <img
+              src={character.outfit_image_url || outfitDummy}
+              alt={`Outfit de ${character.name}`}
+              className="outfit-image"
+              onError={(e) => { 
+                e.target.src = outfitDummy;
+              }}
+            />
             <div>
               <h3 className="font-semibold text-lg leading-tight mb-1">
                 {character.name}
