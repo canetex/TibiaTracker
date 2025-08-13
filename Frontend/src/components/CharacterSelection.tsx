@@ -74,7 +74,14 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
 
       // Aplicar filtros via API
       const filteredData = await apiService.getFilteredCharacters(activeFilters);
-      setFilteredCharacters(filteredData);
+      
+      // Validação adicional para garantir que filteredData é um array
+      if (Array.isArray(filteredData)) {
+        setFilteredCharacters(filteredData);
+      } else {
+        console.warn('[CharacterSelection] Dados filtrados não são um array:', filteredData);
+        setFilteredCharacters([]);
+      }
     } catch (error) {
       console.error('Erro ao aplicar filtros:', error);
       // Em caso de erro, usar filtros locais como fallback
@@ -95,7 +102,12 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
 
   // Inicializar com todos os personagens
   useEffect(() => {
-    setFilteredCharacters(characters);
+    if (Array.isArray(characters)) {
+      setFilteredCharacters(characters);
+    } else {
+      console.warn('[CharacterSelection] characters não é um array:', characters);
+      setFilteredCharacters([]);
+    }
   }, [characters]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,16 +124,24 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
   };
 
   const handleSelectAll = () => {
-    if (selectedCharacters.length === filteredCharacters.length) {
-      setSelectedCharacters([]);
+    if (Array.isArray(filteredCharacters) && Array.isArray(selectedCharacters)) {
+      if (selectedCharacters.length === filteredCharacters.length) {
+        setSelectedCharacters([]);
+      } else {
+        setSelectedCharacters(filteredCharacters.map(char => char.id));
+      }
     } else {
-      setSelectedCharacters(filteredCharacters.map(char => char.id));
+      console.warn('[CharacterSelection] Dados inválidos para seleção:', { filteredCharacters, selectedCharacters });
     }
   };
 
   const handleCompare = () => {
-    const selectedChars = characters.filter(char => selectedCharacters.includes(char.id));
-    onCompare(selectedChars);
+    if (Array.isArray(characters) && Array.isArray(selectedCharacters)) {
+      const selectedChars = characters.filter(char => selectedCharacters.includes(char.id));
+      onCompare(selectedChars);
+    } else {
+      console.warn('[CharacterSelection] Dados inválidos para comparação:', { characters, selectedCharacters });
+    }
   };
 
   return (
@@ -245,33 +265,39 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredCharacters.map((char) => (
-              <Card
-                key={char.id}
-                className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
-                  selectedCharacters.includes(char.id) ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => handleCharacterSelect(char.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={selectedCharacters.includes(char.id)}
-                      onCheckedChange={() => handleCharacterSelect(char.id)}
-                    />
-                    <div>
-                      <p className="font-medium">{char.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Level {char.level} {char.vocation}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {char.server} • {char.world}
-                      </p>
+            {Array.isArray(filteredCharacters) && filteredCharacters.length > 0 ? (
+              filteredCharacters.map((char) => (
+                <Card
+                  key={char.id}
+                  className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
+                    selectedCharacters.includes(char.id) ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => handleCharacterSelect(char.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={selectedCharacters.includes(char.id)}
+                        onCheckedChange={() => handleCharacterSelect(char.id)}
+                      />
+                      <div>
+                        <p className="font-medium">{char.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Level {char.level} {char.vocation}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {char.server} • {char.world}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                {isFiltering ? 'Aplicando filtros...' : 'Nenhum personagem encontrado com os filtros aplicados.'}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

@@ -139,8 +139,15 @@ export const apiService = {
       // Usar o endpoint filter-ids para obter IDs primeiro
       const response = await api.get(`/characters/filter-ids?${params}`);
       
+      // Validação adicional para garantir que response.data existe e tem a estrutura correta
+      if (!response.data) {
+        console.warn('[API] Resposta vazia do filter-ids');
+        return [];
+      }
+      
       // Se não há IDs, retornar array vazio
-      if (!response.data || !response.data.ids || !Array.isArray(response.data.ids)) {
+      if (!response.data.ids || !Array.isArray(response.data.ids)) {
+        console.warn('[API] Resposta do filter-ids não tem estrutura válida:', response.data);
         return [];
       }
       
@@ -149,9 +156,17 @@ export const apiService = {
         ids: response.data.ids
       });
       
-      return characterResponse.data || [];
+      // Validação adicional para garantir que characterResponse.data é um array
+      if (!characterResponse.data || !Array.isArray(characterResponse.data)) {
+        console.warn('[API] Resposta do by-ids não é um array:', characterResponse.data);
+        return [];
+      }
+      
+      return characterResponse.data;
     } catch (error) {
+      console.error('[API] Erro em getFilteredCharacters:', error);
       handleError(error);
+      return []; // Sempre retornar array vazio em caso de erro
     }
   }
 };
