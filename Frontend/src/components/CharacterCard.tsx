@@ -6,7 +6,9 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Heart, RefreshCw, User } from 'lucide-react';
 import { formatNumber, getVocationColor, getTibiaUrl } from '../lib/utils';
-import outfitDummy from '../assets/outfit-dummy.gif';
+
+// Usar referência direta para arquivo na pasta public
+const OUTFIT_DUMMY_URL = '/outfit-dummy.gif';
 
 interface CharacterCardProps {
   character: {
@@ -45,21 +47,28 @@ export function CharacterCard({
     setImageError(true);
   };
 
+  // Função para obter a URL da imagem com fallback
+  const getOutfitImageUrl = (outfitUrl?: string) => {
+    if (!outfitUrl || outfitUrl === '') {
+      return OUTFIT_DUMMY_URL;
+    }
+    return outfitUrl;
+  };
+
   return (
     <Card className="tibia-card group hover:scale-[1.02] transition-all duration-300">
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           <div className="relative">
             <Avatar className="h-16 w-16">
-              {!imageError && character.outfitImageUrl ? (
+              <AvatarImage
+                src={getOutfitImageUrl(character.outfitImageUrl)}
+                alt={character.name}
+                onError={handleImageError}
+              />
+              {imageError && (
                 <AvatarImage
-                  src={character.outfitImageUrl}
-                  alt={character.name}
-                  onError={handleImageError}
-                />
-              ) : (
-                <AvatarImage
-                  src={outfitDummy}
+                  src={OUTFIT_DUMMY_URL}
                   alt={`${character.name} - Outfit padrão`}
                 />
               )}

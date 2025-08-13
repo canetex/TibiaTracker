@@ -20,7 +20,8 @@ import {
 import { toast } from 'sonner';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { formatNumber, formatDate, getVocationColor, getTibiaUrl } from '../lib/utils';
-import outfitDummy from '../assets/outfit-dummy.gif';
+// Usar referência direta para arquivo na pasta public
+const OUTFIT_DUMMY_URL = '/outfit-dummy.gif';
 
 const CharacterCard = ({ 
   character, 
@@ -92,6 +93,14 @@ const CharacterCard = ({
   const experience = character.last_experience || 0;
   const totalGained = character.total_exp_gained || character.exp_gained || 0;
 
+  // Função para obter a URL da imagem com fallback
+  const getOutfitImageUrl = (outfitUrl) => {
+    if (!outfitUrl || outfitUrl === '' || outfitUrl === 'null' || outfitUrl === 'undefined') {
+      return OUTFIT_DUMMY_URL;
+    }
+    return outfitUrl;
+  };
+
   return (
     <Card className={`relative overflow-hidden ${isInComparison ? 'ring-2 ring-primary' : ''}`}>
       <CardContent className="p-6">
@@ -99,11 +108,11 @@ const CharacterCard = ({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             <img
-              src={character.outfit_image_url || outfitDummy}
+              src={getOutfitImageUrl(character.outfit_image_url)}
               alt={`Outfit de ${character.name}`}
               className="outfit-image"
               onError={(e) => { 
-                e.target.src = outfitDummy;
+                e.target.src = OUTFIT_DUMMY_URL;
               }}
             />
             <div>
