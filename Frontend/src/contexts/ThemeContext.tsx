@@ -28,6 +28,10 @@ export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) =
 
   useEffect(() => {
     localStorage.setItem('tibiaTracker_theme', isDarkMode ? 'dark' : 'light')
+    // Sincroniza a classe `dark` no elemento <html> sempre que o tema mudar
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.toggle('dark', isDarkMode)
+    }
   }, [isDarkMode])
 
   const toggleTheme = () => setIsDarkMode(prev => !prev)

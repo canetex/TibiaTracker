@@ -43,8 +43,11 @@ export function CharacterCard({
   const vocationColor = getVocationColor(character.vocation);
   const tibiaUrl = getTibiaUrl(character);
 
-  const handleImageError = () => {
-    setImageError(true);
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, ErrorEvent>) => {
+    // Substitui diretamente pela imagem dummy e evita loop infinito
+    if (e.currentTarget.src !== OUTFIT_DUMMY_URL) {
+      e.currentTarget.src = OUTFIT_DUMMY_URL;
+    }
   };
 
   // Função para obter a URL da imagem com fallback
@@ -66,12 +69,6 @@ export function CharacterCard({
                 alt={character.name}
                 onError={handleImageError}
               />
-              {imageError && (
-                <AvatarImage
-                  src={OUTFIT_DUMMY_URL}
-                  alt={`${character.name} - Outfit padrão`}
-                />
-              )}
             </Avatar>
             {character.isOnline && (
               <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-success" />

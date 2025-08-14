@@ -18,6 +18,7 @@ import {
   Legend
 } from 'recharts';
 import { apiService } from '../services/api';
+import logger from '../lib/logger';
 import { formatNumber, formatDate } from '../lib/utils';
 
 interface CharacterChartsModalProps {
@@ -51,7 +52,7 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
       setExperienceData(expData);
       setLevelData(lvlData);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      logger.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ export function CharacterChartsModal({ character, isOpen, onClose }: CharacterCh
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-auto">
+      <DialogContent hideClose className="max-w-[95vw] md:max-w-6xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Gráficos - {character.name}</DialogTitle>
         </DialogHeader>

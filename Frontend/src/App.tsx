@@ -26,7 +26,8 @@ function AppShell(): JSX.Element {
         <Collapsible.Root>
           <div className="min-h-screen bg-background text-foreground">
             <Header onToggleTheme={toggleTheme} isDarkMode={isDarkMode} />
-            <main className="container mx-auto px-4 py-6">
+            {/* Wrapper com bordas laterais sutis em telas médias + */}
+            <main className="container mx-auto px-4 py-6 sm:border-x border-border/30">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route

@@ -6,6 +6,7 @@ import { LinearityPanel } from './LinearityPanel';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Card } from './ui/card';
 import { Users, Activity, TrendingUp, BarChart3 } from 'lucide-react';
+import Spinner from './ui/spinner';
 import { apiService } from '../services/api';
 import logger from '../lib/logger';
 
@@ -63,13 +64,30 @@ export default function Dashboard(): JSX.Element {
   const handleCompare = async (chars: Character[]) => {
     try {
       setLoading(true);
-      const data = await Promise.all(
-        chars.map(char => apiService.getCharacterStats(char.id))
+      const statsPerChar = await Promise.all(
+        chars.map((char) => apiService.getCharacterStats(char.id))
       );
-      setChartData(data.flat());
+
+      // Combinar por data
+      const merged: Record<string, any> = {};
+      statsPerChar.forEach((statArray, idx) => {
+        const char = chars[idx];
+        statArray.forEach((point: any) => {
+          const dateKey = point.date;
+          if (!merged[dateKey]) merged[dateKey] = { date: dateKey };
+          merged[dateKey][`exp_${char.id}`] = point.experience ?? point.exp ?? 0;
+          merged[dateKey][`level_${char.id}`] = point.level ?? 0;
+        });
+      });
+
+      // Converter para array ordenado por data
+      const combinedData = Object.values(merged).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      setChartData(combinedData as any);
       setSelectedCharacters(chars);
       setIsComparisonOpen(true);
     } catch (err) {
+      logger.error('Erro ao carregar dados para comparação', err);
       setError('Erro ao carregar dados para comparação');
     } finally {
       setLoading(false);
@@ -87,7 +105,7 @@ export default function Dashboard(): JSX.Element {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <Spinner size={64} />
       </div>
     );
   }

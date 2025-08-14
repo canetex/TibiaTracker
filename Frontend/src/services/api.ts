@@ -1,4 +1,6 @@
 import axios from 'axios';
+import logger from '../lib/logger';
+import { toast } from 'sonner';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -7,8 +9,11 @@ const api = axios.create({
 
 const handleError = (error: any) => {
   if (error.response) {
-    throw new Error(error.response.data.detail || 'Erro na requisição');
+    const msg = error.response.data.detail || 'Erro na requisição';
+    toast.error(msg);
+    throw new Error(msg);
   }
+  toast.error('Erro de conexão. Tente novamente.');
   throw error;
 };
 
@@ -141,13 +146,13 @@ export const apiService = {
       
       // Validação adicional para garantir que response.data existe e tem a estrutura correta
       if (!response.data) {
-        console.warn('[API] Resposta vazia do filter-ids');
+        logger.warn('[API] Resposta vazia do filter-ids');
         return [];
       }
       
       // Se não há IDs, retornar array vazio
       if (!response.data.ids || !Array.isArray(response.data.ids)) {
-        console.warn('[API] Resposta do filter-ids não tem estrutura válida:', response.data);
+        logger.warn('[API] Resposta do filter-ids não tem estrutura válida:', response.data);
         return [];
       }
       
@@ -158,13 +163,13 @@ export const apiService = {
       
       // Validação adicional para garantir que characterResponse.data é um array
       if (!characterResponse.data || !Array.isArray(characterResponse.data)) {
-        console.warn('[API] Resposta do by-ids não é um array:', characterResponse.data);
+        logger.warn('[API] Resposta do by-ids não é um array:', characterResponse.data);
         return [];
       }
       
       return characterResponse.data;
     } catch (error) {
-      console.error('[API] Erro em getFilteredCharacters:', error);
+      logger.error('[API] Erro em getFilteredCharacters:', error);
       handleError(error);
       return []; // Sempre retornar array vazio em caso de erro
     }

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
+import Spinner from './ui/spinner';
 import { Activity, RefreshCw } from 'lucide-react';
 import { apiService } from '../services/api';
+import logger from '../lib/logger';
 import { formatNumber } from '../lib/utils';
 
 interface LinearityCharacter {
@@ -50,7 +52,7 @@ export function LinearityPanel({ onCharacterClick }: LinearityPanelProps) {
       const data = await apiService.getLinearity(parseInt(period));
       setCharacters(data);
     } catch (error) {
-      console.error('Erro ao carregar Linearidade:', error);
+      logger.error('Erro ao carregar Linearidade:', error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,7 @@ export function LinearityPanel({ onCharacterClick }: LinearityPanelProps) {
       <CardContent>
         {loading ? (
           <div className="flex items-center justify-center h-[400px]">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            <Spinner size={64} />
           </div>
         ) : (
           <div className="space-y-4">

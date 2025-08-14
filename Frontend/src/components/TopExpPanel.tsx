@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
+import Spinner from './ui/spinner';
 import { TrendingUp, RefreshCw } from 'lucide-react';
 import { apiService } from '../services/api';
+import logger from '../lib/logger';
 import { formatNumber } from '../lib/utils';
 
 interface TopExpCharacter {
@@ -45,7 +47,7 @@ export function TopExpPanel({ onCharacterClick }: TopExpPanelProps) {
       const data = await apiService.getTopExp(parseInt(period));
       setCharacters(data);
     } catch (error) {
-      console.error('Erro ao carregar Top Exp:', error);
+      logger.error('Erro ao carregar Top Exp:', error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export function TopExpPanel({ onCharacterClick }: TopExpPanelProps) {
       <CardContent>
         {loading ? (
           <div className="flex items-center justify-center h-[400px]">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            <Spinner size={64} />
           </div>
         ) : (
           <div className="space-y-4">

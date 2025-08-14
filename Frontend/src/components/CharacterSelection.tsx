@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import Spinner from './ui/spinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Search, Filter, Users } from 'lucide-react';
 import { apiService } from '../services/api';
+import logger from '../lib/logger';
 
 interface Character {
   id: number;
@@ -24,6 +26,16 @@ interface CharacterSelectionProps {
 
 export function CharacterSelection({ characters, onCompare }: CharacterSelectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  // Função utilitária para atualizar vocations/servers/guilds a partir de lista de personagens
+  const deriveFilterOptions = (chars: Character[]) => {
+    const vocs = Array.from(new Set(chars.map(c => c.vocation))).sort();
+    const srvs = Array.from(new Set(chars.map(c => c.server))).sort();
+    const glds = Array.from(new Set(chars.filter(c => c.guild).map(c => c.guild!))).sort();
+    if (vocations.length === 0) setVocations(vocs);
+    if (servers.length === 0) setServers(srvs);
+    if (guilds.length === 0) setGuilds(glds);
+  };
+
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -52,7 +64,7 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
         // Em uma implementação futura, podemos criar um endpoint específico para guilds
         setGuilds([]);
       } catch (error) {
-        console.error('Erro ao carregar filtros:', error);
+        logger.error('Erro ao carregar filtros:', error);
       }
     };
     loadFilters();
@@ -60,12 +72,11 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
 
   // Aplicar filtros via API quando necessário
   const applyFilters = async () => {
+    setIsFiltering(true);
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== '')
+    );
     try {
-      setIsFiltering(true);
-      const activeFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '')
-      );
-      
       if (Object.keys(activeFilters).length === 0) {
         // Se não há filtros ativos, usar todos os personagens
         setFilteredCharacters(characters);
@@ -79,16 +90,35 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
       if (Array.isArray(filteredData)) {
         setFilteredCharacters(filteredData);
       } else {
-        console.warn('[CharacterSelection] Dados filtrados não são um array:', filteredData);
+        logger.warn('[CharacterSelection] Dados filtrados não são um array:', filteredData);
         setFilteredCharacters([]);
       }
     } catch (error) {
-      console.error('Erro ao aplicar filtros:', error);
-      // Em caso de erro, usar filtros locais como fallback
-      setFilteredCharacters(characters);
+      logger.warn('API de filtros indisponível, aplicando filtragem local.');
+      // Fallback local
+      const locallyFiltered = localFilter(characters, activeFilters);
+      setFilteredCharacters(locallyFiltered);
     } finally {
       setIsFiltering(false);
     }
+  };
+
+  // Filtragem local genérica
+  const localFilter = (chars: Character[], activeFilters: Record<string, any>) => {
+    return chars.filter(char => {
+      const fn = (field: keyof typeof activeFilters, predicate: (v:any)=>boolean) => {
+        if (!activeFilters[field]) return true;
+        return predicate(activeFilters[field]);
+      };
+      return (
+        fn('vocation', (v) => char.vocation === v) &&
+        fn('server', (v) => char.server === v) &&
+        fn('guild', (v) => (char.guild || '').toLowerCase().includes(String(v).toLowerCase())) &&
+        fn('minLevel', (v) => char.level >= Number(v)) &&
+        fn('maxLevel', (v) => char.level <= Number(v)) &&
+        fn('search', (v) => char.name.toLowerCase().includes(String(v).toLowerCase()))
+      );
+    });
   };
 
   // Aplicar filtros quando os filtros mudarem
@@ -104,11 +134,19 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
   useEffect(() => {
     if (Array.isArray(characters)) {
       setFilteredCharacters(characters);
+      deriveFilterOptions(characters);
     } else {
-      console.warn('[CharacterSelection] characters não é um array:', characters);
+      logger.warn('[CharacterSelection] characters não é um array:', characters);
       setFilteredCharacters([]);
     }
   }, [characters]);
+
+  // Atualizar lista em tempo real com searchTerm sem esperar debounce
+  useEffect(() => {
+    if (!searchTerm) return; // handled by filters
+    const newFilters = { ...filters, search: searchTerm };
+    setFilters(newFilters);
+  }, [searchTerm]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value || '';
@@ -131,7 +169,7 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
         setSelectedCharacters(filteredCharacters.map(char => char.id));
       }
     } else {
-      console.warn('[CharacterSelection] Dados inválidos para seleção:', { filteredCharacters, selectedCharacters });
+      logger.warn('[CharacterSelection] Dados inválidos para seleção:', { filteredCharacters, selectedCharacters });
     }
   };
 
@@ -140,7 +178,7 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
       const selectedChars = characters.filter(char => selectedCharacters.includes(char.id));
       onCompare(selectedChars);
     } else {
-      console.warn('[CharacterSelection] Dados inválidos para comparação:', { characters, selectedCharacters });
+      logger.warn('[CharacterSelection] Dados inválidos para comparação:', { characters, selectedCharacters });
     }
   };
 
@@ -246,11 +284,7 @@ export function CharacterSelection({ characters, onCompare }: CharacterSelection
             </div>
 
             <div className="flex items-center gap-2">
-              {isFiltering && (
-                <div className="text-sm text-muted-foreground">
-                  Aplicando filtros...
-                </div>
-              )}
+              {isFiltering && <Spinner size={20} />}
               <Button
                 variant="default"
                 size="sm"

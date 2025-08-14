@@ -1,4 +1,5 @@
 import React from 'react'
+import logger from '../lib/logger'
 
 type ErrorBoundaryState = { hasError: boolean }
 
@@ -13,7 +14,7 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
   }
 
   componentDidCatch(error: unknown, info: unknown) {
-    console.error('ErrorBoundary capturou um erro:', error, info)
+    logger.error('ErrorBoundary capturou um erro:', error, info)
   }
 
   render() {
