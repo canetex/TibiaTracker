@@ -170,15 +170,15 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     }
     
     print("HUDs criados para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY .. " com outfit ID: " .. (outfitId or "N/A"))
-    print("HUD do nome criado:", nameHud ~= nil)
-    print("HUD do outfit criado:", outfitHud ~= nil)
+    print("HUD do nome criado: " .. tostring(nameHud ~= nil))
+    print("HUD do outfit criado: " .. tostring(outfitHud ~= nil))
     
     -- Conta HUDs ativos de forma segura
     local hudCount = 0
     for _ in pairs(activeHUDs) do
         hudCount = hudCount + 1
     end
-    print("Total de HUDs ativos:", hudCount)
+    print("Total de HUDs ativos: " .. tostring(hudCount))
 end
 
 -- Função para destruir HUD de uma criatura específica
