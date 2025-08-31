@@ -7,7 +7,7 @@
 local activeHUDs = {}
 
 -- Função para criar HUD para uma criatura
-function createCreatureHUD(creatureId, creatureName, x, y, z)
+function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
     -- Verifica se já existe um HUD para esta criatura
     if activeHUDs[creatureId] then
         return
@@ -19,11 +19,14 @@ function createCreatureHUD(creatureId, creatureName, x, y, z)
         return
     end
     
+    -- Formata o nome da criatura com o count do ícone
+    local displayName = creatureName .. " : " .. (iconCount or "0")
+    
     -- Calcula posição vertical a 1/3 do topo da tela
     local hudY = windowDimensions.height / 3
     
     -- Cria o HUD centralizado horizontalmente e posicionado verticalmente
-    local hud = HUD.new(0, hudY, creatureName, true)
+    local hud = HUD.new(0, hudY, displayName, true)
     hud:setColor(255, 255, 0)  -- Amarelo
     hud:setFontSize(14)
     
@@ -40,10 +43,11 @@ function createCreatureHUD(creatureId, creatureName, x, y, z)
         hud = hud,
         position = {x = x, y = y, z = z},
         lastSeen = os.clock(),
-        creatureName = creatureName
+        creatureName = creatureName,
+        iconCount = iconCount
     }
     
-    print("HUD criado para: " .. creatureName .. " (ID: " .. creatureId .. ")")
+    print("HUD criado para: " .. displayName .. " (ID: " .. creatureId .. ")")
 end
 
 -- Função para destruir HUD de uma criatura específica
@@ -162,7 +166,7 @@ function evaluate_creature()
                             
                             local position = creature:getPosition()
                             if position then
-                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z)
+                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count)
                             end
                             break  -- Uma vez que encontrou um ícone válido, não precisa verificar outros
                         end
