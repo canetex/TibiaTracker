@@ -70,10 +70,22 @@ end
 
 -- Função para criar HUD para uma criatura
 function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitId, creatureType)
+    print("DEBUG: === INÍCIO createCreatureHUD ===")
+    print("DEBUG: Parâmetros recebidos:")
+    print("  - creatureId: " .. tostring(creatureId))
+    print("  - creatureName: " .. tostring(creatureName))
+    print("  - x: " .. tostring(x) .. ", y: " .. tostring(y) .. ", z: " .. tostring(z))
+    print("  - iconCount: " .. tostring(iconCount))
+    print("  - outfitId: " .. tostring(outfitId))
+    print("  - creatureType: " .. tostring(creatureType))
+    
     -- Verifica se já existe um HUD para esta criatura
     if activeHUDs[creatureId] then
+        print("DEBUG: HUD já existe para esta criatura, retornando")
         return
     end
+    
+    print("DEBUG: Verificando dimensões da janela...")
     
     -- Obtém as dimensões da janela do jogo
     local windowDimensions = Client.getGameWindowDimensions()
@@ -82,25 +94,33 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         return
     end
     
+    print("DEBUG: Dimensões obtidas - Width: " .. tostring(windowDimensions.width) .. ", Height: " .. tostring(windowDimensions.height))
+    
     -- Formata o nome da criatura com tipo e count do ícone
     local displayName = creatureType .. " " .. creatureName .. " -> " .. (iconCount or "0")
+    print("DEBUG: Nome formatado: " .. tostring(displayName))
     
     -- Obtém próxima posição vertical disponível
     local hudY = getNextHudPosition()
+    print("DEBUG: Posição Y calculada: " .. tostring(hudY))
     
     -- Debug: Verifica se as funções estão disponíveis
     print("DEBUG: Criando HUDs para criatura...")
-    print("outfitId (Outfit Type):", outfitId)
-    print("Posição Y calculada:", hudY)
+    print("outfitId (Outfit Type): " .. tostring(outfitId))
+    print("Posição Y calculada: " .. tostring(hudY))
     
     -- Cria o HUD do nome centralizado horizontalmente
     local nameHud = nil
     local outfitHud = nil
     
+    print("DEBUG: Tentando criar HUD do nome...")
+    
     -- Tenta criar o HUD do nome
     local success, result = pcall(function()
         return HUD.new(0, hudY, displayName, true)
     end)
+    
+    print("DEBUG: Resultado HUD nome - success: " .. tostring(success) .. ", result: " .. tostring(result))
     
     if success and result then
         nameHud = result
@@ -109,7 +129,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         nameHud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
         print("DEBUG: HUD do nome criado com sucesso")
     else
-        print("DEBUG: ERRO - Falha ao criar HUD do nome:", result)
+        print("DEBUG: ERRO - Falha ao criar HUD do nome: " .. tostring(result))
         return
     end
     
@@ -376,7 +396,17 @@ function evaluate_creature()
                                     creatureType = "[FIENDISH]"
                                 end
                                 
+                                print("DEBUG: Chamando createCreatureHUD com:")
+                                print("  - creatureId: " .. tostring(creatureId))
+                                print("  - creatureName: " .. tostring(creatureName))
+                                print("  - position: X=" .. tostring(position.x) .. ", Y=" .. tostring(position.y) .. ", Z=" .. tostring(position.z))
+                                print("  - icon.count: " .. tostring(icon.count))
+                                print("  - outfitId: " .. tostring(outfitId))
+                                print("  - creatureType: " .. tostring(creatureType))
+                                
                                 createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count, outfitId, creatureType)
+                                
+                                print("DEBUG: createCreatureHUD executada")
                             end
                             break  -- Uma vez que encontrou um ícone válido, não precisa verificar outros
                         end
