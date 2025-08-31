@@ -47,7 +47,15 @@ function reorganizeHUDs()
     -- Reorganiza todos os HUDs ativos
     for creatureId, hudData in pairs(activeHUDs) do
         local newY = baseY + (hudCount * hudSpacing)
-        hudData.hud:setPos(0, newY)
+        
+        -- Move ambos os HUDs para a nova posição
+        if hudData.nameHud then
+            hudData.nameHud:setPos(0, newY)
+        end
+        if hudData.outfitHud then
+            hudData.outfitHud:setPos(-50, newY)
+        end
+        
         hudCount = hudCount + 1
     end
     
@@ -61,7 +69,7 @@ function reorganizeHUDs()
 end
 
 -- Função para criar HUD para uma criatura
-function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
+function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitId)
     -- Verifica se já existe um HUD para esta criatura
     if activeHUDs[creatureId] then
         return
@@ -79,39 +87,49 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
     -- Obtém próxima posição vertical disponível
     local hudY = getNextHudPosition()
     
-    -- Cria o HUD centralizado horizontalmente e posicionado verticalmente
-    local hud = HUD.new(0, hudY, displayName, true)
-    hud:setColor(255, 255, 0)  -- Amarelo
-    hud:setFontSize(14)
+    -- Cria o HUD do nome centralizado horizontalmente
+    local nameHud = HUD.new(0, hudY, displayName, true)
+    nameHud:setColor(255, 255, 0)  -- Amarelo
+    nameHud:setFontSize(14)
+    nameHud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
     
-    -- Centraliza horizontalmente
-    hud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
+    -- Cria o HUD da imagem do outfit ao lado esquerdo do nome
+    local outfitHud = HUD.newOutfit(-50, hudY, outfitId or 0, true)
+    outfitHud:setOutfitMoving(true)  -- Ativa a animação de movimento
     
-    -- Define callback para destruir o HUD quando clicado
-    hud:setCallback(function()
+    -- Define callback para destruir ambos os HUDs quando o nome for clicado
+    nameHud:setCallback(function()
         destroyCreatureHUD(creatureId)
     end)
     
-    -- Armazena o HUD na tabela de HUDs ativos com timestamp
+    -- Define callback para destruir ambos os HUDs quando a imagem for clicada
+    outfitHud:setCallback(function()
+        destroyCreatureHUD(creatureId)
+    end)
+    
+    -- Armazena ambos os HUDs na tabela de HUDs ativos
     activeHUDs[creatureId] = {
-        hud = hud,
+        nameHud = nameHud,
+        outfitHud = outfitHud,
         position = {x = x, y = y, z = z},
         lastSeen = os.clock(),
         creatureName = creatureName,
         iconCount = iconCount,
-        hudY = hudY
+        hudY = hudY,
+        outfitId = outfitId
     }
     
-    print("HUD criado para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY)
+    print("HUDs criados para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY .. " com outfit ID: " .. (outfitId or "N/A"))
 end
 
 -- Função para destruir HUD de uma criatura específica
 function destroyCreatureHUD(creatureId)
     local hudData = activeHUDs[creatureId]
     if hudData then
-        hudData.hud:destroy()
+        hudData.nameHud:destroy()
+        hudData.outfitHud:destroy()
         activeHUDs[creatureId] = nil
-        print("HUD destruído para criatura ID: " .. creatureId)
+        print("HUDs destruídos para criatura ID: " .. creatureId)
         
         -- Reorganiza os HUDs restantes
         reorganizeHUDs()
@@ -224,7 +242,9 @@ function evaluate_creature()
                             
                             local position = creature:getPosition()
                             if position then
-                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count)
+                                local outfit = creature:getOutfit()
+                                local outfitId = outfit and outfit.type or 0
+                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count, outfitId)
                             end
                             break  -- Uma vez que encontrou um ícone válido, não precisa verificar outros
                         end
