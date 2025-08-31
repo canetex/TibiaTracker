@@ -1,6 +1,7 @@
 -- Script para detectar criaturas Influenciadas ou Fiendish e criar HUDs
--- Cada monstro terá um HUD vermelho acima dele com nome e tamanho 10
+-- Cada monstro terá um HUD vermelho no centro da tela com nome e tamanho 10
 -- Clique no HUD destrói o HUD específico
+-- Auto-destruição após 1s de delay quando monstro sai da tela/morre
 
 -- Tabela para armazenar HUDs ativos por criatura
 local activeHUDs = {}
@@ -12,30 +13,34 @@ function createCreatureHUD(creatureId, creatureName, x, y, z)
         return
     end
     
-    -- Obtém a posição da câmera para calcular posição do HUD
-    local cameraPos = Map.getCameraPosition()
-    if not cameraPos then
+    -- Obtém as dimensões da janela do jogo
+    local windowDimensions = Client.getGameWindowDimensions()
+    if not windowDimensions then
         return
     end
     
-    -- Calcula posição relativa do HUD (acima da criatura)
-    local hudX = (x - cameraPos.x) * 32 + 16  -- 32 pixels por SQM, centralizado
-    local hudY = (y - cameraPos.y) * 32 - 20  -- 20 pixels acima da criatura
+    -- Calcula posição vertical a 1/3 do topo da tela
+    local hudY = windowDimensions.height / 3
     
-    -- Cria o HUD com texto vermelho e tamanho 10
-    local hud = HUD.new(hudX, hudY, creatureName, true)
-    hud:setColor(255, 0, 0)  -- Vermelho
-    hud:setFontSize(10)
+    -- Cria o HUD centralizado horizontalmente e posicionado verticalmente
+    local hud = HUD.new(0, hudY, creatureName, true)
+    hud:setColor(255, 255, 0)  -- Amarelo
+    hud:setFontSize(14)
+    
+    -- Centraliza horizontalmente
+    hud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
     
     -- Define callback para destruir o HUD quando clicado
     hud:setCallback(function()
         destroyCreatureHUD(creatureId)
     end)
     
-    -- Armazena o HUD na tabela de HUDs ativos
+    -- Armazena o HUD na tabela de HUDs ativos com timestamp
     activeHUDs[creatureId] = {
         hud = hud,
-        position = {x = x, y = y, z = z}
+        position = {x = x, y = y, z = z},
+        lastSeen = os.clock(),
+        creatureName = creatureName
     }
     
     print("HUD criado para: " .. creatureName .. " (ID: " .. creatureId .. ")")
@@ -51,39 +56,89 @@ function destroyCreatureHUD(creatureId)
     end
 end
 
--- Função para limpar HUDs de criaturas que não existem mais
-function cleanupInvalidHUDs()
+-- Função para verificar se uma criatura ainda está na tela
+function isCreatureOnScreen(creatureId)
     local creatures = Map.getCreatureIds(true, false)
-    local validCreatureIds = {}
-    
-    -- Coleta IDs de criaturas válidas
-    if creatures then
-        for _, id in ipairs(creatures) do
-            validCreatureIds[id] = true
-        end
+    if not creatures then
+        return false
     end
     
-    -- Remove HUDs de criaturas que não existem mais
+    for _, id in ipairs(creatures) do
+        if id == creatureId then
+            return true
+        end
+    end
+    return false
+end
+
+-- Função para limpar HUDs de criaturas que não existem mais (com delay de 1s)
+function cleanupInvalidHUDs()
+    local currentTime = os.clock()
+    
     for creatureId, hudData in pairs(activeHUDs) do
-        if not validCreatureIds[creatureId] then
-            destroyCreatureHUD(creatureId)
+        local timeSinceLastSeen = currentTime - hudData.lastSeen
+        
+        -- Se passou mais de 1 segundo desde que vimos a criatura
+        if timeSinceLastSeen > 1.0 then
+            -- Verifica se a criatura realmente não está mais na tela
+            if not isCreatureOnScreen(creatureId) then
+                print("Auto-destruindo HUD para " .. hudData.creatureName .. " (ID: " .. creatureId .. ") após " .. string.format("%.1f", timeSinceLastSeen) .. "s")
+                destroyCreatureHUD(creatureId)
+            end
         end
     end
 end
 
--- Função para atualizar posições dos HUDs existentes
-function updateHUDPositions()
-    local cameraPos = Map.getCameraPosition()
-    if not cameraPos then
+-- Função para atualizar timestamp de criaturas visíveis
+function updateCreatureTimestamps()
+    local creatures = Map.getCreatureIds(true, false)
+    if not creatures then
         return
     end
     
-    for creatureId, hudData in pairs(activeHUDs) do
-        local pos = hudData.position
-        local hudX = (pos.x - cameraPos.x) * 32 + 16
-        local hudY = (pos.y - cameraPos.y) * 32 - 20
-        hudData.hud:setPos(hudX, hudY)
+    local currentTime = os.clock()
+    for _, creatureId in ipairs(creatures) do
+        if activeHUDs[creatureId] then
+            activeHUDs[creatureId].lastSeen = currentTime
+        end
     end
+end
+
+-- Função para debug completo das informações da criatura
+function debugCreatureInfo(creature, creatureId)
+    print("=== DEBUG: Criatura Detectada ===")
+    print("ID: " .. creatureId)
+    print("Nome: " .. (creature:getName() or "N/A"))
+    
+    local position = creature:getPosition()
+    if position then
+        print("Posição: X=" .. position.x .. ", Y=" .. position.y .. ", Z=" .. position.z)
+    else
+        print("Posição: N/A")
+    end
+    
+    print("Tipo: " .. (creature:getType() or "N/A"))
+    print("Vida: " .. (creature:getHealthPercent() or "N/A") .. "%")
+    print("Velocidade: " .. (creature:getSpeed() or "N/A"))
+    
+    local outfit = creature:getOutfit()
+    if outfit then
+        print("Outfit: Type=" .. outfit.type .. ", Head=" .. outfit.head .. ", Body=" .. outfit.body .. ", Legs=" .. outfit.legs .. ", Feet=" .. outfit.feet)
+    else
+        print("Outfit: N/A")
+    end
+    
+    local icons = creature:getIcons()
+    if icons then
+        print("Ícones:")
+        for i, icon in ipairs(icons) do
+            print("  Ícone " .. i .. ": Type=" .. icon.type .. ", ID=" .. icon.id .. ", Count=" .. icon.count)
+        end
+    else
+        print("Ícones: N/A")
+    end
+    
+    print("================================")
 end
 
 -- Função principal para avaliar criaturas
@@ -102,6 +157,9 @@ function evaluate_creature()
                 if icons then
                     for _, icon in ipairs(icons) do
                         if icon.id == Enums.CreatureIcons.CREATURE_ICON_INFLUENCED or icon.id == Enums.CreatureIcons.CREATURE_ICON_FIENDISH then
+                            -- Debug completo das informações da criatura
+                            debugCreatureInfo(creature, creatureId)
+                            
                             local position = creature:getPosition()
                             if position then
                                 createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z)
@@ -114,9 +172,9 @@ function evaluate_creature()
         end
     end
     
-    -- Limpa HUDs inválidos e atualiza posições
+    -- Atualiza timestamps e limpa HUDs inválidos
+    updateCreatureTimestamps()
     cleanupInvalidHUDs()
-    updateHUDPositions()
 end
 
 -- Timer para executar a verificação continuamente
@@ -135,6 +193,8 @@ function stopCreatureFinder()
     end
 end
 
+local control = false
+
 -- Função para iniciar o script
 function startCreatureFinder()
     if continuosFinder then
@@ -145,3 +205,20 @@ end
 
 print("Script findCreatureFiendshorInfluenced carregado!")
 print("Use startCreatureFinder() para iniciar ou stopCreatureFinder() para parar")
+
+-- HUD de controle principal
+hud = HUD.new(100, 100, "Fiendish Finder", true)
+hud:setColor(255,0, 0)
+hud:setFontSize(10)
+hud:setDraggable(true)
+hud:setCallback(function()
+  if control == false then
+    startCreatureFinder()
+    hud:setColor(0,255, 0)
+    control = true
+  else
+    stopCreatureFinder()
+    hud:setColor(255,0, 0)
+    control = false
+  end
+end)
