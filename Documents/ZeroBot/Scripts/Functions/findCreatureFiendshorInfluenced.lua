@@ -2,9 +2,63 @@
 -- Cada monstro terá um HUD vermelho no centro da tela com nome e tamanho 10
 -- Clique no HUD destrói o HUD específico
 -- Auto-destruição após 1s de delay quando monstro sai da tela/morre
+-- Suporte para múltiplos monstros com posicionamento automático
 
 -- Tabela para armazenar HUDs ativos por criatura
 local activeHUDs = {}
+
+-- Variável para controlar a posição vertical dos próximos HUDs
+local nextHudY = 0
+local hudSpacing = 30  -- Espaçamento entre HUDs em pixels
+
+-- Função para obter próxima posição vertical disponível
+function getNextHudPosition()
+    local windowDimensions = Client.getGameWindowDimensions()
+    if not windowDimensions then
+        return 100  -- Posição padrão se não conseguir obter dimensões
+    end
+    
+    -- Se não há HUDs ativos, começa a 1/3 do topo
+    if nextHudY == 0 then
+        nextHudY = windowDimensions.height / 3
+    else
+        -- Move para baixo com espaçamento
+        nextHudY = nextHudY + hudSpacing
+    end
+    
+    -- Se ultrapassar 2/3 da tela, volta ao topo
+    if nextHudY > (windowDimensions.height * 2/3) then
+        nextHudY = windowDimensions.height / 3
+    end
+    
+    return nextHudY
+end
+
+-- Função para reorganizar posições dos HUDs quando um é removido
+function reorganizeHUDs()
+    local windowDimensions = Client.getGameWindowDimensions()
+    if not windowDimensions then
+        return
+    end
+    
+    local hudCount = 0
+    local baseY = windowDimensions.height / 3
+    
+    -- Reorganiza todos os HUDs ativos
+    for creatureId, hudData in pairs(activeHUDs) do
+        local newY = baseY + (hudCount * hudSpacing)
+        hudData.hud:setPos(0, newY)
+        hudCount = hudCount + 1
+    end
+    
+    -- Atualiza a próxima posição disponível
+    nextHudY = baseY + (hudCount * hudSpacing)
+    
+    -- Se não há HUDs, reseta para posição inicial
+    if hudCount == 0 then
+        nextHudY = 0
+    end
+end
 
 -- Função para criar HUD para uma criatura
 function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
@@ -22,8 +76,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
     -- Formata o nome da criatura com o count do ícone
     local displayName = creatureName .. " : " .. (iconCount or "0")
     
-    -- Calcula posição vertical a 1/3 do topo da tela
-    local hudY = windowDimensions.height / 3
+    -- Obtém próxima posição vertical disponível
+    local hudY = getNextHudPosition()
     
     -- Cria o HUD centralizado horizontalmente e posicionado verticalmente
     local hud = HUD.new(0, hudY, displayName, true)
@@ -44,10 +98,11 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount)
         position = {x = x, y = y, z = z},
         lastSeen = os.clock(),
         creatureName = creatureName,
-        iconCount = iconCount
+        iconCount = iconCount,
+        hudY = hudY
     }
     
-    print("HUD criado para: " .. displayName .. " (ID: " .. creatureId .. ")")
+    print("HUD criado para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY)
 end
 
 -- Função para destruir HUD de uma criatura específica
@@ -57,6 +112,9 @@ function destroyCreatureHUD(creatureId)
         hudData.hud:destroy()
         activeHUDs[creatureId] = nil
         print("HUD destruído para criatura ID: " .. creatureId)
+        
+        -- Reorganiza os HUDs restantes
+        reorganizeHUDs()
     end
 end
 
