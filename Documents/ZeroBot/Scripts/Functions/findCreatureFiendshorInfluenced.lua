@@ -69,7 +69,7 @@ function reorganizeHUDs()
 end
 
 -- Função para criar HUD para uma criatura
-function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitId)
+function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitId, creatureType)
     -- Verifica se já existe um HUD para esta criatura
     if activeHUDs[creatureId] then
         return
@@ -82,8 +82,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         return
     end
     
-    -- Formata o nome da criatura com o count do ícone
-    local displayName = creatureName .. " -> " .. (iconCount or "0")
+    -- Formata o nome da criatura com tipo e count do ícone
+    local displayName = creatureType .. " " .. creatureName .. " -> " .. (iconCount or "0")
     
     -- Obtém próxima posição vertical disponível
     local hudY = getNextHudPosition()
@@ -125,7 +125,6 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         if success2 and result2 then
             outfitHud = result2
             print("DEBUG: HUD do outfit criado com sucesso")
-            print("DEBUG: Tipo do resultado:", type(result2))
             
             -- Tenta ativar a animação de movimento
             local success3, result3 = pcall(function()
@@ -136,15 +135,13 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
             if success3 then
                 print("DEBUG: Animação de movimento ativada")
             else
-                print("DEBUG: Aviso - Falha ao ativar animação: " .. tostring(result3))
+                print("DEBUG: Aviso - Falha ao ativar animação:", result3)
             end
         else
-            print("DEBUG: ERRO - Falha ao criar HUD do outfit: " .. tostring(result2))
-            print("DEBUG: success2 = " .. tostring(success2) .. ", result2 = " .. tostring(result2))
+            print("DEBUG: ERRO - Falha ao criar HUD do outfit:", result2)
         end
     else
         print("DEBUG: ERRO - HUD.newOutfit não está disponível")
-        print("DEBUG: HUD.newOutfit = " .. tostring(HUD.newOutfit))
     end
     
     -- Define callback para destruir ambos os HUDs quando o nome for clicado
@@ -170,7 +167,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         creatureName = creatureName,
         iconCount = iconCount,
         hudY = hudY,
-        outfitId = outfitId
+        outfitId = outfitId,
+        creatureType = creatureType
     }
     
     print("HUDs criados para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY .. " com outfit ID: " .. (outfitId or "N/A"))
@@ -307,7 +305,16 @@ function evaluate_creature()
                             if position then
                                 local outfit = creature:getOutfit()
                                 local outfitId = outfit and outfit.type or 0
-                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count, outfitId)
+                                
+                                -- Determina o tipo baseado no ID do ícone
+                                local creatureType = ""
+                                if icon.id == Enums.CreatureIcons.CREATURE_ICON_INFLUENCED then
+                                    creatureType = "[INFLUENCED]"
+                                elseif icon.id == Enums.CreatureIcons.CREATURE_ICON_FIENDISH then
+                                    creatureType = "[FIENDISH]"
+                                end
+                                
+                                createCreatureHUD(creatureId, creatureName, position.x, position.y, position.z, icon.count, outfitId, creatureType)
                             end
                             break  -- Uma vez que encontrou um ícone válido, não precisa verificar outros
                         end
