@@ -114,35 +114,97 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     end
     
     -- Tenta criar o HUD da imagem do outfit
+    print("DEBUG: === INÍCIO CRIAÇÃO HUD OUTFIT ===")
+    print("DEBUG: HUD.newOutfit disponível:", HUD.newOutfit ~= nil)
+    print("DEBUG: Tipo de HUD.newOutfit:", type(HUD.newOutfit))
+    
     if HUD.newOutfit then
         print("DEBUG: Criando HUD do outfit com ID: " .. tostring(outfitId))
         print("DEBUG: Parâmetros - X: -50, Y: " .. tostring(hudY) .. ", outfitId: " .. tostring(outfitId) .. ", newFeatures: true")
         
+        -- Testa diferentes posições X para o outfit
+        local outfitX = -50
+        print("DEBUG: Tentando posição X: " .. tostring(outfitX))
+        
         local success2, result2 = pcall(function()
-            return HUD.newOutfit(-50, hudY, outfitId, true)
+            return HUD.newOutfit(outfitX, hudY, outfitId, true)
         end)
+        
+        print("DEBUG: Resultado pcall - success2:", success2)
+        print("DEBUG: Resultado pcall - result2:", result2)
+        print("DEBUG: Tipo do result2:", type(result2))
         
         if success2 and result2 then
             outfitHud = result2
             print("DEBUG: HUD do outfit criado com sucesso")
+            print("DEBUG: outfitHud válido:", outfitHud ~= nil)
             
             -- Tenta ativar a animação de movimento
+            print("DEBUG: Tentando ativar animação de movimento...")
             local success3, result3 = pcall(function()
                 outfitHud:setOutfitMoving(true)
                 return true
             end)
             
+            print("DEBUG: Animação - success3:", success3)
+            print("DEBUG: Animação - result3:", result3)
+            
             if success3 then
-                print("DEBUG: Animação de movimento ativada")
+                print("DEBUG: Animação de movimento ativada com sucesso")
             else
                 print("DEBUG: Aviso - Falha ao ativar animação:", result3)
             end
+            
+            -- Tenta definir posição específica
+            print("DEBUG: Tentando definir posição específica...")
+            local success4, result4 = pcall(function()
+                outfitHud:setPos(outfitX, hudY)
+                return true
+            end)
+            
+            print("DEBUG: setPos - success4:", success4)
+            print("DEBUG: setPos - result4:", result4)
+            
         else
-            print("DEBUG: ERRO - Falha ao criar HUD do outfit:", result2)
+            print("DEBUG: ERRO - Falha ao criar HUD do outfit")
+            print("DEBUG: success2 = " .. tostring(success2))
+            print("DEBUG: result2 = " .. tostring(result2))
+            
+            -- Tenta criar com parâmetros diferentes
+            print("DEBUG: Tentando criar com parâmetros alternativos...")
+            local successAlt, resultAlt = pcall(function()
+                return HUD.newOutfit(0, hudY, outfitId, false)
+            end)
+            
+            print("DEBUG: Alternativo - successAlt:", successAlt)
+            print("DEBUG: Alternativo - resultAlt:", resultAlt)
+            
+            if successAlt and resultAlt then
+                outfitHud = resultAlt
+                print("DEBUG: HUD do outfit criado com parâmetros alternativos")
+            end
         end
     else
         print("DEBUG: ERRO - HUD.newOutfit não está disponível")
+        print("DEBUG: HUD.newOutfit = " .. tostring(HUD.newOutfit))
+        
+        -- Tenta usar HUD.new com outfit
+        print("DEBUG: Tentando HUD.new com outfit...")
+        local successAlt2, resultAlt2 = pcall(function()
+            return HUD.new(-50, hudY, "OUTFIT:" .. tostring(outfitId), true)
+        end)
+        
+        print("DEBUG: HUD.new alternativo - successAlt2:", successAlt2)
+        print("DEBUG: HUD.new alternativo - resultAlt2:", resultAlt2)
+        
+        if successAlt2 and resultAlt2 then
+            outfitHud = resultAlt2
+            print("DEBUG: HUD alternativo criado com HUD.new")
+        end
     end
+    
+    print("DEBUG: === FIM CRIAÇÃO HUD OUTFIT ===")
+    print("DEBUG: outfitHud final:", outfitHud ~= nil)
     
     -- Define callback para destruir ambos os HUDs quando o nome for clicado
     if nameHud then
