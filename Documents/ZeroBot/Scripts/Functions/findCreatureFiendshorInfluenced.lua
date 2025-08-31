@@ -88,10 +88,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     local hudY = getNextHudPosition()
     
     -- Debug: Verifica se as funções estão disponíveis
-    print("DEBUG: Verificando funções HUD...")
-    print("HUD.new disponível:", HUD.new ~= nil)
-    print("HUD.newOutfit disponível:", HUD.newOutfit ~= nil)
-    print("outfitId recebido:", outfitId)
+    print("DEBUG: Criando HUDs para criatura...")
+    print("outfitId (Outfit Type):", outfitId)
     
     -- Cria o HUD do nome centralizado horizontalmente
     local nameHud = HUD.new(0, hudY, displayName, true)
@@ -102,8 +100,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     -- Cria o HUD da imagem do outfit ao lado esquerdo do nome
     local outfitHud = nil
     if HUD.newOutfit then
-        print("DEBUG: Criando HUD do outfit...")
-        outfitHud = HUD.newOutfit(-50, hudY, outfitId or 0, true)
+        print("DEBUG: Criando HUD do outfit com ID:", outfitId)
+        outfitHud = HUD.newOutfit(-50, hudY, outfitId, true)
         if outfitHud then
             print("DEBUG: HUD do outfit criado com sucesso")
             outfitHud:setOutfitMoving(true)  -- Ativa a animação de movimento
