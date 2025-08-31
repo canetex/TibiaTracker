@@ -79,10 +79,10 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     print("  - outfitId: " .. tostring(outfitId))
     print("  - creatureType: " .. tostring(creatureType))
     
-    -- Verifica se já existe um HUD para esta criatura
+    -- Verifica se já existe um HUD para esta criatura e destrói se necessário
     if activeHUDs[creatureId] then
-        print("DEBUG: HUD já existe para esta criatura, retornando")
-        return
+        print("DEBUG: HUD já existe para esta criatura, destruindo anterior...")
+        destroyCreatureHUD(creatureId)
     end
     
     print("DEBUG: Verificando dimensões da janela...")
@@ -202,6 +202,20 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
             if successAlt and resultAlt then
                 outfitHud = resultAlt
                 print("DEBUG: HUD do outfit criado com parâmetros alternativos")
+            else
+                -- Tenta criar com HUD.new como fallback
+                print("DEBUG: Tentando HUD.new como fallback...")
+                local successFallback, resultFallback = pcall(function()
+                    return HUD.new(-50, hudY, "OUTFIT:" .. tostring(outfitId), true)
+                end)
+                
+                print("DEBUG: Fallback - successFallback: " .. tostring(successFallback))
+                print("DEBUG: Fallback - resultFallback: " .. tostring(resultFallback))
+                
+                if successFallback and resultFallback then
+                    outfitHud = resultFallback
+                    print("DEBUG: HUD fallback criado com HUD.new")
+                end
             end
         end
     else
@@ -269,8 +283,12 @@ end
 function destroyCreatureHUD(creatureId)
     local hudData = activeHUDs[creatureId]
     if hudData then
-        hudData.nameHud:destroy()
-        hudData.outfitHud:destroy()
+        if hudData.nameHud then
+            hudData.nameHud:destroy()
+        end
+        if hudData.outfitHud then
+            hudData.outfitHud:destroy()
+        end
         activeHUDs[creatureId] = nil
         print("HUDs destruídos para criatura ID: " .. creatureId)
         
@@ -391,9 +409,9 @@ function evaluate_creature()
                                 -- Determina o tipo baseado no ID do ícone
                                 local creatureType = ""
                                 if icon.id == Enums.CreatureIcons.CREATURE_ICON_INFLUENCED then
-                                    creatureType = "[INFLUENCED]"
+                                    creatureType = "[I]"
                                 elseif icon.id == Enums.CreatureIcons.CREATURE_ICON_FIENDISH then
-                                    creatureType = "[FIENDISH]"
+                                    creatureType = "[F]"
                                 end
                                 
                                 print("DEBUG: Chamando createCreatureHUD com:")
@@ -451,7 +469,7 @@ print("Script findCreatureFiendshorInfluenced carregado!")
 print("Use startCreatureFinder() para iniciar ou stopCreatureFinder() para parar")
 
 -- HUD de controle principal
-hud = HUD.new(100, 100, "Fiendish Finder", true)
+hud = HUD.new(100, Client.getGameWindowDimensions().height - hudSpacing, "Fiendish Finder", true)
 hud:setColor(255,0, 0)
 hud:setFontSize(10)
 hud:setDraggable(true)
