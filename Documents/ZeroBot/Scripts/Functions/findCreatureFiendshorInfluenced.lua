@@ -115,8 +115,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     
     -- Tenta criar o HUD da imagem do outfit
     print("DEBUG: === INÍCIO CRIAÇÃO HUD OUTFIT ===")
-    print("DEBUG: HUD.newOutfit disponível:", HUD.newOutfit ~= nil)
-    print("DEBUG: Tipo de HUD.newOutfit:", type(HUD.newOutfit))
+    print("DEBUG: HUD.newOutfit disponível: " .. tostring(HUD.newOutfit ~= nil))
+    print("DEBUG: Tipo de HUD.newOutfit: " .. type(HUD.newOutfit))
     
     if HUD.newOutfit then
         print("DEBUG: Criando HUD do outfit com ID: " .. tostring(outfitId))
@@ -130,14 +130,14 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
             return HUD.newOutfit(outfitX, hudY, outfitId, true)
         end)
         
-        print("DEBUG: Resultado pcall - success2:", success2)
-        print("DEBUG: Resultado pcall - result2:", result2)
-        print("DEBUG: Tipo do result2:", type(result2))
+        print("DEBUG: Resultado pcall - success2: " .. tostring(success2))
+        print("DEBUG: Resultado pcall - result2: " .. tostring(result2))
+        print("DEBUG: Tipo do result2: " .. type(result2))
         
         if success2 and result2 then
             outfitHud = result2
             print("DEBUG: HUD do outfit criado com sucesso")
-            print("DEBUG: outfitHud válido:", outfitHud ~= nil)
+            print("DEBUG: outfitHud válido: " .. tostring(outfitHud ~= nil))
             
             -- Tenta ativar a animação de movimento
             print("DEBUG: Tentando ativar animação de movimento...")
@@ -146,13 +146,13 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
                 return true
             end)
             
-            print("DEBUG: Animação - success3:", success3)
-            print("DEBUG: Animação - result3:", result3)
+            print("DEBUG: Animação - success3: " .. tostring(success3))
+            print("DEBUG: Animação - result3: " .. tostring(result3))
             
             if success3 then
                 print("DEBUG: Animação de movimento ativada com sucesso")
             else
-                print("DEBUG: Aviso - Falha ao ativar animação:", result3)
+                print("DEBUG: Aviso - Falha ao ativar animação: " .. tostring(result3))
             end
             
             -- Tenta definir posição específica
@@ -162,8 +162,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
                 return true
             end)
             
-            print("DEBUG: setPos - success4:", success4)
-            print("DEBUG: setPos - result4:", result4)
+            print("DEBUG: setPos - success4: " .. tostring(success4))
+            print("DEBUG: setPos - result4: " .. tostring(result4))
             
         else
             print("DEBUG: ERRO - Falha ao criar HUD do outfit")
@@ -176,8 +176,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
                 return HUD.newOutfit(0, hudY, outfitId, false)
             end)
             
-            print("DEBUG: Alternativo - successAlt:", successAlt)
-            print("DEBUG: Alternativo - resultAlt:", resultAlt)
+            print("DEBUG: Alternativo - successAlt: " .. tostring(successAlt))
+            print("DEBUG: Alternativo - resultAlt: " .. tostring(resultAlt))
             
             if successAlt and resultAlt then
                 outfitHud = resultAlt
@@ -194,8 +194,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
             return HUD.new(-50, hudY, "OUTFIT:" .. tostring(outfitId), true)
         end)
         
-        print("DEBUG: HUD.new alternativo - successAlt2:", successAlt2)
-        print("DEBUG: HUD.new alternativo - resultAlt2:", resultAlt2)
+        print("DEBUG: HUD.new alternativo - successAlt2: " .. tostring(successAlt2))
+        print("DEBUG: HUD.new alternativo - resultAlt2: " .. tostring(resultAlt2))
         
         if successAlt2 and resultAlt2 then
             outfitHud = resultAlt2
@@ -204,7 +204,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     end
     
     print("DEBUG: === FIM CRIAÇÃO HUD OUTFIT ===")
-    print("DEBUG: outfitHud final:", outfitHud ~= nil)
+    print("DEBUG: outfitHud final: " .. tostring(outfitHud ~= nil))
     
     -- Define callback para destruir ambos os HUDs quando o nome for clicado
     if nameHud then
