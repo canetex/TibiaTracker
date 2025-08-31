@@ -115,7 +115,8 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     
     -- Tenta criar o HUD da imagem do outfit
     if HUD.newOutfit then
-        print("DEBUG: Criando HUD do outfit com ID:", outfitId)
+        print("DEBUG: Criando HUD do outfit com ID: " .. tostring(outfitId))
+        print("DEBUG: Parâmetros - X: -50, Y: " .. tostring(hudY) .. ", outfitId: " .. tostring(outfitId) .. ", newFeatures: true")
         
         local success2, result2 = pcall(function()
             return HUD.newOutfit(-50, hudY, outfitId, true)
@@ -124,6 +125,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         if success2 and result2 then
             outfitHud = result2
             print("DEBUG: HUD do outfit criado com sucesso")
+            print("DEBUG: Tipo do resultado:", type(result2))
             
             -- Tenta ativar a animação de movimento
             local success3, result3 = pcall(function()
@@ -134,13 +136,15 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
             if success3 then
                 print("DEBUG: Animação de movimento ativada")
             else
-                print("DEBUG: Aviso - Falha ao ativar animação:", result3)
+                print("DEBUG: Aviso - Falha ao ativar animação: " .. tostring(result3))
             end
         else
-            print("DEBUG: ERRO - Falha ao criar HUD do outfit:", result2)
+            print("DEBUG: ERRO - Falha ao criar HUD do outfit: " .. tostring(result2))
+            print("DEBUG: success2 = " .. tostring(success2) .. ", result2 = " .. tostring(result2))
         end
     else
         print("DEBUG: ERRO - HUD.newOutfit não está disponível")
+        print("DEBUG: HUD.newOutfit = " .. tostring(HUD.newOutfit))
     end
     
     -- Define callback para destruir ambos os HUDs quando o nome for clicado
