@@ -78,6 +78,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     -- Obtém as dimensões da janela do jogo
     local windowDimensions = Client.getGameWindowDimensions()
     if not windowDimensions then
+        print("DEBUG: Erro ao obter dimensões da janela")
         return
     end
     
@@ -90,32 +91,64 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     -- Debug: Verifica se as funções estão disponíveis
     print("DEBUG: Criando HUDs para criatura...")
     print("outfitId (Outfit Type):", outfitId)
+    print("Posição Y calculada:", hudY)
     
     -- Cria o HUD do nome centralizado horizontalmente
-    local nameHud = HUD.new(0, hudY, displayName, true)
-    nameHud:setColor(255, 255, 0)  -- Amarelo
-    nameHud:setFontSize(14)
-    nameHud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
-    
-    -- Cria o HUD da imagem do outfit ao lado esquerdo do nome
+    local nameHud = nil
     local outfitHud = nil
+    
+    -- Tenta criar o HUD do nome
+    local success, result = pcall(function()
+        return HUD.new(0, hudY, displayName, true)
+    end)
+    
+    if success and result then
+        nameHud = result
+        nameHud:setColor(255, 255, 0)  -- Amarelo
+        nameHud:setFontSize(14)
+        nameHud:setHorizontalAlignment(Enums.HorizontalAlign.Center)
+        print("DEBUG: HUD do nome criado com sucesso")
+    else
+        print("DEBUG: ERRO - Falha ao criar HUD do nome:", result)
+        return
+    end
+    
+    -- Tenta criar o HUD da imagem do outfit
     if HUD.newOutfit then
         print("DEBUG: Criando HUD do outfit com ID:", outfitId)
-        outfitHud = HUD.newOutfit(-50, hudY, outfitId, true)
-        if outfitHud then
+        
+        local success2, result2 = pcall(function()
+            return HUD.newOutfit(-50, hudY, outfitId, true)
+        end)
+        
+        if success2 and result2 then
+            outfitHud = result2
             print("DEBUG: HUD do outfit criado com sucesso")
-            outfitHud:setOutfitMoving(true)  -- Ativa a animação de movimento
+            
+            -- Tenta ativar a animação de movimento
+            local success3, result3 = pcall(function()
+                outfitHud:setOutfitMoving(true)
+                return true
+            end)
+            
+            if success3 then
+                print("DEBUG: Animação de movimento ativada")
+            else
+                print("DEBUG: Aviso - Falha ao ativar animação:", result3)
+            end
         else
-            print("DEBUG: ERRO - HUD do outfit não foi criado")
+            print("DEBUG: ERRO - Falha ao criar HUD do outfit:", result2)
         end
     else
         print("DEBUG: ERRO - HUD.newOutfit não está disponível")
     end
     
     -- Define callback para destruir ambos os HUDs quando o nome for clicado
-    nameHud:setCallback(function()
-        destroyCreatureHUD(creatureId)
-    end)
+    if nameHud then
+        nameHud:setCallback(function()
+            destroyCreatureHUD(creatureId)
+        end)
+    end
     
     -- Define callback para destruir ambos os HUDs quando a imagem for clicada
     if outfitHud then
@@ -139,6 +172,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     print("HUDs criados para: " .. displayName .. " (ID: " .. creatureId .. ") na posição Y: " .. hudY .. " com outfit ID: " .. (outfitId or "N/A"))
     print("HUD do nome criado:", nameHud ~= nil)
     print("HUD do outfit criado:", outfitHud ~= nil)
+    print("Total de HUDs ativos:", #activeHUDs)
 end
 
 -- Função para destruir HUD de uma criatura específica
