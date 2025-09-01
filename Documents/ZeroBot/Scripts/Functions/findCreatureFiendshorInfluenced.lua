@@ -20,8 +20,8 @@ local DEBUG_FLAGS = {
 
 -- Configurações do Timer
 local TIMER_CONFIG = {
-    INTERVAL = 200,        -- Intervalo em milissegundos (200ms = 5x por segundo)
-    ENABLED = true         -- Se o timer deve estar ativo por padrão
+    INTERVAL = 1000,        -- Intervalo em milissegundos (1000ms = 1x por segundo)
+    ENABLED = false         -- Se o timer deve estar ativo por padrão (MUDADO PARA FALSE)
 }
 
 -- Configurações dos HUDs
@@ -61,6 +61,9 @@ local activeHUDs = {}
 
 -- Variável para controlar a posição vertical dos próximos HUDs
 local nextHudY = 0
+
+-- Variável de controle do script
+local control = false
 
 -- ========================================
 -- FUNÇÕES PRINCIPAIS
@@ -164,11 +167,6 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     local hudY = getNextHudPosition()
     debugPrint("HUD_CREATION", "Posição Y calculada: " .. tostring(hudY))
     
-    -- Debug: Verifica se as funções estão disponíveis
-    debugPrint("HUD_CREATION", "Criando HUDs para criatura...")
-    debugPrint("HUD_CREATION", "outfitId (Outfit Type): " .. tostring(outfitId))
-    debugPrint("HUD_CREATION", "Posição Y calculada: " .. tostring(hudY))
-    
     -- Cria o HUD do nome centralizado horizontalmente
     local nameHud = nil
     local outfitHud = nil
@@ -198,104 +196,58 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
     debugPrint("HUD_CREATION", "HUD.newOutfit disponível: " .. tostring(HUD.newOutfit ~= nil))
     debugPrint("HUD_CREATION", "Tipo de HUD.newOutfit: " .. type(HUD.newOutfit))
     
+    -- Tenta diferentes métodos para criar o HUD do outfit
+    local outfitX = HUD_CONFIG.OUTFIT.POSITION_X
+    
+    -- Método 1: HUD.newOutfit se disponível
     if HUD.newOutfit then
-        debugPrint("HUD_CREATION", "Criando HUD do outfit com ID: " .. tostring(outfitId))
-        debugPrint("HUD_CREATION", "Parâmetros - X: " .. tostring(HUD_CONFIG.OUTFIT.POSITION_X) .. ", Y: " .. tostring(hudY) .. ", outfitId: " .. tostring(outfitId) .. ", newFeatures: true")
-        
-        -- Testa diferentes posições X para o outfit
-        local outfitX = HUD_CONFIG.OUTFIT.POSITION_X
-        debugPrint("HUD_CREATION", "Tentando posição X: " .. tostring(outfitX))
-        
+        debugPrint("HUD_CREATION", "Tentando HUD.newOutfit...")
         local success2, result2 = pcall(function()
             return HUD.newOutfit(outfitX, hudY, outfitId, true)
         end)
         
-        debugPrint("HUD_CREATION", "Resultado pcall - success2: " .. tostring(success2))
-        debugPrint("HUD_CREATION", "Resultado pcall - result2: " .. tostring(result2))
-        debugPrint("HUD_CREATION", "Tipo do result2: " .. type(result2))
-        
         if success2 and result2 then
             outfitHud = result2
-            debugPrint("HUD_CREATION", "HUD do outfit criado com sucesso")
-            debugPrint("HUD_CREATION", "outfitHud válido: " .. tostring(outfitHud ~= nil))
+            debugPrint("HUD_CREATION", "HUD do outfit criado com HUD.newOutfit")
             
-            -- Tenta ativar a animação de movimento se configurado
+            -- Tenta ativar animação se configurado
             if HUD_CONFIG.OUTFIT.ANIMATION then
-                debugPrint("HUD_CREATION", "Tentando ativar animação de movimento...")
-                local success3, result3 = pcall(function()
+                pcall(function()
                     outfitHud:setOutfitMoving(true)
-                    return true
                 end)
-                
-                debugPrint("HUD_CREATION", "Animação - success3: " .. tostring(success3))
-                debugPrint("HUD_CREATION", "Animação - result3: " .. tostring(result3))
-                
-                if success3 then
-                    debugPrint("HUD_CREATION", "Animação de movimento ativada com sucesso")
-                else
-                    debugPrint("HUD_CREATION", "Aviso - Falha ao ativar animação: " .. tostring(result3))
-                end
             end
-            
-            -- Tenta definir posição específica
-            debugPrint("HUD_CREATION", "Tentando definir posição específica...")
-            local success4, result4 = pcall(function()
-                outfitHud:setPos(outfitX, hudY)
-                return true
-            end)
-            
-            debugPrint("HUD_CREATION", "setPos - success4: " .. tostring(success4))
-            debugPrint("HUD_CREATION", "setPos - result4: " .. tostring(result4))
-            
         else
-            debugPrint("HUD_CREATION", "ERRO - Falha ao criar HUD do outfit")
-            debugPrint("HUD_CREATION", "success2 = " .. tostring(success2))
-            debugPrint("HUD_CREATION", "result2 = " .. tostring(result2))
-            
-            -- Tenta criar com parâmetros diferentes
-            debugPrint("HUD_CREATION", "Tentando criar com parâmetros alternativos...")
-            local successAlt, resultAlt = pcall(function()
-                return HUD.newOutfit(0, hudY, outfitId, false)
-            end)
-            
-            debugPrint("HUD_CREATION", "Alternativo - successAlt: " .. tostring(successAlt))
-            debugPrint("HUD_CREATION", "Alternativo - resultAlt: " .. tostring(resultAlt))
-            
-            if successAlt and resultAlt then
-                outfitHud = resultAlt
-                debugPrint("HUD_CREATION", "HUD do outfit criado com parâmetros alternativos")
-            else
-                -- Tenta criar com HUD.new como fallback
-                debugPrint("HUD_CREATION", "Tentando HUD.new como fallback...")
-                local successFallback, resultFallback = pcall(function()
-                    return HUD.new(HUD_CONFIG.OUTFIT.POSITION_X, hudY, "OUTFIT:" .. tostring(outfitId), true)
-                end)
-                
-                debugPrint("HUD_CREATION", "Fallback - successFallback: " .. tostring(successFallback))
-                debugPrint("HUD_CREATION", "Fallback - resultFallback: " .. tostring(resultFallback))
-                
-                if successFallback and resultFallback then
-                    outfitHud = resultFallback
-                    debugPrint("HUD_CREATION", "HUD fallback criado com HUD.new")
-                end
-            end
+            debugPrint("HUD_CREATION", "Falha com HUD.newOutfit, tentando alternativas...")
         end
-    else
-        debugPrint("HUD_CREATION", "ERRO - HUD.newOutfit não está disponível")
-        debugPrint("HUD_CREATION", "HUD.newOutfit = " .. tostring(HUD.newOutfit))
-        
-        -- Tenta usar HUD.new com outfit
-        debugPrint("HUD_CREATION", "Tentando HUD.new com outfit...")
-        local successAlt2, resultAlt2 = pcall(function()
-            return HUD.new(HUD_CONFIG.OUTFIT.POSITION_X, hudY, "OUTFIT:" .. tostring(outfitId), true)
+    end
+    
+    -- Método 2: HUD.new com texto do outfit se o primeiro falhou
+    if not outfitHud then
+        debugPrint("HUD_CREATION", "Tentando HUD.new com texto do outfit...")
+        local success3, result3 = pcall(function()
+            return HUD.new(outfitX, hudY, "OUTFIT:" .. tostring(outfitId), true)
         end)
         
-        debugPrint("HUD_CREATION", "HUD.new alternativo - successAlt2: " .. tostring(successAlt2))
-        debugPrint("HUD_CREATION", "HUD.new alternativo - resultAlt2: " .. tostring(resultAlt2))
+        if success3 and result3 then
+            outfitHud = result3
+            outfitHud:setColor(255, 255, 255)  -- Branco para destacar
+            outfitHud:setFontSize(12)
+            debugPrint("HUD_CREATION", "HUD do outfit criado com HUD.new (texto)")
+        end
+    end
+    
+    -- Método 3: HUD.new com ícone se disponível
+    if not outfitHud then
+        debugPrint("HUD_CREATION", "Tentando HUD.new com ícone...")
+        local success4, result4 = pcall(function()
+            return HUD.new(outfitX, hudY, "👤", true)  -- Emoji como fallback
+        end)
         
-        if successAlt2 and resultAlt2 then
-            outfitHud = resultAlt2
-            debugPrint("HUD_CREATION", "HUD alternativo criado com HUD.new")
+        if success4 and result4 then
+            outfitHud = result4
+            outfitHud:setColor(255, 255, 255)
+            outfitHud:setFontSize(16)
+            debugPrint("HUD_CREATION", "HUD do outfit criado com emoji")
         end
     end
     
@@ -446,10 +398,15 @@ end
 
 -- Função principal para avaliar criaturas
 function evaluate_creature()
+    debugPrint("TIMER", "Executando evaluate_creature...")
+    
     local creatures = Map.getCreatureIds(true, false)
     if not creatures then
+        debugPrint("TIMER", "Nenhuma criatura encontrada na tela")
         return
     end
+    
+    debugPrint("TIMER", "Verificando " .. #creatures .. " criaturas na tela")
     
     for _, creatureId in ipairs(creatures) do
         local creature = Creature.new(creatureId)
@@ -501,8 +458,8 @@ function evaluate_creature()
     cleanupInvalidHUDs()
 end
 
--- Timer para executar a verificação continuamente
-local continuosFinder = Timer.new("creature_finder", evaluate_creature, TIMER_CONFIG.INTERVAL, true)
+-- Timer para executar a verificação continuamente (NÃO INICIA AUTOMATICAMENTE)
+local continuosFinder = Timer.new("creature_finder", evaluate_creature, TIMER_CONFIG.INTERVAL, false)  -- MUDADO PARA FALSE
 
 -- Função para parar o script
 function stopCreatureFinder()
@@ -517,8 +474,6 @@ function stopCreatureFinder()
     end
 end
 
-local control = false
-
 -- Função para iniciar o script
 function startCreatureFinder()
     if continuosFinder then
@@ -527,12 +482,55 @@ function startCreatureFinder()
     end
 end
 
+-- ========================================
+-- INICIALIZAÇÃO DO SCRIPT
+-- ========================================
+
+-- Debug inicial para verificar se o script está carregando
+print("=== SCRIPT findCreatureFiendshorInfluenced CARREGADO ===")
+print("DEBUG: Verificando se as funções estão disponíveis...")
+
+-- Testa se as funções básicas estão disponíveis
+if HUD then
+    print("DEBUG: HUD disponível ✓")
+else
+    print("DEBUG: HUD NÃO disponível ✗")
+end
+
+if Timer then
+    print("DEBUG: Timer disponível ✓")
+else
+    print("DEBUG: Timer NÃO disponível ✗")
+end
+
+if Client then
+    print("DEBUG: Client disponível ✓")
+else
+    print("DEBUG: Client NÃO disponível ✗")
+end
+
+if Map then
+    print("DEBUG: Map disponível ✓")
+else
+    print("DEBUG: Map NÃO disponível ✗")
+end
+
+if Creature then
+    print("DEBUG: Creature disponível ✓")
+else
+    print("DEBUG: Creature NÃO disponível ✗")
+end
+
 debugPrint("GENERAL", "Script findCreatureFiendshorInfluenced carregado!")
 debugPrint("GENERAL", "Use startCreatureFinder() para iniciar ou stopCreatureFinder() para parar")
 debugPrint("TIMER", "Timer configurado com intervalo de " .. TIMER_CONFIG.INTERVAL .. "ms")
+debugPrint("GENERAL", "Status inicial: INATIVO (clique no HUD para ativar)")
 
 -- HUD de controle principal
-hud = HUD.new(100, Client.getGameWindowDimensions().height - HUD_CONFIG.NAME.SPACING, "Fiendish Finder", true)
+local windowDimensions = Client.getGameWindowDimensions()
+local hudY = windowDimensions and (windowDimensions.height - HUD_CONFIG.NAME.SPACING) or 100
+
+hud = HUD.new(100, hudY, "Fiendish Finder [INATIVO]", true)
 hud:setColor(HUD_CONFIG.CONTROL.COLOR[1], HUD_CONFIG.CONTROL.COLOR[2], HUD_CONFIG.CONTROL.COLOR[3])
 hud:setFontSize(HUD_CONFIG.CONTROL.FONT_SIZE)
 hud:setDraggable(true)
@@ -540,10 +538,17 @@ hud:setCallback(function()
   if control == false then
     startCreatureFinder()
     hud:setColor(0, 255, 0)  -- Verde quando ativo
+    hud:setText("Fiendish Finder [ATIVO]")
     control = true
+    debugPrint("GENERAL", "Script ATIVADO pelo usuário")
   else
     stopCreatureFinder()
     hud:setColor(HUD_CONFIG.CONTROL.COLOR[1], HUD_CONFIG.CONTROL.COLOR[2], HUD_CONFIG.CONTROL.COLOR[3])  -- Volta à cor original
+    hud:setText("Fiendish Finder [INATIVO]")
     control = false
+    debugPrint("GENERAL", "Script DESATIVADO pelo usuário")
   end
 end)
+
+print("=== SCRIPT INICIALIZADO COM SUCESSO ===")
+print("Clique no HUD 'Fiendish Finder' para ativar/desativar o script")
