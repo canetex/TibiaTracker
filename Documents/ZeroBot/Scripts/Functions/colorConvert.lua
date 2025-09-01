@@ -6,7 +6,7 @@
 -- Parâmetros:
 --   hexString: string com cor em hexadecimal (ex: "FFFFFF", "#FFFFFF", "FFF")
 -- Retorna:
---   table com valores RGB {r, g, b} ou nil se inválido
+--   table com estrutura RGB {r = valor, g = valor, b = valor} ou nil se inválido
 function ColorHEX(hexString)
     -- Verifica se o parâmetro é válido
     if not hexString or type(hexString) ~= "string" then
@@ -48,7 +48,7 @@ function ColorHEX(hexString)
     
     -- Verifica se a conversão foi bem-sucedida
     if r and g and b then
-        return {r, g, b}
+        return {r = r, g = g, b = b}
     else
         return nil
     end
@@ -98,7 +98,7 @@ function TestColorConversion()
     for i, testCase in ipairs(testCases) do
         local result = ColorHEX(testCase)
         if result then
-            print(string.format("'%s' -> RGB(%d, %d, %d)", testCase or "nil", result[1], result[2], result[3]))
+            print(string.format("'%s' -> RGB(r=%d, g=%d, b=%d)", testCase or "nil", result.r, result.g, result.b))
         else
             print(string.format("'%s' -> INVÁLIDO", testCase or "nil"))
         end
@@ -114,14 +114,22 @@ end
 EXEMPLOS DE USO:
 
 -- Conversão básica
-local rgb = ColorHEX("FFFFFF")  -- Retorna {255, 255, 255}
-local rgb2 = ColorHEX("#FF0000") -- Retorna {255, 0, 0}
-local rgb3 = ColorHEX("FFF")     -- Retorna {255, 255, 255}
+local rgb = ColorHEX("FFFFFF")  -- Retorna {r = 255, g = 255, b = 255}
+local rgb2 = ColorHEX("#FF0000") -- Retorna {r = 255, g = 0, b = 0}
+local rgb3 = ColorHEX("FFF")     -- Retorna {r = 255, g = 255, b = 255}
 
 -- Uso em configurações de HUD
 local hudColor = ColorHEX("FFFF00")  -- Amarelo
 if hudColor then
-    hud:setColor(hudColor[1], hudColor[2], hudColor[3])
+    hud:setColor(hudColor.r, hudColor.g, hudColor.b)
+end
+
+-- Acesso aos valores RGB
+local color = ColorHEX("FF0000")
+if color then
+    print("Vermelho: " .. color.r)
+    print("Verde: " .. color.g)
+    print("Azul: " .. color.b)
 end
 
 -- Validação
@@ -131,10 +139,17 @@ if not color then
 end
 
 FORMATOS SUPORTADOS:
-- 3 caracteres: "FFF" -> RGB(255, 255, 255)
-- 6 caracteres: "FFFFFF" -> RGB(255, 255, 255)
-- 8 caracteres: "FFFFFFFF" -> RGB(255, 255, 255) (ignora alpha)
-- Com #: "#FFFFFF" -> RGB(255, 255, 255)
+- 3 caracteres: "FFF" -> RGB(r=255, g=255, b=255)
+- 6 caracteres: "FFFFFF" -> RGB(r=255, g=255, b=255)
+- 8 caracteres: "FFFFFFFF" -> RGB(r=255, g=255, b=255) (ignora alpha)
+- Com #: "#FFFFFF" -> RGB(r=255, g=255, b=255)
+
+ESTRUTURA DE RETORNO:
+{
+    r = valor_vermelho,    -- 0-255
+    g = valor_verde,       -- 0-255
+    b = valor_azul         -- 0-255
+}
 
 CARACTERÍSTICAS:
 - Case insensitive (aceita maiúsculas e minúsculas)
@@ -142,6 +157,7 @@ CARACTERÍSTICAS:
 - Retorna nil para cores inválidas
 - Validação completa de entrada
 - Totalmente encapsulada e reutilizável
+- Retorna estrutura RGB com campos nomeados
 ]]
 
 print("Função ColorHEX carregada!")
