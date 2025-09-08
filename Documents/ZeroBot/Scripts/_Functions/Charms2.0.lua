@@ -480,6 +480,13 @@ local function createHudText(name, data, damage, timeElapsed, type)
     return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
+local function createHud(x, y, text)
+    local hud = HUD.new(x, y, text, true)
+    hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
+    hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
+    return hud
+end
+
 -- Função genérica para criar ou atualizar HUD
 local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, type)
     if not data[name].hud.text then
@@ -705,13 +712,6 @@ local filename = getThisFilename()
 -- ================================================================
 -- FUNÇÕES DE UTILITÁRIOS
 -- ================================================================
-
-local function createHud(x, y, text)
-    local hud = HUD.new(x, y, text, true)
-    hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
-    hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
-    return hud
-end
 
 -- ================================================================
 -- FUNÇÕES DE GERENCIAMENTO DE COOLDOWN
