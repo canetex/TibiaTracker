@@ -287,7 +287,7 @@ local function updateAllHuds()
     
     for _, group in ipairs(dataGroups) do
         for name, item in pairs(group.data) do
-            if item.hud.text then
+            if item.hud.text and item.hud.text.setText and item.hud.text.setVisible then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 item.hud.text:setText(hudText)
