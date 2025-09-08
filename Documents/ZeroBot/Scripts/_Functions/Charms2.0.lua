@@ -418,6 +418,12 @@ local function processActivation(data, name, damage, cooldownData)
     return true
 end
 
+-- Funções utilitárias básicas
+local function isTable(t) return type(t) == 'table' end
+local function hasDragged(currentPos, lastPos) return currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y end
+local function setPos(hud, x, y) hud:setPos(x, y) end
+local function getThisFilename() return debug.getinfo(1).source:gsub("Scripts/", "") end
+
 -- Função genérica para atualizar variáveis de cooldown globais
 local function updateGlobalCooldown(type, name, cooldownData)
     if not cooldownData then return end
@@ -676,12 +682,6 @@ end
 -- ================================================================
 -- FUNÇÕES AUXILIARES E UTILITÁRIAS
 -- ================================================================
-
--- Funções utilitárias básicas
-local function isTable(t) return type(t) == 'table' end
-local function hasDragged(currentPos, lastPos) return currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y end
-local function setPos(hud, x, y) hud:setPos(x, y) end
-local function getThisFilename() return debug.getinfo(1).source:gsub("Scripts/", "") end
 
 local function setDebugMode(class, enabled)
     if print_ativo and print_ativo[class] ~= nil then
