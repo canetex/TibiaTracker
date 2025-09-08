@@ -258,6 +258,150 @@ local function getCooldownData(type, name)
     return nil
 end
 
+-- Verifica se o cooldown expirou e atualiza para o próximo uso
+-- @param cooldownData: tabela com lastTime e cooldown
+-- @return: true se pode ativar, false se ainda em cooldown
+local function checkAndUpdateCooldown(cooldownData)
+    if not cooldownData then return true end
+    
+    local lastTime = cooldownData.lastTime
+    local cooldown = cooldownData.cooldown
+    local currentTime = os.time()
+    
+    -- Verificar se ainda está em cooldown
+    if lastTime > 0 and currentTime < lastTime then
+        checkAndPrint("cooldown", "Cooldown ativo: " .. (lastTime - currentTime) .. "s restantes")
+        return false
+    end
+    
+    -- Atualizar cooldown para o próximo uso
+    cooldownData.lastTime = currentTime + cooldown
+    return true
+end
+
+-- Calcula estatísticas de dano (média, maior, menor) com soma incremental
+-- @param charm: objeto charm com dados de dano
+-- @param lastDamage: último dano causado
+-- @return: objeto charm atualizado com estatísticas
+local function getAverageAndHigherDamage(charm, lastDamage)
+    -- Validar entrada
+    if not charm or not charm.damages or #charm.damages == 0 then
+        return charm
+    end
+    
+    if #charm.damages == 1 then
+        charm.average = lastDamage
+        charm.lowest = lastDamage
+        charm.totalSum = lastDamage
+        return charm
+    end
+
+    -- Atualizar maior e menor dano de forma mais eficiente
+    if lastDamage > charm.higher then
+        charm.higher = lastDamage
+    end
+    
+    if lastDamage < charm.lowest then
+        charm.lowest = lastDamage
+    end
+
+    -- Calcular média usando soma incremental (muito mais eficiente)
+    charm.totalSum = (charm.totalSum or 0) + lastDamage
+    local count = #charm.damages
+    charm.average = math.floor((charm.totalSum / count) * 100) / 100
+    
+    return charm
+end
+
+-- Função para calcular previsão de ativações por hora
+local function getOneHourEstimate(first, count)
+    -- Validar parâmetros
+    if not first or not count or count < 0 then
+        return 0
+    end
+    
+    local timeDif = os.time() - first
+    if timeDif <= 0 then 
+        timeDif = 1 
+    end
+    
+    -- Para evitar divisão por zero e cálculos incorretos
+    if count == 0 then
+        return 0
+    end
+    
+    -- Calcular taxa por segundo e multiplicar por 3600 segundos (1 hora)
+    local ratePerSecond = count / timeDif
+    local inAHour = math.floor(ratePerSecond * oneHourInSeconds)
+    
+    -- Log para debug
+    checkAndPrint("statistics", string.format("Previsão 1h: count=%d, timeDif=%d, ratePerSecond=%.4f, inAHour=%d", 
+        count, timeDif, ratePerSecond, inAHour))
+    
+    return inAHour
+end
+
+-- Processa ativação de charm ou tier com validação e estatísticas
+-- @param data: tabela de dados (charms ou tiers)
+-- @param name: nome do charm/tier
+-- @param damage: dano causado
+-- @param cooldownData: dados de cooldown (opcional)
+-- @return: true se processado com sucesso, false se em cooldown
+local function processActivation(data, name, damage, cooldownData)
+    -- Validar parâmetros de entrada
+    if not validateInput(data, "table", true) then
+        checkAndPrint("erros", "Erro: data deve ser uma tabela")
+        return false
+    end
+    
+    if not validateInput(name, "string", false) then
+        checkAndPrint("erros", "Erro: name deve ser uma string não vazia")
+        return false
+    end
+    
+    if not damage or type(damage) ~= "number" or damage < 0 then
+        damage = 0 -- Valor padrão para dano inválido
+    end
+    
+    -- Verificar cooldown se especificado
+    if not checkAndUpdateCooldown(cooldownData) then
+        return false
+    end
+    
+    -- Inicializar ou atualizar dados
+    if not data[name] then
+        data[name] = {
+            count = 1,
+            first = os.time(),
+            inAHour = 0,
+            hud = { text = nil },
+            damages = { damage },
+            higher = damage,
+            lowest = damage,
+            average = damage,
+            totalSum = damage
+        }
+        checkAndPrint("statistics", string.format("Inicializando %s: count=1, first=%d, damage=%d", name, data[name].first, damage))
+    else
+        table.insert(data[name].damages, damage)
+        data[name].count = data[name].count + 1
+        checkAndPrint("statistics", string.format("Atualizando %s: count=%d, damage=%d", name, data[name].count, damage))
+    end
+    
+    -- Calcular estatísticas de dano
+    data[name] = getAverageAndHigherDamage(data[name], damage)
+    
+    -- Calcular previsão de 1 hora
+    local inAHour = getOneHourEstimate(data[name].first, data[name].count)
+    data[name].inAHour = inAHour
+    
+    -- Log de estatísticas
+    checkAndPrint("statistics", string.format("%s: %d ativações, prev 1h: %d, dano: %d", 
+        name, data[name].count, inAHour, damage))
+    
+    return true
+end
+
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
     -- Validar entrada
@@ -532,57 +676,9 @@ local function createHud(x, y, text)
     return hud
 end
 
-local function getOneHourEstimate(first, count)
-    -- Validar parâmetros
-    if not first or not count or count < 0 then
-        return 0
-    end
-    
-    local timeDif = os.time() - first
-    if timeDif <= 0 then 
-        timeDif = 1 
-    end
-    
-    -- Para evitar divisão por zero e cálculos incorretos
-    if count == 0 then
-        return 0
-    end
-    
-    -- Calcular taxa por segundo e multiplicar por 3600 segundos (1 hora)
-    local ratePerSecond = count / timeDif
-    local inAHour = math.floor(ratePerSecond * oneHourInSeconds)
-    
-    -- Log para debug
-    checkAndPrint("statistics", string.format("Previsão 1h: count=%d, timeDif=%d, ratePerSecond=%.4f, inAHour=%d", 
-        count, timeDif, ratePerSecond, inAHour))
-    
-    return inAHour
-end
-
 -- ================================================================
 -- FUNÇÕES DE GERENCIAMENTO DE COOLDOWN
 -- ================================================================
-
--- Verifica se o cooldown expirou e atualiza para o próximo uso
--- @param cooldownData: tabela com lastTime e cooldown
--- @return: true se pode ativar, false se ainda em cooldown
-local function checkAndUpdateCooldown(cooldownData)
-    if not cooldownData then return true end
-    
-    local lastTime = cooldownData.lastTime
-    local cooldown = cooldownData.cooldown
-    local currentTime = os.time()
-    
-    -- Verificar se ainda está em cooldown
-    if lastTime > 0 and currentTime < lastTime then
-        checkAndPrint("cooldown", "Cooldown ativo: " .. (lastTime - currentTime) .. "s restantes")
-        return false
-    end
-    
-    -- Atualizar cooldown para o próximo uso
-    cooldownData.lastTime = currentTime + cooldown
-    return true
-end
 
 
 -- Função genérica para atualizar variáveis de cooldown globais
@@ -600,104 +696,10 @@ end
 -- FUNÇÕES DE CÁLCULO DE ESTATÍSTICAS
 -- ================================================================
 
--- Calcula estatísticas de dano (média, maior, menor) com soma incremental
--- @param charm: objeto charm com dados de dano
--- @param lastDamage: último dano causado
--- @return: objeto charm atualizado com estatísticas
-local function getAverageAndHigherDamage(charm, lastDamage)
-    -- Validar entrada
-    if not charm or not charm.damages or #charm.damages == 0 then
-        return charm
-    end
-    
-    if #charm.damages == 1 then
-        charm.average = lastDamage
-        charm.lowest = lastDamage
-        charm.totalSum = lastDamage
-        return charm
-    end
-
-    -- Atualizar maior e menor dano de forma mais eficiente
-    if lastDamage > charm.higher then
-        charm.higher = lastDamage
-    end
-    
-    if lastDamage < charm.lowest then
-        charm.lowest = lastDamage
-    end
-
-    -- Calcular média usando soma incremental (muito mais eficiente)
-    charm.totalSum = (charm.totalSum or 0) + lastDamage
-    local count = #charm.damages
-    charm.average = math.floor((charm.totalSum / count) * 100) / 100
-    
-    return charm
-end
-
 -- ================================================================
 -- FUNÇÕES DE PROCESSAMENTO DE ATIVAÇÕES
 -- ================================================================
 
--- Processa ativação de charm ou tier com validação e estatísticas
--- @param data: tabela de dados (charms ou tiers)
--- @param name: nome do charm/tier
--- @param damage: dano causado
--- @param cooldownData: dados de cooldown (opcional)
--- @return: true se processado com sucesso, false se em cooldown
-local function processActivation(data, name, damage, cooldownData)
-    -- Validar parâmetros de entrada
-    if not validateInput(data, "table", true) then
-        checkAndPrint("erros", "Erro: data deve ser uma tabela")
-        return false
-    end
-    
-    if not validateInput(name, "string", false) then
-        checkAndPrint("erros", "Erro: name deve ser uma string não vazia")
-        return false
-    end
-    
-    if not damage or type(damage) ~= "number" or damage < 0 then
-        damage = 0 -- Valor padrão para dano inválido
-    end
-    
-    -- Verificar cooldown se especificado
-    if not checkAndUpdateCooldown(cooldownData) then
-        return false
-    end
-    
-    -- Inicializar ou atualizar dados
-    if not data[name] then
-        data[name] = {
-            count = 1,
-            first = os.time(),
-            inAHour = 0,
-            hud = { text = nil },
-            damages = { damage },
-            higher = damage,
-            lowest = damage,
-            average = damage,
-            totalSum = damage
-        }
-        checkAndPrint("statistics", string.format("Inicializando %s: count=1, first=%d, damage=%d", name, data[name].first, damage))
-    else
-        table.insert(data[name].damages, damage)
-        data[name].count = data[name].count + 1
-        checkAndPrint("statistics", string.format("Atualizando %s: count=%d, damage=%d", name, data[name].count, damage))
-    end
-    
-    -- Calcular estatísticas de dano
-    data[name] = getAverageAndHigherDamage(data[name], damage)
-    
-    -- Calcular previsão de 1 hora
-    local inAHour = getOneHourEstimate(data[name].first, data[name].count)
-    data[name].inAHour = inAHour
-    
-    -- Log de estatísticas
-    checkAndPrint("statistics", string.format("%s: %d ativações, prev 1h: %d, dano: %d", 
-        name, data[name].count, inAHour, damage))
-    
-    return true
-end
 
 -- Função genérica para criar ou atualizar HUD
 local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, type)
