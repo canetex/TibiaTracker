@@ -521,6 +521,32 @@ local function createHud(x, y, text)
     return hud
 end
 
+-- Função genérica para zerar contador específico
+local function resetCounter(type, name)
+    local dataGroups = {charm = charms, tier = tiers, heal = heals}
+    local data = dataGroups[type]
+    if not data or not data[name] then return end
+    
+    -- Resetar dados
+    data[name].count = 0
+    data[name].first = os.time()
+    data[name].inAHour = 0
+    data[name].damages = {}
+    data[name].higher = 0
+    data[name].lowest = 0
+    data[name].average = 0
+    data[name].totalSum = 0
+    
+    -- Atualizar HUD
+    if data[name].hud.text then
+        local timeElapsed = getTimeElapsedString(data[name].first)
+        local hudText = createHudText(name, data[name], 0, timeElapsed, type)
+        data[name].hud.text:setText(hudText)
+    end
+    
+    print("[" .. type:upper() .. "] Contador do " .. type .. " '" .. name .. "' zerado")
+end
+
 -- Função genérica para criar ou atualizar HUD
 local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, type)
     if not data[name].hud.text then
@@ -650,33 +676,6 @@ local function updateAllHuds()
             end
         end
     end
-end
-
-
--- Função genérica para zerar contador específico
-local function resetCounter(type, name)
-    local dataGroups = {charm = charms, tier = tiers, heal = heals}
-    local data = dataGroups[type]
-    if not data or not data[name] then return end
-    
-    -- Resetar dados
-    data[name].count = 0
-    data[name].first = os.time()
-    data[name].inAHour = 0
-    data[name].damages = {}
-    data[name].higher = 0
-    data[name].lowest = 0
-    data[name].average = 0
-    data[name].totalSum = 0
-    
-    -- Atualizar HUD
-    if data[name].hud.text then
-        local timeElapsed = getTimeElapsedString(data[name].first)
-        local hudText = createHudText(name, data[name], 0, timeElapsed, type)
-        data[name].hud.text:setText(hudText)
-    end
-    
-    print("[" .. type:upper() .. "] Contador do " .. type .. " '" .. name .. "' zerado")
 end
 
 -- ================================================================
