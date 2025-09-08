@@ -418,6 +418,17 @@ local function processActivation(data, name, damage, cooldownData)
     return true
 end
 
+-- Função genérica para atualizar variáveis de cooldown globais
+local function updateGlobalCooldown(type, name, cooldownData)
+    if not cooldownData then return end
+    
+    if cooldowns[type] and cooldowns[type][name] then
+        cooldowns[type][name].lastTime = cooldownData.lastTime
+    elseif type == "heal" and cooldowns.heal.default then
+        cooldowns.heal.default.lastTime = cooldownData.lastTime
+    end
+end
+
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
     -- Validar entrada
@@ -679,18 +690,6 @@ end
 -- ================================================================
 -- FUNÇÕES DE GERENCIAMENTO DE COOLDOWN
 -- ================================================================
-
-
--- Função genérica para atualizar variáveis de cooldown globais
-local function updateGlobalCooldown(type, name, cooldownData)
-    if not cooldownData then return end
-    
-    if cooldowns[type] and cooldowns[type][name] then
-        cooldowns[type][name].lastTime = cooldownData.lastTime
-    elseif type == "heal" and cooldowns.heal.default then
-        cooldowns.heal.default.lastTime = cooldownData.lastTime
-    end
-end
 
 -- ================================================================
 -- FUNÇÕES DE CÁLCULO DE ESTATÍSTICAS
