@@ -258,6 +258,14 @@ local function getCooldownData(type, name)
     return nil
 end
 
+-- Sistema de debug e logging
+local function checkAndPrint(class, message)
+    if not print_ativo or not class or not message then return end
+    if print_ativo[class] then
+        print("[DEBUG:" .. class:upper() .. "] " .. tostring(message))
+    end
+end
+
 -- Verifica se o cooldown expirou e atualiza para o próximo uso
 -- @param cooldownData: tabela com lastTime e cooldown
 -- @return: true se pode ativar, false se ainda em cooldown
@@ -311,14 +319,6 @@ local function getAverageAndHigherDamage(charm, lastDamage)
     charm.average = math.floor((charm.totalSum / count) * 100) / 100
     
     return charm
-end
-
--- Sistema de debug e logging
-local function checkAndPrint(class, message)
-    if not print_ativo or not class or not message then return end
-    if print_ativo[class] then
-        print("[DEBUG:" .. class:upper() .. "] " .. tostring(message))
-    end
 end
 
 -- Função para calcular previsão de ativações por hora
