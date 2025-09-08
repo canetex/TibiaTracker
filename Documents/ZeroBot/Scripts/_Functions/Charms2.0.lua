@@ -226,6 +226,18 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     return visibilityIcon
 end
 
+local function getTimeElapsedString(first)
+    local timeDif = os.time() - first
+    local minutes = math.floor(timeDif / 60)
+    local seconds = timeDif % 60
+    
+    if minutes > 0 then
+        return string.format("%dm %ds", minutes, seconds)
+    else
+        return string.format("%ds", seconds)
+    end
+end
+
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
     local dataGroups = {
@@ -480,18 +492,6 @@ local function updateGlobalCooldown(type, name, cooldownData)
         cooldowns[type][name].lastTime = cooldownData.lastTime
     elseif type == "heal" and cooldowns.heal.default then
         cooldowns.heal.default.lastTime = cooldownData.lastTime
-    end
-end
-
-local function getTimeElapsedString(first)
-    local timeDif = os.time() - first
-    local minutes = math.floor(timeDif / 60)
-    local seconds = timeDif % 60
-    
-    if minutes > 0 then
-        return string.format("%dm %ds", minutes, seconds)
-    else
-        return string.format("%ds", seconds)
     end
 end
 
