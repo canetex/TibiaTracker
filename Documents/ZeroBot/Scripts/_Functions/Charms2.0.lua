@@ -226,6 +226,34 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     return visibilityIcon
 end
 
+-- Função para alternar configurações de visibilidade
+local function cycleVisibilityConfig()
+    local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
+    local currentIndex = 1
+    
+    -- Encontrar índice atual
+    for i, config in ipairs(configs) do
+        if config == currentVisibilityConfig then
+            currentIndex = i
+            break
+        end
+    end
+    
+    -- Próxima configuração (ciclo)
+    local nextIndex = (currentIndex % #configs) + 1
+    currentVisibilityConfig = configs[nextIndex]
+    
+    -- Aplicar nova configuração
+    VisibleInfo.tier = VisibilityConfigs[currentVisibilityConfig].tier
+    VisibleInfo.charm = VisibilityConfigs[currentVisibilityConfig].charm
+    VisibleInfo.heal = VisibilityConfigs[currentVisibilityConfig].heal
+    
+    -- Atualizar todos os HUDs existentes
+    updateAllHuds()
+    
+    print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
+end
+
 -- Função genérica para criar ícone principal e de visibilidade
 local function createMainIcon(x, y, id, groupType)
     local mainIcon = HUD.new(x, y, id, true)
@@ -622,34 +650,6 @@ local function updateAllHuds()
             end
         end
     end
-end
-
--- Função para alternar configurações de visibilidade
-local function cycleVisibilityConfig()
-    local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
-    local currentIndex = 1
-    
-    -- Encontrar índice atual
-    for i, config in ipairs(configs) do
-        if config == currentVisibilityConfig then
-            currentIndex = i
-            break
-        end
-    end
-    
-    -- Próxima configuração (ciclo)
-    local nextIndex = (currentIndex % #configs) + 1
-    currentVisibilityConfig = configs[nextIndex]
-    
-    -- Aplicar nova configuração
-    VisibleInfo.tier = VisibilityConfigs[currentVisibilityConfig].tier
-    VisibleInfo.charm = VisibilityConfigs[currentVisibilityConfig].charm
-    VisibleInfo.heal = VisibilityConfigs[currentVisibilityConfig].heal
-    
-    -- Atualizar todos os HUDs existentes
-    updateAllHuds()
-    
-    print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
 end
 
 
