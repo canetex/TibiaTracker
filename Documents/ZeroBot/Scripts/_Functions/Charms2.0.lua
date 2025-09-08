@@ -495,14 +495,14 @@ local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, 
         data[name].hud.text = createHud(x, y, hudText)
         
         -- Adicionar callback para zerar contador
-        if data[name].hud.text then
+        if data[name].hud.text and data[name].hud.text.setCallback then
             data[name].hud.text:setCallback(function()
                 resetCounter(type, name)
             end)
         end
         
         -- Aplicar visibilidade do grupo
-        if data[name].hud.text then
+        if data[name].hud.text and data[name].hud.text.setVisible then
             local groupVisibility = (type == "charm" and charmGroupVisible) or 
                                    (type == "tier" and tierGroupVisible) or 
                                    (type == "heal" and healGroupVisible)
@@ -511,7 +511,7 @@ local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, 
         
         return foundCount + 1
     else
-        if data[name].hud.text then
+        if data[name].hud.text and data[name].hud.text.setText then
             data[name].hud.text:setText(hudText)
         end
         return foundCount
