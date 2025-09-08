@@ -285,11 +285,16 @@ local function updateAllHuds()
         {data = heals, type = "heal", visible = healGroupVisible}
     }
     
+    print("[DEBUG] Atualizando HUDs - Configuração atual: " .. currentVisibilityConfig)
+    print("[DEBUG] VisibleInfo.charm.ativacoes: " .. tostring(VisibleInfo.charm.ativacoes))
+    print("[DEBUG] VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
+    
     for _, group in ipairs(dataGroups) do
         for name, item in pairs(group.data) do
             if item.hud.text and item.hud.text.setText and item.hud.text.setVisible then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                print("[DEBUG] HUD Text para " .. name .. ": " .. hudText)
                 item.hud.text:setText(hudText)
                 item.hud.text:setVisible(group.visible)
             end
@@ -314,10 +319,34 @@ local function cycleVisibilityConfig()
     local nextIndex = (currentIndex % #configs) + 1
     currentVisibilityConfig = configs[nextIndex]
     
-    -- Aplicar nova configuração
-    VisibleInfo.tier = VisibilityConfigs[currentVisibilityConfig].tier
-    VisibleInfo.charm = VisibilityConfigs[currentVisibilityConfig].charm
-    VisibleInfo.heal = VisibilityConfigs[currentVisibilityConfig].heal
+    -- Aplicar nova configuração (copiar valores, não referências)
+    VisibleInfo.tier = {
+        tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
+        ativacoes = VisibilityConfigs[currentVisibilityConfig].tier.ativacoes,
+        previsao = VisibilityConfigs[currentVisibilityConfig].tier.previsao,
+        danoMinimo = VisibilityConfigs[currentVisibilityConfig].tier.danoMinimo,
+        danoMedio = VisibilityConfigs[currentVisibilityConfig].tier.danoMedio,
+        danoMaximo = VisibilityConfigs[currentVisibilityConfig].tier.danoMaximo,
+        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].tier.tempoDecorrido
+    }
+    VisibleInfo.charm = {
+        charm = VisibilityConfigs[currentVisibilityConfig].charm.charm,
+        ativacoes = VisibilityConfigs[currentVisibilityConfig].charm.ativacoes,
+        previsao = VisibilityConfigs[currentVisibilityConfig].charm.previsao,
+        danoMinimo = VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo,
+        danoMedio = VisibilityConfigs[currentVisibilityConfig].charm.danoMedio,
+        danoMaximo = VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo,
+        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido
+    }
+    VisibleInfo.heal = {
+        heal = VisibilityConfigs[currentVisibilityConfig].heal.heal,
+        ativacoes = VisibilityConfigs[currentVisibilityConfig].heal.ativacoes,
+        previsao = VisibilityConfigs[currentVisibilityConfig].heal.previsao,
+        curaMinima = VisibilityConfigs[currentVisibilityConfig].heal.curaMinima,
+        curaMedia = VisibilityConfigs[currentVisibilityConfig].heal.curaMedia,
+        curaMaxima = VisibilityConfigs[currentVisibilityConfig].heal.curaMaxima,
+        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].heal.tempoDecorrido
+    }
     
     -- Atualizar todos os HUDs existentes
     updateAllHuds()
