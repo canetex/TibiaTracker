@@ -480,6 +480,31 @@ local function createHudText(name, data, damage, timeElapsed, type)
     return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
+-- Função genérica para criar ou atualizar HUD
+local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, type)
+    if not data[name].hud.text then
+        local x = iconX - 35
+        local y = iconY + 40 + (15 * foundCount)
+        data[name].hud.text = createHud(x, y, hudText)
+        
+        -- Adicionar callback para zerar contador
+        data[name].hud.text:setCallback(function()
+            resetCounter(type, name)
+        end)
+        
+        -- Aplicar visibilidade do grupo
+        local groupVisibility = (type == "charm" and charmGroupVisible) or 
+                               (type == "tier" and tierGroupVisible) or 
+                               (type == "heal" and healGroupVisible)
+        data[name].hud.text:setVisible(groupVisibility)
+        
+        return foundCount + 1
+    else
+        data[name].hud.text:setText(hudText)
+        return foundCount
+    end
+end
+
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
     -- Validar entrada
@@ -699,32 +724,6 @@ end
 -- ================================================================
 -- FUNÇÕES DE PROCESSAMENTO DE ATIVAÇÕES
 -- ================================================================
-
-
--- Função genérica para criar ou atualizar HUD
-local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, type)
-    if not data[name].hud.text then
-        local x = iconX - 35
-        local y = iconY + 40 + (15 * foundCount)
-        data[name].hud.text = createHud(x, y, hudText)
-        
-        -- Adicionar callback para zerar contador
-        data[name].hud.text:setCallback(function()
-            resetCounter(type, name)
-        end)
-        
-        -- Aplicar visibilidade do grupo
-        local groupVisibility = (type == "charm" and charmGroupVisible) or 
-                               (type == "tier" and tierGroupVisible) or 
-                               (type == "heal" and healGroupVisible)
-        data[name].hud.text:setVisible(groupVisibility)
-        
-        return foundCount + 1
-    else
-        data[name].hud.text:setText(hudText)
-        return foundCount
-    end
-end
 
 -- Função para salvar posição do ícone e estados de visibilidade no arquivo
 local function saveIconPosition(name, value, which)
