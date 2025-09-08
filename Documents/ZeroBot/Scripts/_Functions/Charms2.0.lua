@@ -313,6 +313,14 @@ local function getAverageAndHigherDamage(charm, lastDamage)
     return charm
 end
 
+-- Sistema de debug e logging
+local function checkAndPrint(class, message)
+    if not print_ativo or not class or not message then return end
+    if print_ativo[class] then
+        print("[DEBUG:" .. class:upper() .. "] " .. tostring(message))
+    end
+end
+
 -- Função para calcular previsão de ativações por hora
 local function getOneHourEstimate(first, count)
     -- Validar parâmetros
@@ -339,6 +347,14 @@ local function getOneHourEstimate(first, count)
         count, timeDif, ratePerSecond, inAHour))
     
     return inAHour
+end
+
+-- Função genérica de validação
+local function validateInput(value, expectedType, allowEmpty)
+    if not value then return false end
+    if type(value) ~= expectedType then return false end
+    if not allowEmpty and (expectedType == "string" and value == "") then return false end
+    return true
 end
 
 -- Processa ativação de charm ou tier com validação e estatísticas
@@ -616,22 +632,6 @@ local function isTable(t) return type(t) == 'table' end
 local function hasDragged(currentPos, lastPos) return currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y end
 local function setPos(hud, x, y) hud:setPos(x, y) end
 local function getThisFilename() return debug.getinfo(1).source:gsub("Scripts/", "") end
-
--- Função genérica de validação
-local function validateInput(value, expectedType, allowEmpty)
-    if not value then return false end
-    if type(value) ~= expectedType then return false end
-    if not allowEmpty and (expectedType == "string" and value == "") then return false end
-    return true
-end
-
--- Sistema de debug e logging
-local function checkAndPrint(class, message)
-    if not print_ativo or not class or not message then return end
-    if print_ativo[class] then
-        print("[DEBUG:" .. class:upper() .. "] " .. tostring(message))
-    end
-end
 
 local function setDebugMode(class, enabled)
     if print_ativo and print_ativo[class] ~= nil then
