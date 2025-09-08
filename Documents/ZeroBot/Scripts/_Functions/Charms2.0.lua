@@ -238,6 +238,45 @@ local function getTimeElapsedString(first)
     end
 end
 
+-- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
+local function createHudText(name, data, damage, timeElapsed, type)
+    local config = VisibleInfo[type] or VisibleInfo.charm
+    local parts = {}
+    
+    -- Nome do item
+    if config[type] then
+        table.insert(parts, "[" .. name .. "]")
+    end
+    
+    -- Ativações
+    if config.ativacoes then
+        table.insert(parts, "\u{1F5E1}: " .. data.count)
+    end
+    
+    if config.previsao then
+        table.insert(parts, "\u{1F553}: " .. data.inAHour)
+    end
+    
+    -- Dano/Cura
+    if damage > 0 then
+        local isHeal = type == "heal"
+        local damageConfig = isHeal and 
+            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima} or
+            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo}
+        
+        if damageConfig.min then table.insert(parts, "\u{2B07}: " .. data.lowest) end
+        if damageConfig.avg then table.insert(parts, "\u{1F503}: " .. string.format("%.1f", data.average)) end
+        if damageConfig.max then table.insert(parts, "\u{2B06}: " .. data.higher) end
+    end
+    
+    -- Tempo
+    if config.tempoDecorrido then
+        table.insert(parts, "TEMPO: " .. timeElapsed)
+    end
+    
+    return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
+end
+
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
     local dataGroups = {
@@ -493,45 +532,6 @@ local function updateGlobalCooldown(type, name, cooldownData)
     elseif type == "heal" and cooldowns.heal.default then
         cooldowns.heal.default.lastTime = cooldownData.lastTime
     end
-end
-
--- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
-local function createHudText(name, data, damage, timeElapsed, type)
-    local config = VisibleInfo[type] or VisibleInfo.charm
-    local parts = {}
-    
-    -- Nome do item
-    if config[type] then
-        table.insert(parts, "[" .. name .. "]")
-    end
-    
-    -- Ativações
-    if config.ativacoes then
-        table.insert(parts, "\u{1F5E1}: " .. data.count)
-    end
-    
-    if config.previsao then
-        table.insert(parts, "\u{1F553}: " .. data.inAHour)
-    end
-    
-    -- Dano/Cura
-    if damage > 0 then
-        local isHeal = type == "heal"
-        local damageConfig = isHeal and 
-            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima} or
-            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo}
-        
-        if damageConfig.min then table.insert(parts, "\u{2B07}: " .. data.lowest) end
-        if damageConfig.avg then table.insert(parts, "\u{1F503}: " .. string.format("%.1f", data.average)) end
-        if damageConfig.max then table.insert(parts, "\u{2B06}: " .. data.higher) end
-    end
-    
-    -- Tempo
-    if config.tempoDecorrido then
-        table.insert(parts, "TEMPO: " .. timeElapsed)
-    end
-    
-    return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
 local function createHud(x, y, text)
