@@ -429,6 +429,18 @@ local function updateGlobalCooldown(type, name, cooldownData)
     end
 end
 
+local function getTimeElapsedString(first)
+    local timeDif = os.time() - first
+    local minutes = math.floor(timeDif / 60)
+    local seconds = timeDif % 60
+    
+    if minutes > 0 then
+        return string.format("%dm %ds", minutes, seconds)
+    else
+        return string.format("%ds", seconds)
+    end
+end
+
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
     -- Validar entrada
@@ -506,18 +518,6 @@ local function toggleGroupVisibility(groupType)
           (groupType == "charm" and charmGroupVisible or groupType == "tier" and tierGroupVisible or healGroupVisible) and "visível" or "oculto")
     
     updateAllHuds()
-end
-
-local function getTimeElapsedString(first)
-    local timeDif = os.time() - first
-    local minutes = math.floor(timeDif / 60)
-    local seconds = timeDif % 60
-    
-    if minutes > 0 then
-        return string.format("%dm %ds", minutes, seconds)
-    else
-        return string.format("%ds", seconds)
-    end
 end
 
 -- Função para atualizar todos os HUDs existentes
