@@ -248,6 +248,16 @@ local function createMainIcon(x, y, id, groupType)
     return mainIcon, visibilityIcon
 end
 
+-- Função genérica para configurar cooldown baseado no tipo
+local function getCooldownData(type, name)
+    if cooldowns[type] and cooldowns[type][name] then
+        return {cooldown = cooldowns[type][name].cooldown, lastTime = cooldowns[type][name].lastTime}
+    elseif type == "heal" and cooldowns.heal.default then
+        return {cooldown = cooldowns.heal.default.cooldown, lastTime = cooldowns.heal.default.lastTime}
+    end
+    return nil
+end
+
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
     -- Validar entrada
@@ -574,15 +584,6 @@ local function checkAndUpdateCooldown(cooldownData)
     return true
 end
 
--- Função genérica para configurar cooldown baseado no tipo
-local function getCooldownData(type, name)
-    if cooldowns[type] and cooldowns[type][name] then
-        return {cooldown = cooldowns[type][name].cooldown, lastTime = cooldowns[type][name].lastTime}
-    elseif type == "heal" and cooldowns.heal.default then
-        return {cooldown = cooldowns.heal.default.cooldown, lastTime = cooldowns.heal.default.lastTime}
-    end
-    return nil
-end
 
 -- Função genérica para atualizar variáveis de cooldown globais
 local function updateGlobalCooldown(type, name, cooldownData)
