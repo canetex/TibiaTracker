@@ -286,8 +286,11 @@ local function updateAllHuds()
     }
     
     print("[DEBUG] Atualizando HUDs - Configuração atual: " .. currentVisibilityConfig)
+    print("[DEBUG] Configuração original TUDO.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
     print("[DEBUG] VisibleInfo.charm.ativacoes: " .. tostring(VisibleInfo.charm.ativacoes))
     print("[DEBUG] VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
+    print("[DEBUG] VisibleInfo.charm.danoMedio: " .. tostring(VisibleInfo.charm.danoMedio))
+    print("[DEBUG] VisibleInfo.charm.danoMaximo: " .. tostring(VisibleInfo.charm.danoMaximo))
     
     for _, group in ipairs(dataGroups) do
         for name, item in pairs(group.data) do
