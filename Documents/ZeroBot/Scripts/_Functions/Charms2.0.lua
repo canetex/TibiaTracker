@@ -661,16 +661,14 @@ end
 -- Função genérica para lidar com arrastar ícones
 local function handleIconDrag(iconType, icon, lastPos, iconX, iconY, visibilityIcon, data)
     if not icon or not isTable(icon) then return end
-    if not lastPos then
-        lastPos = icon:getPos()
-    end
-
-    local currentIconPos = icon:getPos()
-    print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentIconPos.x .. ", " .. currentIconPos.y .. " | Última: " .. lastPos.x .. ", " .. lastPos.y)
     
-    if hasDragged(currentIconPos, lastPos) then
+    local currentIconPos = icon:getPos()
+    local lastPosRef = lastPos or currentIconPos
+    
+    print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentIconPos.x .. ", " .. currentIconPos.y .. " | Última: " .. lastPosRef.x .. ", " .. lastPosRef.y)
+    
+    if hasDragged(currentIconPos, lastPosRef) then
         print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
-        lastPos = currentIconPos
         local index = 0
         for name, item in pairs(data) do
             if item.hud.text and item.hud.text.setPos then
@@ -1089,9 +1087,14 @@ end)
 
 -- Timer unificado para todos os ícones
 Timer.new("handle-all-huds", function()
-    handleIconDrag("CHARM", charmIcon, charmIconLastPos, ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION, charmVisibilityIcon, charms)
-    handleIconDrag("TIER", tierIcon, tierIconLastPos, ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, tierVisibilityIcon, tiers)
-    handleIconDrag("HEAL", healIcon, healIconLastPos, ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, healVisibilityIcon, heals)
+    -- Usar as variáveis globais de posição para comparação
+    local charmLastPos = {x = ICON_CHARM_X_POSITION, y = ICON_CHARM_Y_POSITION}
+    local tierLastPos = {x = ICON_TIER_X_POSITION, y = ICON_TIER_Y_POSITION}
+    local healLastPos = {x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION}
+    
+    handleIconDrag("CHARM", charmIcon, charmLastPos, ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION, charmVisibilityIcon, charms)
+    handleIconDrag("TIER", tierIcon, tierLastPos, ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, tierVisibilityIcon, tiers)
+    handleIconDrag("HEAL", healIcon, healLastPos, ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, healVisibilityIcon, heals)
 end, 1000)
 -- Nexus scripts / Charm/Tier/Heal Proc Tracker --
 
