@@ -394,8 +394,6 @@ end
 
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
-    print("[DEBUG] updateAllHuds iniciada - charm:" .. tostring(charmGroupVisible) .. " tier:" .. tostring(tierGroupVisible) .. " heal:" .. tostring(healGroupVisible))
-    
     local dataGroups = {
         {data = charms, type = "charm", visible = charmGroupVisible},
         {data = tiers, type = "tier", visible = tierGroupVisible},
@@ -403,30 +401,29 @@ local function updateAllHuds()
     }
     
     for _, group in ipairs(dataGroups) do
-        print("[DEBUG] Processando grupo: " .. group.type .. " (visível: " .. tostring(group.visible) .. ")")
         for name, item in pairs(group.data) do
             if item.hud.text then
-                print("[DEBUG] HUD existente para " .. name .. " - " .. group.type)
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
                 if group.visible then
-                    -- Se deve estar visível, atualizar texto
-                    print("[DEBUG] Atualizando texto do HUD " .. name)
-                    if item.hud.text and item.hud.text.setText then
-                        item.hud.text:setText(hudText)
+                    -- Se deve estar visível, mostrar e atualizar texto
+                    if item.hud.text then
+                        if item.hud.text.show then
+                            item.hud.text:show()
+                        end
+                        if item.hud.text.setText then
+                            item.hud.text:setText(hudText)
+                        end
                     end
                 else
-                    -- Se deve estar oculto, deletar o HUD
-                    print("[DEBUG] Deletando HUD " .. name)
-                    if item.hud.text and item.hud.text.delete then
-                        item.hud.text:delete()
+                    -- Se deve estar oculto, esconder o HUD
+                    if item.hud.text and item.hud.text.hide then
+                        item.hud.text:hide()
                     end
-                    item.hud.text = nil
                 end
             elseif group.visible then
                 -- Se deve estar visível mas não tem HUD, criar um novo
-                print("[DEBUG] Criando novo HUD para " .. name .. " - " .. group.type)
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
@@ -442,14 +439,7 @@ local function updateAllHuds()
                 
                 local x = iconX - 35
                 local y = iconY + 40 + (15 * #group.data)
-                print("[DEBUG] Posição do novo HUD: " .. x .. "," .. y)
                 item.hud.text = createHud(x, y, hudText)
-                
-                if item.hud.text then
-                    print("[DEBUG] HUD criado com sucesso para " .. name)
-                else
-                    print("[DEBUG] ERRO: Falha ao criar HUD para " .. name)
-                end
                 
                 -- Adicionar callback para zerar contador
                 if item.hud.text and item.hud.text.setCallback then
@@ -465,8 +455,6 @@ end
 
 -- Função para alternar visibilidade de um grupo
 local function toggleGroupVisibility(groupType)
-    print("[DEBUG] toggleGroupVisibility chamada - Tipo: " .. tostring(groupType))
-    
     local groupConfigs = {
         charm = {var = "charmGroupVisible", name = "charms"},
         tier = {var = "tierGroupVisible", name = "tiers"},
@@ -474,27 +462,15 @@ local function toggleGroupVisibility(groupType)
     }
     
     local config = groupConfigs[groupType]
-    if not config then 
-        print("[DEBUG] ERRO: Config não encontrada para tipo: " .. tostring(groupType))
-        return 
-    end
-    
-    -- Mostrar estado atual antes de alternar
-    local currentState = (groupType == "charm" and charmGroupVisible) or 
-                        (groupType == "tier" and tierGroupVisible) or 
-                        (groupType == "heal" and healGroupVisible)
-    print("[DEBUG] Estado atual - " .. groupType .. ": " .. tostring(currentState))
+    if not config then return end
     
     -- Alternar visibilidade
     if groupType == "charm" then
         charmGroupVisible = not charmGroupVisible
-        print("[DEBUG] charmGroupVisible alterado para: " .. tostring(charmGroupVisible))
     elseif groupType == "tier" then
         tierGroupVisible = not tierGroupVisible
-        print("[DEBUG] tierGroupVisible alterado para: " .. tostring(tierGroupVisible))
     elseif groupType == "heal" then
         healGroupVisible = not healGroupVisible
-        print("[DEBUG] healGroupVisible alterado para: " .. tostring(healGroupVisible))
     end
     
     local isVisible = (groupType == "charm" and charmGroupVisible) or 
@@ -502,9 +478,7 @@ local function toggleGroupVisibility(groupType)
                      (groupType == "heal" and healGroupVisible)
     print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. (isVisible and "visível" or "oculto"))
     
-    print("[DEBUG] Chamando updateAllHuds...")
     updateAllHuds()
-    print("[DEBUG] updateAllHuds concluído")
 end
 
 
