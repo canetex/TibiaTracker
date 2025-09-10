@@ -459,6 +459,29 @@ local function updateAllHuds()
     end
 end
 
+-- Função para atualizar apenas o texto dos HUDs (sem afetar visibilidade)
+local function updateHudTexts()
+    local dataGroups = {
+        {data = charms, type = "charm"},
+        {data = tiers, type = "tier"},
+        {data = heals, type = "heal"}
+    }
+    
+    for _, group in ipairs(dataGroups) do
+        for name, item in pairs(group.data) do
+            if item.hud.text then
+                local timeElapsed = getTimeElapsedString(item.first)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                
+                -- Apenas atualizar o texto, sem afetar visibilidade
+                if item.hud.text.setText then
+                    item.hud.text:setText(hudText)
+                end
+            end
+        end
+    end
+end
+
 -- Função para alternar visibilidade de um grupo
 local function toggleGroupVisibility(groupType)
     local groupConfigs = {
@@ -537,8 +560,8 @@ local function cycleVisibilityConfig()
     
     print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
     
-    -- Atualizar todos os HUDs existentes
-    updateAllHuds()
+    -- Atualizar apenas o texto dos HUDs existentes (sem afetar visibilidade)
+    updateHudTexts()
 end
 
 -- Função genérica para criar ícone principal e de visibilidade
