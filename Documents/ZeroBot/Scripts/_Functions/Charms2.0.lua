@@ -1138,15 +1138,33 @@ local function findHealsProc(text)
     local playerName = nil
     local charmName = nil
     
+    -- Debug específico para heals de players
+    if text:find("healed by") or text:find("heal") then
+        print("[DEBUG HEAL] Texto recebido: " .. text)
+    end
+    
     -- Verificar padrões de heal
-    for _, patternData in ipairs(healPatterns) do
+    for i, patternData in ipairs(healPatterns) do
         local pattern, type = patternData.pattern, patternData.type
         local matches = {text:match(pattern)}
+        
+        -- Debug específico para padrões de player
+        if type == "PlayerFrom" or type == "PlayerTo" then
+            print("[DEBUG HEAL] Testando padrão " .. i .. " (" .. type .. "): " .. pattern)
+            print("[DEBUG HEAL] Matches encontrados: " .. #matches)
+            if #matches > 0 then
+                for j, match in ipairs(matches) do
+                    print("[DEBUG HEAL] Match " .. j .. ": " .. tostring(match))
+                end
+            end
+        end
         
         if #matches > 0 then
             local isSelfOrImbu = type == "Self" or type == "Imbuiments"
             local isPlayer = type == "PlayerFrom" or type == "PlayerTo"
             local isCharm = type == "Charm"
+            
+            print("[DEBUG HEAL] Padrão " .. type .. " encontrado! Matches: " .. #matches)
             
             if isSelfOrImbu then
                 healAmount = tonumber(matches[1])
@@ -1154,6 +1172,7 @@ local function findHealsProc(text)
             elseif isPlayer then
                 healAmount, playerName = tonumber(matches[2]), matches[1]
                 healType = type .. " Heal"
+                print("[DEBUG HEAL] Player heal detectado - Amount: " .. healAmount .. ", Player: " .. playerName)
             elseif isCharm then
                 healAmount = tonumber(matches[1])
                 charmName = #matches == 2 and matches[2] or matches[3]
@@ -1181,11 +1200,15 @@ local function findHealsProc(text)
         end
     elseif healType == "PlayerFrom Heal" then
         healName = "From_" .. playerName
+        print("[DEBUG HEAL] Criando heal FROM: " .. healName)
     elseif healType == "PlayerTo Heal" then
         healName = "To_" .. playerName
+        print("[DEBUG HEAL] Criando heal TO: " .. healName)
     elseif healType == "Charm Heal" then
         healName = "Charm_" .. charmName
     end
+    
+    print("[DEBUG HEAL] Heal final - Nome: " .. healName .. ", Amount: " .. healAmount .. ", Type: " .. healType)
 
     if not isTable(healIcon) then
         healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
