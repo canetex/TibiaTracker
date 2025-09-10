@@ -61,6 +61,41 @@ local ICON_HEAL_Y_POSITION = 967
 -- local ICON_HEAL_ID = 11604
 local ICON_HEAL_ID = 19077
 
+-- Função para carregar posições salvas dos ícones
+local function loadIconPositions()
+    local path = Engine.getScriptsDirectory() .. "/Charms2.0.lua"
+    local file = io.open(path, "r")
+    if not file then return end
+    
+    local content = file:read("*all")
+    file:close()
+    if not content then return end
+    
+    -- Carregar posições dos ícones
+    local charmX = content:match("ICON_CHARM_X_POSITION = (%d+)")
+    local charmY = content:match("ICON_CHARM_Y_POSITION = (%d+)")
+    local tierX = content:match("ICON_TIER_X_POSITION = (%d+)")
+    local tierY = content:match("ICON_TIER_Y_POSITION = (%d+)")
+    local healX = content:match("ICON_HEAL_X_POSITION = (%d+)")
+    local healY = content:match("ICON_HEAL_Y_POSITION = (%d+)")
+    
+    if charmX and charmY then
+        ICON_CHARM_X_POSITION = tonumber(charmX)
+        ICON_CHARM_Y_POSITION = tonumber(charmY)
+    end
+    if tierX and tierY then
+        ICON_TIER_X_POSITION = tonumber(tierX)
+        ICON_TIER_Y_POSITION = tonumber(tierY)
+    end
+    if healX and healY then
+        ICON_HEAL_X_POSITION = tonumber(healX)
+        ICON_HEAL_Y_POSITION = tonumber(healY)
+    end
+end
+
+-- Carregar posições salvas
+loadIconPositions()
+
 -- Ícones de visibilidade (ao lado dos ícones principais)
 local VISIBILITY_ICON_ID = 19369
 local VISIBILITY_ICON_SCALE = 0.4
