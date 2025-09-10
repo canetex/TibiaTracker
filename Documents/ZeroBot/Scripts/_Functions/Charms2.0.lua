@@ -288,7 +288,7 @@ local healVisibilityIcon = nil
 -- Estados de visibilidade dos grupos
 local charmGroupVisible = true
 local tierGroupVisible = true
-local healGroupVisible = false
+local healGroupVisible = true
 local oneHourInSeconds = 3600
 
 -- ================================================================
