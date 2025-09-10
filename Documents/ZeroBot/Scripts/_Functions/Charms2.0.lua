@@ -1139,8 +1139,13 @@ local function findHealsProc(text)
     local charmName = nil
     
     -- Debug específico para heals de players
-    if text:find("healed by") or text:find("heal") then
+    if text:find("heal") then
         print("[DEBUG HEAL] Texto recebido: " .. text)
+        if text:find("healed by") then
+            print("[DEBUG HEAL] *** MENSAGEM DE HEAL FROM DETECTADA! ***")
+        elseif text:find("You heal") and not text:find("yourself") then
+            print("[DEBUG HEAL] *** MENSAGEM DE HEAL TO DETECTADA! ***")
+        end
     end
     
     -- Verificar padrões de heal
