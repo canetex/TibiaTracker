@@ -68,10 +68,35 @@ local VISIBILITY_ICON_OFFSET = 30  -- Distância do ícone principal
 
 -- Função geradora de configurações de visibilidade
 local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, danoMax, tempo)
+    -- Criar cópias independentes para cada tipo
     return {
-        tier = { tier = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
-        charm = { charm = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
-        heal = { heal = true, ativacoes = ativacoes, previsao = previsao, curaMinima = danoMin, curaMedia = danoMed, curaMaxima = danoMax, tempoDecorrido = tempo }
+        tier = { 
+            tier = true, 
+            ativacoes = ativacoes, 
+            previsao = previsao, 
+            danoMinimo = danoMin, 
+            danoMedio = danoMed, 
+            danoMaximo = danoMax, 
+            tempoDecorrido = tempo 
+        },
+        charm = { 
+            charm = true, 
+            ativacoes = ativacoes, 
+            previsao = previsao, 
+            danoMinimo = danoMin, 
+            danoMedio = danoMed, 
+            danoMaximo = danoMax, 
+            tempoDecorrido = tempo 
+        },
+        heal = { 
+            heal = true, 
+            ativacoes = ativacoes, 
+            previsao = previsao, 
+            curaMinima = danoMin, 
+            curaMedia = danoMed, 
+            curaMaxima = danoMax, 
+            tempoDecorrido = tempo 
+        }
     }
 end
 
