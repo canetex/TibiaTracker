@@ -429,6 +429,9 @@ local function cycleVisibilityConfig()
     print("[DEBUG] cycleVisibilityConfig - Aplicando configuração: " .. currentVisibilityConfig)
     print("[DEBUG] cycleVisibilityConfig - TUDO.charm.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
     print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMinimo: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo))
+    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMedio: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio))
+    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMaximo: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo))
+    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.tempoDecorrido: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
     
     VisibleInfo.tier = {
         tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
