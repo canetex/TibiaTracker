@@ -107,8 +107,6 @@ local VisibilityConfigs = {
     ATIVACOES = createVisibilityConfig(true, true, false, false, false, false)
 }
 
--- Debug temporário: verificar se TUDO foi criado corretamente
-print("[DEBUG] TUDO criado - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs.TUDO.charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
 
 
 -- Controla quais informações são exibidas no HUD quando disponiveis
@@ -263,7 +261,6 @@ local oneHourInSeconds = 3600
 -- Função unificada para criar e atualizar ícone de visibilidade
 local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     if not mainIcon then 
-        print("[DEBUG] manageVisibilityIcon: mainIcon é nil")
         return nil 
     end
     
@@ -287,19 +284,15 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     
     if not visibilityIcon then
         -- Criar novo ícone
-        print("[DEBUG] Criando novo ícone de visibilidade...")
         visibilityIcon = HUD.new(visibilityX, visibilityY, VISIBILITY_ICON_ID, true)
         if visibilityIcon then
             visibilityIcon:setDraggable(false)
             visibilityIcon:setHorizontalAlignment(Enums.HorizontalAlign.Left)
             visibilityIcon:setScale(VISIBILITY_ICON_SCALE)
-            print("[DEBUG] Ícone de visibilidade criado com sucesso")
         else
-            print("[DEBUG] ERRO: Falha ao criar HUD.new para ícone de visibilidade")
         end
     else
         -- Atualizar posição existente
-        print("[DEBUG] Atualizando posição do ícone de visibilidade existente")
         visibilityIcon:setPos(visibilityX, visibilityY)
     end
     
@@ -461,8 +454,6 @@ local function cycleVisibilityConfig()
     currentVisibilityConfig = configs[nextIndex]
     
     -- Aplicar nova configuração (copiar valores, não referências)
-    print("[DEBUG] Aplicando " .. currentVisibilityConfig .. " - danoMin:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
-    print("[DEBUG] Verificando TUDO diretamente - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs.TUDO.charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
     
     -- Copiar valores, não referências (usar createVisibilityConfig para garantir cópia limpa)
     local sourceConfig = VisibilityConfigs[currentVisibilityConfig]
@@ -514,12 +505,10 @@ local function createMainIcon(x, y, id, groupType)
     -- Criar ícone de visibilidade
     local visibilityIcon = manageVisibilityIcon(mainIcon, groupType, nil)
     if visibilityIcon then
-        print("[DEBUG] Ícone de visibilidade criado para " .. groupType)
         visibilityIcon:setCallback(function()
             toggleGroupVisibility(groupType)
         end)
     else
-        print("[DEBUG] ERRO: Falha ao criar ícone de visibilidade para " .. groupType)
     end
     
     return mainIcon, visibilityIcon
@@ -1192,7 +1181,6 @@ local function scheduleSave(iconType, currentPos)
                 ICON_HEAL_Y_POSITION = currentPos.y
             end
             
-            print("[DEBUG] Posição do ícone " .. iconType .. " salva: " .. currentPos.x .. ", " .. currentPos.y)
         end
         
         saveTimer = nil
@@ -1203,9 +1191,6 @@ end
 
 -- Função para reposicionar HUDs quando ícone é arrastado
 local function repositionHUDs(iconType, realPos, data, visibilityIcon)
-    print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
-    print("[DEBUG] " .. iconType .. " - Estados de visibilidade: charm=" .. tostring(charmGroupVisible) .. " tier=" .. tostring(tierGroupVisible) .. " heal=" .. tostring(healGroupVisible))
-    print("[DEBUG] " .. iconType .. " - Posição real do ícone: " .. realPos.x .. ", " .. realPos.y)
     
     local index = 0
     for name, item in pairs(data) do
@@ -1213,14 +1198,8 @@ local function repositionHUDs(iconType, realPos, data, visibilityIcon)
             local newX = realPos.x - 35
             local newY = realPos.y + 40 + (15 * index)
             
-            print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
             setPos(item.hud.text, newX, newY)
-            
-            -- Verificar se o HUD realmente está visível após setVisible
-            local actualPos = item.hud.text:getPos()
-            print("[DEBUG] " .. iconType .. " - HUD " .. name .. " posição real: " .. actualPos.x .. ", " .. actualPos.y)
         else
-            print("[DEBUG] " .. iconType .. " - ERRO: HUD " .. name .. " não tem text ou setPos")
         end
         index = index + 1
     end
@@ -1267,7 +1246,6 @@ Game.registerEvent(Game.Events.HUD_DRAG, function(hudId, x, y)
     if iconType and data and mainIcon then
         -- Obter a posição real do ícone usando getPos()
         local realPos = mainIcon:getPos()
-        print("[DEBUG] " .. iconType .. " - Detectado drag! Posição real: " .. realPos.x .. ", " .. realPos.y)
         
         -- Reposicionar HUDs imediatamente
         repositionHUDs(iconType, realPos, data, visibilityIcon)
