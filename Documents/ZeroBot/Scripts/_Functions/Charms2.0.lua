@@ -419,6 +419,7 @@ local function updateAllHuds()
                 end
             elseif group.visible then
                 -- Se deve estar visível mas não tem HUD, criar um novo
+                print("[DEBUG] Criando novo HUD para " .. name .. " - " .. group.type)
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
@@ -434,7 +435,14 @@ local function updateAllHuds()
                 
                 local x = iconX - 35
                 local y = iconY + 40 + (15 * #group.data)
+                print("[DEBUG] Posição do novo HUD: " .. x .. "," .. y)
                 item.hud.text = createHud(x, y, hudText)
+                
+                if item.hud.text then
+                    print("[DEBUG] HUD criado com sucesso para " .. name)
+                else
+                    print("[DEBUG] ERRO: Falha ao criar HUD para " .. name)
+                end
                 
                 -- Adicionar callback para zerar contador
                 if item.hud.text and item.hud.text.setCallback then
