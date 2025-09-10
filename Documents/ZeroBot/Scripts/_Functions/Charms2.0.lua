@@ -1150,21 +1150,9 @@ local function scheduleSave(iconType, currentPos)
 end
 
 -- Função para reposicionar HUDs quando ícone é arrastado
-local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
+local function repositionHUDs(iconType, realPos, data, visibilityIcon)
     print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
     print("[DEBUG] " .. iconType .. " - Estados de visibilidade: charm=" .. tostring(charmGroupVisible) .. " tier=" .. tostring(tierGroupVisible) .. " heal=" .. tostring(healGroupVisible))
-    
-    -- Obter posição real do ícone principal (não a posição do evento)
-    local mainIcon = nil
-    if iconType == "CHARM" then
-        mainIcon = charmIcon
-    elseif iconType == "TIER" then
-        mainIcon = tierIcon
-    elseif iconType == "HEAL" then
-        mainIcon = healIcon
-    end
-    
-    local realPos = mainIcon and mainIcon:getPos() or currentPos
     print("[DEBUG] " .. iconType .. " - Posição real do ícone: " .. realPos.x .. ", " .. realPos.y)
     
     local index = 0
@@ -1172,10 +1160,6 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
         if item.hud.text and item.hud.text.setPos then
             local newX = realPos.x - 35
             local newY = realPos.y + 40 + (15 * index)
-            
-            -- Garantir que as posições sejam válidas (não negativas)
-            newX = math.max(0, newX)
-            newY = math.max(0, newY)
             
             print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
             setPos(item.hud.text, newX, newY)
@@ -1191,6 +1175,14 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
     
     -- Reposicionar ícone de visibilidade
     if visibilityIcon then
+        local mainIcon = nil
+        if iconType == "CHARM" then
+            mainIcon = charmIcon
+        elseif iconType == "TIER" then
+            mainIcon = tierIcon
+        elseif iconType == "HEAL" then
+            mainIcon = healIcon
+        end
         manageVisibilityIcon(mainIcon, nil, visibilityIcon)
     end
 end
@@ -1200,31 +1192,37 @@ Game.registerEvent(Game.Events.HUD_DRAG, function(hudId, x, y)
     local iconType = nil
     local data = nil
     local visibilityIcon = nil
+    local mainIcon = nil
     
     -- Identificar qual ícone foi arrastado
     if charmIcon and hudId == charmIcon:getId() then
         iconType = "CHARM"
         data = charms
         visibilityIcon = charmVisibilityIcon
+        mainIcon = charmIcon
     elseif tierIcon and hudId == tierIcon:getId() then
         iconType = "TIER"
         data = tiers
         visibilityIcon = tierVisibilityIcon
+        mainIcon = tierIcon
     elseif healIcon and hudId == healIcon:getId() then
         iconType = "HEAL"
         data = heals
         visibilityIcon = healVisibilityIcon
+        mainIcon = healIcon
     end
     
-    if iconType and data then
-        local currentPos = {x = x, y = y}
-        print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentPos.x .. ", " .. currentPos.y)
+    if iconType and data and mainIcon then
+        -- Usar a posição real do ícone, não as coordenadas do evento
+        local realPos = mainIcon:getPos()
+        print("[DEBUG] " .. iconType .. " - Posição do evento: " .. x .. ", " .. y)
+        print("[DEBUG] " .. iconType .. " - Posição real do ícone: " .. realPos.x .. ", " .. realPos.y)
         
-        -- Reposicionar HUDs imediatamente
-        repositionHUDs(iconType, currentPos, data, visibilityIcon)
+        -- Reposicionar HUDs imediatamente usando a posição real
+        repositionHUDs(iconType, realPos, data, visibilityIcon)
         
-        -- Agendar salvamento com delay
-        scheduleSave(iconType, currentPos)
+        -- Agendar salvamento com delay usando a posição real
+        scheduleSave(iconType, realPos)
     end
 end)
 -- Nexus scripts / Charm/Tier/Heal Proc Tracker --
