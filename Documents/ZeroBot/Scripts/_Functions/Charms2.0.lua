@@ -112,7 +112,35 @@ print("[DEBUG] TUDO criado - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.
 
 
 -- Controla quais informações são exibidas no HUD quando disponiveis
-local VisibleInfo = VisibilityConfigs.TUDO
+local VisibleInfo = {
+    tier = {
+        tier = VisibilityConfigs.TUDO.tier.tier,
+        ativacoes = VisibilityConfigs.TUDO.tier.ativacoes,
+        previsao = VisibilityConfigs.TUDO.tier.previsao,
+        danoMinimo = VisibilityConfigs.TUDO.tier.danoMinimo,
+        danoMedio = VisibilityConfigs.TUDO.tier.danoMedio,
+        danoMaximo = VisibilityConfigs.TUDO.tier.danoMaximo,
+        tempoDecorrido = VisibilityConfigs.TUDO.tier.tempoDecorrido
+    },
+    charm = {
+        charm = VisibilityConfigs.TUDO.charm.charm,
+        ativacoes = VisibilityConfigs.TUDO.charm.ativacoes,
+        previsao = VisibilityConfigs.TUDO.charm.previsao,
+        danoMinimo = VisibilityConfigs.TUDO.charm.danoMinimo,
+        danoMedio = VisibilityConfigs.TUDO.charm.danoMedio,
+        danoMaximo = VisibilityConfigs.TUDO.charm.danoMaximo,
+        tempoDecorrido = VisibilityConfigs.TUDO.charm.tempoDecorrido
+    },
+    heal = {
+        heal = VisibilityConfigs.TUDO.heal.heal,
+        ativacoes = VisibilityConfigs.TUDO.heal.ativacoes,
+        previsao = VisibilityConfigs.TUDO.heal.previsao,
+        curaMinima = VisibilityConfigs.TUDO.heal.curaMinima,
+        curaMedia = VisibilityConfigs.TUDO.heal.curaMedia,
+        curaMaxima = VisibilityConfigs.TUDO.heal.curaMaxima,
+        tempoDecorrido = VisibilityConfigs.TUDO.heal.tempoDecorrido
+    }
+}
 
 -- Estado atual das configurações de visibilidade
 local currentVisibilityConfig = "TUDO"
