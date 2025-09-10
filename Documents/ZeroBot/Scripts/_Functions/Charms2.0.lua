@@ -267,14 +267,11 @@ local function createHudText(name, data, damage, timeElapsed, type)
     local config = VisibleInfo[type] or VisibleInfo.charm
     local parts = {}
     
-    print("[DEBUG] createHudText - " .. name .. " (tipo: " .. type .. ")")
-    print("[DEBUG] createHudText - config[" .. type .. "]: " .. tostring(config[type]))
-    print("[DEBUG] createHudText - config.ativacoes: " .. tostring(config.ativacoes))
-    print("[DEBUG] createHudText - config.previsao: " .. tostring(config.previsao))
-    print("[DEBUG] createHudText - config.danoMinimo: " .. tostring(config.danoMinimo))
-    print("[DEBUG] createHudText - config.danoMedio: " .. tostring(config.danoMedio))
-    print("[DEBUG] createHudText - config.danoMaximo: " .. tostring(config.danoMaximo))
-    print("[DEBUG] createHudText - config.tempoDecorrido: " .. tostring(config.tempoDecorrido))
+    -- Log concatenado para debug
+    local debugInfo = string.format("[DEBUG] createHudText - %s (%s) | %s:%s ativacoes:%s previsao:%s danoMin:%s danoMed:%s danoMax:%s tempo:%s", 
+        name, type, type, tostring(config[type]), tostring(config.ativacoes), tostring(config.previsao), 
+        tostring(config.danoMinimo), tostring(config.danoMedio), tostring(config.danoMaximo), tostring(config.tempoDecorrido))
+    print(debugInfo)
     
     -- Nome do item
     if config[type] then
@@ -308,7 +305,7 @@ local function createHudText(name, data, damage, timeElapsed, type)
     end
     
     local result = #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
-    print("[DEBUG] createHudText - resultado final: " .. result)
+    print("[DEBUG] createHudText - resultado: " .. result)
     return result
 end
 
@@ -427,12 +424,11 @@ local function cycleVisibilityConfig()
     currentVisibilityConfig = configs[nextIndex]
     
     -- Aplicar nova configuração (copiar valores, não referências)
-    print("[DEBUG] cycleVisibilityConfig - Aplicando configuração: " .. currentVisibilityConfig)
-    print("[DEBUG] cycleVisibilityConfig - TUDO.charm.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
-    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMinimo: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo))
-    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMedio: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio))
-    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMaximo: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo))
-    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.tempoDecorrido: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
+    local configDebug = string.format("[DEBUG] cycleVisibilityConfig - Aplicando: %s | TUDO.danoMin:%s | %s.danoMin:%s danoMed:%s danoMax:%s tempo:%s", 
+        currentVisibilityConfig, tostring(VisibilityConfigs.TUDO.charm.danoMinimo), currentVisibilityConfig,
+        tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo), tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio),
+        tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo), tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
+    print(configDebug)
     
     VisibleInfo.tier = {
         tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
