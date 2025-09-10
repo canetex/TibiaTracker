@@ -1144,6 +1144,20 @@ local function findHealsProc(text)
     -- Debug específico apenas para heals de players (sem spam)
     if text:find("healed by") or (text:find("You heal") and not text:find("yourself")) then
         print("[DEBUG HEAL] Player heal detectado: " .. text)
+        -- Testar padrões manualmente
+        if text:find("healed by") then
+            local testMatch = {text:match(".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*")}
+            print("[DEBUG HEAL] Teste PlayerFrom - Matches: " .. #testMatch)
+            if #testMatch > 0 then
+                print("[DEBUG HEAL] Player: " .. testMatch[1] .. ", Amount: " .. testMatch[2])
+            end
+        elseif text:find("You heal") and not text:find("yourself") then
+            local testMatch = {text:match(".*[Yy]ou heal ([^%s]+) for (%d+) hitpoints?.*")}
+            print("[DEBUG HEAL] Teste PlayerTo - Matches: " .. #testMatch)
+            if #testMatch > 0 then
+                print("[DEBUG HEAL] Player: " .. testMatch[1] .. ", Amount: " .. testMatch[2])
+            end
+        end
     end
     
     -- Verificar padrões de heal
