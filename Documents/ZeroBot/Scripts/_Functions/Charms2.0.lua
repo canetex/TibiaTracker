@@ -205,21 +205,33 @@ local oneHourInSeconds = 3600
 
 -- Função unificada para criar e atualizar ícone de visibilidade
 local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
-    if not mainIcon then return nil end
+    if not mainIcon then 
+        print("[DEBUG] manageVisibilityIcon: mainIcon é nil")
+        return nil 
+    end
     
     local mainPos = mainIcon:getPos()
     local mainX, mainY = mainPos.x, mainPos.y
     local visibilityX = mainX + VISIBILITY_ICON_OFFSET
     local visibilityY = mainY
     
+    print("[DEBUG] manageVisibilityIcon: mainPos=" .. mainX .. "," .. mainY .. " visibilityPos=" .. visibilityX .. "," .. visibilityY)
+    
     if not visibilityIcon then
         -- Criar novo ícone
+        print("[DEBUG] Criando novo ícone de visibilidade...")
         visibilityIcon = HUD.new(visibilityX, visibilityY, VISIBILITY_ICON_ID, true)
-        visibilityIcon:setDraggable(false)
-        visibilityIcon:setHorizontalAlignment(Enums.HorizontalAlign.Left)
-        visibilityIcon:setScale(VISIBILITY_ICON_SCALE)
+        if visibilityIcon then
+            visibilityIcon:setDraggable(false)
+            visibilityIcon:setHorizontalAlignment(Enums.HorizontalAlign.Left)
+            visibilityIcon:setScale(VISIBILITY_ICON_SCALE)
+            print("[DEBUG] Ícone de visibilidade criado com sucesso")
+        else
+            print("[DEBUG] ERRO: Falha ao criar HUD.new para ícone de visibilidade")
+        end
     else
         -- Atualizar posição existente
+        print("[DEBUG] Atualizando posição do ícone de visibilidade existente")
         visibilityIcon:setPos(visibilityX, visibilityY)
     end
     
@@ -397,11 +409,14 @@ local function createMainIcon(x, y, id, groupType)
     end)
     
     -- Criar ícone de visibilidade
-    local visibilityIcon = manageVisibilityIcon(mainIcon, groupType)
+    local visibilityIcon = manageVisibilityIcon(mainIcon, groupType, nil)
     if visibilityIcon then
+        print("[DEBUG] Ícone de visibilidade criado para " .. groupType)
         visibilityIcon:setCallback(function()
             toggleGroupVisibility(groupType)
         end)
+    else
+        print("[DEBUG] ERRO: Falha ao criar ícone de visibilidade para " .. groupType)
     end
     
     return mainIcon, visibilityIcon
