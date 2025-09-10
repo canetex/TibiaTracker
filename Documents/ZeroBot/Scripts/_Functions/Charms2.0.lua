@@ -82,6 +82,12 @@ local VisibilityConfigs = {
     ATIVACOES = createVisibilityConfig(true, true, false, false, false, false)
 }
 
+-- Debug: Verificar se as configurações foram criadas corretamente
+print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
+print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMedio: " .. tostring(VisibilityConfigs.TUDO.charm.danoMedio))
+print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMaximo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo))
+print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.tempoDecorrido: " .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
+
 -- Controla quais informações são exibidas no HUD quando disponiveis
 local VisibleInfo = VisibilityConfigs.TUDO
 
