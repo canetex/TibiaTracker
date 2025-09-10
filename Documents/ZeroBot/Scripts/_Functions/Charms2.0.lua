@@ -658,50 +658,6 @@ local function processGroup(groupType, name, damage, patterns, iconConfig, data,
 end
 
 
--- Função genérica para lidar com arrastar ícones
-local function handleIconDrag(iconType, icon, lastPos, iconX, iconY, visibilityIcon, data)
-    if not icon or not isTable(icon) then return end
-    
-    local currentIconPos = icon:getPos()
-    local lastPosRef = lastPos or currentIconPos
-    
-    print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentIconPos.x .. ", " .. currentIconPos.y .. " | Última: " .. lastPosRef.x .. ", " .. lastPosRef.y)
-    
-    if hasDragged(currentIconPos, lastPosRef) then
-        print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
-        local index = 0
-        for name, item in pairs(data) do
-            if item.hud.text and item.hud.text.setPos then
-                local newX = currentIconPos.x - 35
-                local newY = currentIconPos.y + 40 + (15 * index)
-                print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
-                setPos(item.hud.text, newX, newY)
-            end
-            index = index + 1
-        end
-
-        -- Salvar posição no arquivo principal (não no _Functions)
-        local mainFilename = "Charms2.0.lua"
-        saveIconPosition(mainFilename, currentIconPos, "ICON_" .. iconType)
-        
-        -- Atualizar variáveis globais de posição
-        if iconType == "CHARM" then
-            ICON_CHARM_X_POSITION = currentIconPos.x
-            ICON_CHARM_Y_POSITION = currentIconPos.y
-        elseif iconType == "TIER" then
-            ICON_TIER_X_POSITION = currentIconPos.x
-            ICON_TIER_Y_POSITION = currentIconPos.y
-        elseif iconType == "HEAL" then
-            ICON_HEAL_X_POSITION = currentIconPos.x
-            ICON_HEAL_Y_POSITION = currentIconPos.y
-        end
-        
-        -- Reposicionar ícone de visibilidade
-        manageVisibilityIcon(icon, nil, visibilityIcon)
-        
-        print("[DEBUG] Posição do ícone " .. iconType .. " salva: " .. currentIconPos.x .. ", " .. currentIconPos.y)
-    end
-end
 
 -- Função para alternar visibilidade de um grupo
 local function toggleGroupVisibility(groupType)
@@ -1085,17 +1041,100 @@ Game.registerEvent(Game.Events.TEXT_MESSAGE, function(data)
     detectTiers(data.text, lastDamage)
 end)
 
--- Timer unificado para todos os ícones
-Timer.new("handle-all-huds", function()
-    -- Usar as variáveis globais de posição para comparação
-    local charmLastPos = {x = ICON_CHARM_X_POSITION, y = ICON_CHARM_Y_POSITION}
-    local tierLastPos = {x = ICON_TIER_X_POSITION, y = ICON_TIER_Y_POSITION}
-    local healLastPos = {x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION}
+-- Sistema de eventos para drag (muito mais eficiente que timer)
+local saveTimer = nil
+local SAVE_DELAY = 2000  -- 2 segundos de delay para salvar
+local lastSavedPositions = {
+    charm = { x = ICON_CHARM_X_POSITION, y = ICON_CHARM_Y_POSITION },
+    tier = { x = ICON_TIER_X_POSITION, y = ICON_TIER_Y_POSITION },
+    heal = { x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION }
+}
+
+-- Função para salvar posições com delay (só se a posição mudou)
+local function scheduleSave(iconType, currentPos)
+    if saveTimer then
+        saveTimer:stop()
+    end
     
-    handleIconDrag("CHARM", charmIcon, charmLastPos, ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION, charmVisibilityIcon, charms)
-    handleIconDrag("TIER", tierIcon, tierLastPos, ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, tierVisibilityIcon, tiers)
-    handleIconDrag("HEAL", healIcon, healLastPos, ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, healVisibilityIcon, heals)
-end, 1000)
+    saveTimer = Timer.new("delayed-save", function()
+        -- Só salva se a posição realmente mudou
+        local lastPos = lastSavedPositions[iconType:lower()]
+        if currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y then
+            local mainFilename = "Charms2.0.lua"
+            saveIconPosition(mainFilename, currentPos, "ICON_" .. iconType)
+            lastSavedPositions[iconType:lower()] = { x = currentPos.x, y = currentPos.y }
+            
+            -- Atualizar variáveis globais de posição
+            if iconType == "CHARM" then
+                ICON_CHARM_X_POSITION = currentPos.x
+                ICON_CHARM_Y_POSITION = currentPos.y
+            elseif iconType == "TIER" then
+                ICON_TIER_X_POSITION = currentPos.x
+                ICON_TIER_Y_POSITION = currentPos.y
+            elseif iconType == "HEAL" then
+                ICON_HEAL_X_POSITION = currentPos.x
+                ICON_HEAL_Y_POSITION = currentPos.y
+            end
+            
+            print("[DEBUG] Posição do ícone " .. iconType .. " salva: " .. currentPos.x .. ", " .. currentPos.y)
+        end
+        
+        saveTimer = nil
+    end, SAVE_DELAY, false)
+    
+    saveTimer:start()
+end
+
+-- Função para reposicionar HUDs quando ícone é arrastado
+local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
+    print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
+    local index = 0
+    for name, item in pairs(data) do
+        if item.hud.text and item.hud.text.setPos then
+            local newX = currentPos.x - 35
+            local newY = currentPos.y + 40 + (15 * index)
+            print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
+            setPos(item.hud.text, newX, newY)
+        end
+        index = index + 1
+    end
+    
+    -- Reposicionar ícone de visibilidade
+    manageVisibilityIcon(iconType == "CHARM" and charmIcon or iconType == "TIER" and tierIcon or healIcon, nil, visibilityIcon)
+end
+
+-- Sistema de eventos para drag
+Game.registerEvent(Game.Events.HUD_DRAG, function(hudId, x, y)
+    local iconType = nil
+    local data = nil
+    local visibilityIcon = nil
+    
+    -- Identificar qual ícone foi arrastado
+    if charmIcon and hudId == charmIcon:getId() then
+        iconType = "CHARM"
+        data = charms
+        visibilityIcon = charmVisibilityIcon
+    elseif tierIcon and hudId == tierIcon:getId() then
+        iconType = "TIER"
+        data = tiers
+        visibilityIcon = tierVisibilityIcon
+    elseif healIcon and hudId == healIcon:getId() then
+        iconType = "HEAL"
+        data = heals
+        visibilityIcon = healVisibilityIcon
+    end
+    
+    if iconType and data then
+        local currentPos = {x = x, y = y}
+        print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentPos.x .. ", " .. currentPos.y)
+        
+        -- Reposicionar HUDs imediatamente
+        repositionHUDs(iconType, currentPos, data, visibilityIcon)
+        
+        -- Agendar salvamento com delay
+        scheduleSave(iconType, currentPos)
+    end
+end)
 -- Nexus scripts / Charm/Tier/Heal Proc Tracker --
 
 
