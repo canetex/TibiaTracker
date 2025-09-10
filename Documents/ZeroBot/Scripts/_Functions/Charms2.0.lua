@@ -1146,8 +1146,24 @@ local function findHealsProc(text)
         print("[DEBUG HEAL] Texto recebido: " .. text)
         if text:find("healed by") then
             print("[DEBUG HEAL] *** MENSAGEM DE HEAL FROM DETECTADA! ***")
+            -- Testar padrão manualmente
+            local testMatch = {text:match(".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*")}
+            print("[DEBUG HEAL] Teste manual PlayerFrom - Matches: " .. #testMatch)
+            if #testMatch > 0 then
+                for i, match in ipairs(testMatch) do
+                    print("[DEBUG HEAL] Teste manual Match " .. i .. ": " .. tostring(match))
+                end
+            end
         elseif text:find("You heal") and not text:find("yourself") then
             print("[DEBUG HEAL] *** MENSAGEM DE HEAL TO DETECTADA! ***")
+            -- Testar padrão manualmente
+            local testMatch = {text:match(".*[Yy]ou heal ([^%s]+) for (%d+) hitpoints?.*")}
+            print("[DEBUG HEAL] Teste manual PlayerTo - Matches: " .. #testMatch)
+            if #testMatch > 0 then
+                for i, match in ipairs(testMatch) do
+                    print("[DEBUG HEAL] Teste manual Match " .. i .. ": " .. tostring(match))
+                end
+            end
         end
     end
     
