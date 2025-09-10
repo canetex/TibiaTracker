@@ -382,7 +382,11 @@ local function createHudText(name, data, damage, timeElapsed, type)
         table.insert(parts, "TEMPO: " .. timeElapsed)
     end
     
-    return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
+    if #parts > 0 then
+        return table.concat(parts, " - ")
+    else
+        return "[" .. name .. "]: Nenhuma informação habilitada"
+    end
 end
 
 local function createHud(x, y, text)
