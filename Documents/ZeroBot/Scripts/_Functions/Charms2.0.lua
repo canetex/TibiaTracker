@@ -1120,6 +1120,9 @@ local healPatterns = {
     -- Self heal
     {pattern = ".*[Yy]ou heal?ed? yourself for (%d+) hitpoints?.*", type = "Self"},
     
+    -- Other player heals (outros players sendo curados) - para debug
+    {pattern = ".*([^%s]+) was healed for (%d+) hitpoints?.*", type = "OtherPlayer"},
+    
     -- Imbuiments heal (deve vir por último para não conflitar)
     {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?.*", type = "Imbuiments"},
     {pattern = ".*[Yy]ou gain?ed? (%d+) (hitpoints?|mana).*", type = "Imbuiments"},
@@ -1168,6 +1171,7 @@ local function findHealsProc(text)
             local isSelfOrImbu = type == "Self" or type == "Imbuiments"
             local isPlayer = type == "PlayerFrom" or type == "PlayerTo"
             local isCharm = type == "Charm"
+            local isOtherPlayer = type == "OtherPlayer"
             
             print("[DEBUG HEAL] Padrão " .. type .. " encontrado! Matches: " .. #matches)
             
@@ -1182,6 +1186,12 @@ local function findHealsProc(text)
                 healAmount = tonumber(matches[1])
                 charmName = #matches == 2 and matches[2] or matches[3]
                 healType = "Charm Heal"
+            elseif isOtherPlayer then
+                playerName, healAmount = matches[1], tonumber(matches[2])
+                healType = "OtherPlayer Heal"
+                print("[DEBUG HEAL] Other player heal detectado - Player: " .. playerName .. ", Amount: " .. healAmount)
+                -- Não processar heals de outros players, apenas para debug
+                return false
             end
             break
         end
