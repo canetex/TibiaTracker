@@ -426,6 +426,10 @@ local function cycleVisibilityConfig()
     currentVisibilityConfig = configs[nextIndex]
     
     -- Aplicar nova configuração (copiar valores, não referências)
+    print("[DEBUG] cycleVisibilityConfig - Aplicando configuração: " .. currentVisibilityConfig)
+    print("[DEBUG] cycleVisibilityConfig - TUDO.charm.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
+    print("[DEBUG] cycleVisibilityConfig - " .. currentVisibilityConfig .. ".charm.danoMinimo: " .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo))
+    
     VisibleInfo.tier = {
         tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
         ativacoes = VisibilityConfigs[currentVisibilityConfig].tier.ativacoes,
@@ -453,6 +457,8 @@ local function cycleVisibilityConfig()
         curaMaxima = VisibilityConfigs[currentVisibilityConfig].heal.curaMaxima,
         tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].heal.tempoDecorrido
     }
+    
+    print("[DEBUG] cycleVisibilityConfig - Após aplicar - VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
     
     -- Atualizar todos os HUDs existentes
     updateAllHuds()
