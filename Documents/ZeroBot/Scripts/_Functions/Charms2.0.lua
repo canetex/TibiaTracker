@@ -226,6 +226,32 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     return visibilityIcon
 end
 
+-- Função para alternar visibilidade de um grupo
+local function toggleGroupVisibility(groupType)
+    local groupConfigs = {
+        charm = {var = "charmGroupVisible", name = "charms"},
+        tier = {var = "tierGroupVisible", name = "tiers"},
+        heal = {var = "healGroupVisible", name = "heals"}
+    }
+    
+    local config = groupConfigs[groupType]
+    if not config then return end
+    
+    -- Alternar visibilidade
+    if groupType == "charm" then
+        charmGroupVisible = not charmGroupVisible
+    elseif groupType == "tier" then
+        tierGroupVisible = not tierGroupVisible
+    elseif groupType == "heal" then
+        healGroupVisible = not healGroupVisible
+    end
+    
+    print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. 
+          (groupType == "charm" and charmGroupVisible or groupType == "tier" and tierGroupVisible or healGroupVisible) and "visível" or "oculto")
+    
+    updateAllHuds()
+end
+
 local function getTimeElapsedString(first)
     local timeDif = os.time() - first
     local minutes = math.floor(timeDif / 60)
@@ -655,34 +681,6 @@ local function processGroup(groupType, name, damage, patterns, iconConfig, data,
     foundCount = createOrUpdateHud(data, name, iconConfig.x, iconConfig.y, foundCount, hudText, groupType)
     
     return true, foundCount
-end
-
-
-
--- Função para alternar visibilidade de um grupo
-local function toggleGroupVisibility(groupType)
-    local groupConfigs = {
-        charm = {var = "charmGroupVisible", name = "charms"},
-        tier = {var = "tierGroupVisible", name = "tiers"},
-        heal = {var = "healGroupVisible", name = "heals"}
-    }
-    
-    local config = groupConfigs[groupType]
-    if not config then return end
-    
-    -- Alternar visibilidade
-    if groupType == "charm" then
-        charmGroupVisible = not charmGroupVisible
-    elseif groupType == "tier" then
-        tierGroupVisible = not tierGroupVisible
-    elseif groupType == "heal" then
-        healGroupVisible = not healGroupVisible
-    end
-    
-    print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. 
-          (groupType == "charm" and charmGroupVisible or groupType == "tier" and tierGroupVisible or healGroupVisible) and "visível" or "oculto")
-    
-    updateAllHuds()
 end
 
 -- Função para atualizar todos os HUDs existentes
