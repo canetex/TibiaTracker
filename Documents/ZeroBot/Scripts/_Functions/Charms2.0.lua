@@ -68,17 +68,11 @@ local VISIBILITY_ICON_OFFSET = 30  -- Distância do ícone principal
 
 -- Função geradora de configurações de visibilidade
 local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, danoMax, tempo)
-    print("[DEBUG] createVisibilityConfig - Parâmetros: ativacoes=" .. tostring(ativacoes) .. " previsao=" .. tostring(previsao) .. " danoMin=" .. tostring(danoMin) .. " danoMed=" .. tostring(danoMed) .. " danoMax=" .. tostring(danoMax) .. " tempo=" .. tostring(tempo))
-    
-    local config = {
+    return {
         tier = { tier = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
         charm = { charm = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
         heal = { heal = true, ativacoes = ativacoes, previsao = previsao, curaMinima = danoMin, curaMedia = danoMed, curaMaxima = danoMax, tempoDecorrido = tempo }
     }
-    
-    print("[DEBUG] createVisibilityConfig - Resultado charm: danoMinimo=" .. tostring(config.charm.danoMinimo) .. " danoMedio=" .. tostring(config.charm.danoMedio) .. " danoMaximo=" .. tostring(config.charm.danoMaximo) .. " tempoDecorrido=" .. tostring(config.charm.tempoDecorrido))
-    
-    return config
 end
 
 -- Configurações de visibilidade predefinidas
@@ -88,11 +82,6 @@ local VisibilityConfigs = {
     ATIVACOES = createVisibilityConfig(true, true, false, false, false, false)
 }
 
--- Debug: Verificar se as configurações foram criadas corretamente
-print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
-print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMedio: " .. tostring(VisibilityConfigs.TUDO.charm.danoMedio))
-print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.danoMaximo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo))
-print("[DEBUG] INICIALIZAÇÃO - TUDO.charm.tempoDecorrido: " .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
 
 -- Controla quais informações são exibidas no HUD quando disponiveis
 local VisibleInfo = VisibilityConfigs.TUDO
@@ -239,7 +228,6 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     local visibilityX = mainX + VISIBILITY_ICON_OFFSET
     local visibilityY = mainY
     
-    print("[DEBUG] manageVisibilityIcon: mainPos=" .. mainX .. "," .. mainY .. " visibilityPos=" .. visibilityX .. "," .. visibilityY)
     
     if not visibilityIcon then
         -- Criar novo ícone
@@ -279,12 +267,6 @@ local function createHudText(name, data, damage, timeElapsed, type)
     local config = VisibleInfo[type] or VisibleInfo.charm
     local parts = {}
     
-    -- Log concatenado para debug
-    local debugInfo = string.format("[DEBUG] createHudText - %s (%s) | %s:%s ativacoes:%s previsao:%s danoMin:%s danoMed:%s danoMax:%s tempo:%s", 
-        name, type, type, tostring(config[type]), tostring(config.ativacoes), tostring(config.previsao), 
-        tostring(config.danoMinimo), tostring(config.danoMedio), tostring(config.danoMaximo), tostring(config.tempoDecorrido))
-    print(debugInfo)
-    
     -- Nome do item
     if config[type] then
         table.insert(parts, "[" .. name .. "]")
@@ -316,9 +298,7 @@ local function createHudText(name, data, damage, timeElapsed, type)
         table.insert(parts, "TEMPO: " .. timeElapsed)
     end
     
-    local result = #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
-    print("[DEBUG] createHudText - resultado: " .. result)
-    return result
+    return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
 -- Função para atualizar todos os HUDs existentes
@@ -329,19 +309,11 @@ local function updateAllHuds()
         {data = heals, type = "heal", visible = healGroupVisible}
     }
     
-    print("[DEBUG] Atualizando HUDs - Configuração atual: " .. currentVisibilityConfig)
-    print("[DEBUG] Configuração original TUDO.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
-    print("[DEBUG] VisibleInfo.charm.ativacoes: " .. tostring(VisibleInfo.charm.ativacoes))
-    print("[DEBUG] VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
-    print("[DEBUG] VisibleInfo.charm.danoMedio: " .. tostring(VisibleInfo.charm.danoMedio))
-    print("[DEBUG] VisibleInfo.charm.danoMaximo: " .. tostring(VisibleInfo.charm.danoMaximo))
-    
     for _, group in ipairs(dataGroups) do
         for name, item in pairs(group.data) do
             if item.hud.text then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
-                print("[DEBUG] HUD Text para " .. name .. ": " .. hudText)
                 
                 if group.visible then
                     -- Se deve estar visível, atualizar texto
@@ -353,7 +325,6 @@ local function updateAllHuds()
                     if item.hud.text.delete then
                         item.hud.text:delete()
                         item.hud.text = nil
-                        print("[DEBUG] HUD " .. name .. " deletado (oculto)")
                     end
                 end
             elseif group.visible then
@@ -382,7 +353,6 @@ local function updateAllHuds()
                     end)
                 end
                 
-                print("[DEBUG] HUD " .. name .. " criado (visível)")
             end
         end
     end
@@ -419,7 +389,6 @@ end
 
 -- Função para alternar configurações de visibilidade
 local function cycleVisibilityConfig()
-    print("[DEBUG] cycleVisibilityConfig - FUNÇÃO CHAMADA!")
     local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
     local currentIndex = 1
     
@@ -436,11 +405,7 @@ local function cycleVisibilityConfig()
     currentVisibilityConfig = configs[nextIndex]
     
     -- Aplicar nova configuração (copiar valores, não referências)
-    local configDebug = string.format("[DEBUG] cycleVisibilityConfig - Aplicando: %s | TUDO.danoMin:%s | %s.danoMin:%s danoMed:%s danoMax:%s tempo:%s", 
-        currentVisibilityConfig, tostring(VisibilityConfigs.TUDO.charm.danoMinimo), currentVisibilityConfig,
-        tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo), tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio),
-        tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo), tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
-    print(configDebug)
+    print("[DEBUG] Aplicando " .. currentVisibilityConfig .. " - danoMin:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
     
     VisibleInfo.tier = {
         tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
@@ -469,8 +434,6 @@ local function cycleVisibilityConfig()
         curaMaxima = VisibilityConfigs[currentVisibilityConfig].heal.curaMaxima,
         tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].heal.tempoDecorrido
     }
-    
-    print("[DEBUG] cycleVisibilityConfig - Após aplicar - VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
     
     -- Atualizar todos os HUDs existentes
     updateAllHuds()
