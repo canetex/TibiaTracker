@@ -670,16 +670,32 @@ local function handleIconDrag(iconType, icon, lastPos, iconX, iconY, visibilityI
         lastPos = currentIconPos
         local index = 0
         for _, item in pairs(data) do
-            setPos(item.hud.text, currentIconPos.x - 35, currentIconPos.y + 40 + (15 * index))
+            if item.hud.text and item.hud.text.setPos then
+                setPos(item.hud.text, currentIconPos.x - 35, currentIconPos.y + 40 + (15 * index))
+            end
             index = index + 1
         end
 
-        saveIconPosition(filename, currentIconPos, "ICON_" .. iconType)
-        iconX = currentIconPos.x
-        iconY = currentIconPos.y
+        -- Salvar posição no arquivo principal (não no _Functions)
+        local mainFilename = "Charms2.0.lua"
+        saveIconPosition(mainFilename, currentIconPos, "ICON_" .. iconType)
+        
+        -- Atualizar variáveis globais de posição
+        if iconType == "CHARM" then
+            ICON_CHARM_X_POSITION = currentIconPos.x
+            ICON_CHARM_Y_POSITION = currentIconPos.y
+        elseif iconType == "TIER" then
+            ICON_TIER_X_POSITION = currentIconPos.x
+            ICON_TIER_Y_POSITION = currentIconPos.y
+        elseif iconType == "HEAL" then
+            ICON_HEAL_X_POSITION = currentIconPos.x
+            ICON_HEAL_Y_POSITION = currentIconPos.y
+        end
         
         -- Reposicionar ícone de visibilidade
         manageVisibilityIcon(icon, nil, visibilityIcon)
+        
+        print("[DEBUG] Posição do ícone " .. iconType .. " salva: " .. currentIconPos.x .. ", " .. currentIconPos.y)
     end
 end
 
