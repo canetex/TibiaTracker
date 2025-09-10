@@ -884,8 +884,12 @@ local function saveIconPosition(name, value, which)
     if not name or not value or not which then return false end
     
     local path = Engine.getScriptsDirectory() .. "/" .. name
+    print("[DEBUG] Salvando posição - Arquivo: " .. path .. " | Posição: " .. value.x .. "," .. value.y .. " | Tipo: " .. which)
     local file = openFile(path, "r")
-    if not file then return false end
+    if not file then 
+        print("[DEBUG] ERRO: Não foi possível abrir arquivo para leitura: " .. path)
+        return false 
+    end
     
     local content = file:read("*all")
     file:close()
@@ -913,10 +917,14 @@ local function saveIconPosition(name, value, which)
     newContent = newContent:gsub('local currentVisibilityConfig = "[^"]*"', 'local currentVisibilityConfig = "' .. currentVisibilityConfig .. '"')
     
     file = openFile(path, "w")
-    if not file then return false end
+    if not file then 
+        print("[DEBUG] ERRO: Não foi possível abrir arquivo para escrita: " .. path)
+        return false 
+    end
 
     local success = file:write(newContent)
     file:close()
+    print("[DEBUG] Salvamento " .. (success and "SUCESSO" or "FALHOU") .. " - Arquivo: " .. path)
     return success
 end
 
@@ -1192,6 +1200,7 @@ local lastSavedPositions = {
 
 -- Função para salvar posições com delay (só se a posição mudou)
 local function scheduleSave(iconType, currentPos)
+    print("[DEBUG] scheduleSave chamada - Tipo: " .. iconType .. " | Posição: " .. currentPos.x .. "," .. currentPos.y)
     if saveTimer then
         saveTimer:stop()
     end
@@ -1199,6 +1208,7 @@ local function scheduleSave(iconType, currentPos)
     saveTimer = Timer.new("delayed-save", function()
         -- Só salva se a posição realmente mudou
         local lastPos = lastSavedPositions[iconType:lower()]
+        print("[DEBUG] Verificando mudança - Última: " .. (lastPos and (lastPos.x .. "," .. lastPos.y) or "nil") .. " | Atual: " .. currentPos.x .. "," .. currentPos.y)
         if currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y then
             local mainFilename = "Charms2.0.lua"
             saveIconPosition(mainFilename, currentPos, "ICON_" .. iconType)
