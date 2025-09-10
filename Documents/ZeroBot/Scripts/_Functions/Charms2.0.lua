@@ -1148,6 +1148,15 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
             local newY = currentPos.y + 40 + (15 * index)
             print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
             setPos(item.hud.text, newX, newY)
+            
+            -- Garantir que o HUD permaneça visível após reposicionamento
+            if item.hud.text.setVisible then
+                local groupVisible = (iconType == "CHARM" and charmGroupVisible) or 
+                                   (iconType == "TIER" and tierGroupVisible) or 
+                                   (iconType == "HEAL" and healGroupVisible)
+                item.hud.text:setVisible(groupVisible)
+                print("[DEBUG] " .. iconType .. " - HUD " .. name .. " visibilidade: " .. tostring(groupVisible))
+            end
         end
         index = index + 1
     end
