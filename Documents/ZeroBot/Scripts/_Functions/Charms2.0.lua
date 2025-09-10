@@ -406,16 +406,16 @@ local function updateAllHuds()
                 if group.visible then
                     -- Se deve estar visível, atualizar texto
                     print("[DEBUG] Atualizando texto do HUD " .. name)
-                    if item.hud.text.setText then
+                    if item.hud.text and item.hud.text.setText then
                         item.hud.text:setText(hudText)
                     end
                 else
                     -- Se deve estar oculto, deletar o HUD
                     print("[DEBUG] Deletando HUD " .. name)
-                    if item.hud.text.delete then
+                    if item.hud.text and item.hud.text.delete then
                         item.hud.text:delete()
-                        item.hud.text = nil
                     end
+                    item.hud.text = nil
                 end
             elseif group.visible then
                 -- Se deve estar visível mas não tem HUD, criar um novo
