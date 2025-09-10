@@ -52,12 +52,12 @@ local ICON_CHARM_X_POSITION = 827
 local ICON_CHARM_Y_POSITION = 967
 local ICON_CHARM_ID = 36726
 
-local ICON_TIER_X_POSITION = 433
-local ICON_TIER_Y_POSITION = 846
+local ICON_TIER_X_POSITION = 445
+local ICON_TIER_Y_POSITION = 451
 local ICON_TIER_ID = 30278
 
-local ICON_HEAL_X_POSITION = 399
-local ICON_HEAL_Y_POSITION = 967
+local ICON_HEAL_X_POSITION = 424
+local ICON_HEAL_Y_POSITION = 835
 -- local ICON_HEAL_ID = 11604
 local ICON_HEAL_ID = 19077
 
@@ -884,12 +884,8 @@ local function saveIconPosition(name, value, which)
     if not name or not value or not which then return false end
     
     local path = Engine.getScriptsDirectory() .. "/" .. name
-    print("[DEBUG] Salvando posição - Arquivo: " .. path .. " | Posição: " .. value.x .. "," .. value.y .. " | Tipo: " .. which)
     local file = openFile(path, "r")
-    if not file then 
-        print("[DEBUG] ERRO: Não foi possível abrir arquivo para leitura: " .. path)
-        return false 
-    end
+    if not file then return false end
     
     local content = file:read("*all")
     file:close()
@@ -907,24 +903,20 @@ local function saveIconPosition(name, value, which)
         newContent = newContent:gsub("local charmGroupVisible = false", "local charmGroupVisible = " .. tostring(charmGroupVisible))
     elseif which == "ICON_TIER" then
         newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
-        newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
+        newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
     elseif which == "ICON_HEAL" then
         newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
-        newContent = newContent:gsub("local healGroupVisible = false", "local healGroupVisible = " .. tostring(healGroupVisible))
+        newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
     end
     
     -- Salvar configuração de visibilidade atual
-    newContent = newContent:gsub('local currentVisibilityConfig = "[^"]*"', 'local currentVisibilityConfig = "' .. currentVisibilityConfig .. '"')
+    newContent = newContent:gsub('local currentVisibilityConfig = "TUDO"]*"', 'local currentVisibilityConfig = "TUDO"')
     
     file = openFile(path, "w")
-    if not file then 
-        print("[DEBUG] ERRO: Não foi possível abrir arquivo para escrita: " .. path)
-        return false 
-    end
+    if not file then return false end
 
     local success = file:write(newContent)
     file:close()
-    print("[DEBUG] Salvamento " .. (success and "SUCESSO" or "FALHOU") .. " - Arquivo: " .. path)
     return success
 end
 
@@ -1200,7 +1192,6 @@ local lastSavedPositions = {
 
 -- Função para salvar posições com delay (só se a posição mudou)
 local function scheduleSave(iconType, currentPos)
-    print("[DEBUG] scheduleSave chamada - Tipo: " .. iconType .. " | Posição: " .. currentPos.x .. "," .. currentPos.y)
     if saveTimer then
         saveTimer:stop()
     end
@@ -1208,7 +1199,6 @@ local function scheduleSave(iconType, currentPos)
     saveTimer = Timer.new("delayed-save", function()
         -- Só salva se a posição realmente mudou
         local lastPos = lastSavedPositions[iconType:lower()]
-        print("[DEBUG] Verificando mudança - Última: " .. (lastPos and (lastPos.x .. "," .. lastPos.y) or "nil") .. " | Atual: " .. currentPos.x .. "," .. currentPos.y)
         if currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y then
             local mainFilename = "_Functions/Charms2.0.lua"
             saveIconPosition(mainFilename, currentPos, "ICON_" .. iconType)
