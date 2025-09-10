@@ -175,8 +175,10 @@ local VisibleInfo = {
     }
 }
 
--- Estado atual das configurações de visibilidade
-local currentVisibilityConfig = "TUDO"
+-- Estado atual das configurações de visibilidade por grupo
+local charmVisibilityConfig = "TUDO"
+local tierVisibilityConfig = "TUDO"
+local healVisibilityConfig = "TUDO"
 
 -- ================================================================
 -- SISTEMA DE DEBUG E LOGGING
@@ -482,6 +484,32 @@ local function updateHudTexts()
     end
 end
 
+-- Função para atualizar apenas o texto dos HUDs de um grupo específico
+local function updateGroupHudTexts(groupType)
+    local data = nil
+    if groupType == "charm" then
+        data = charms
+    elseif groupType == "tier" then
+        data = tiers
+    elseif groupType == "heal" then
+        data = heals
+    else
+        return -- Grupo inválido
+    end
+    
+    for name, item in pairs(data) do
+        if item.hud.text then
+            local timeElapsed = getTimeElapsedString(item.first)
+            local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, groupType)
+            
+            -- Apenas atualizar o texto, sem afetar visibilidade
+            if item.hud.text.setText then
+                item.hud.text:setText(hudText)
+            end
+        end
+    end
+end
+
 -- Função para alternar visibilidade de um grupo
 local function toggleGroupVisibility(groupType)
     local groupConfigs = {
@@ -511,14 +539,26 @@ local function toggleGroupVisibility(groupType)
 end
 
 
--- Função para alternar configurações de visibilidade
-local function cycleVisibilityConfig()
+-- Função para alternar configurações de visibilidade por grupo
+local function cycleVisibilityConfig(groupType)
     local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
+    local currentConfig = ""
     local currentIndex = 1
+    
+    -- Obter configuração atual do grupo
+    if groupType == "charm" then
+        currentConfig = charmVisibilityConfig
+    elseif groupType == "tier" then
+        currentConfig = tierVisibilityConfig
+    elseif groupType == "heal" then
+        currentConfig = healVisibilityConfig
+    else
+        return -- Grupo inválido
+    end
     
     -- Encontrar índice atual
     for i, config in ipairs(configs) do
-        if config == currentVisibilityConfig then
+        if config == currentConfig then
             currentIndex = i
             break
         end
@@ -526,42 +566,56 @@ local function cycleVisibilityConfig()
     
     -- Próxima configuração (ciclo)
     local nextIndex = (currentIndex % #configs) + 1
-    currentVisibilityConfig = configs[nextIndex]
+    local newConfig = configs[nextIndex]
     
-    -- Aplicar nova configuração (copiar valores, não referências)
-    local sourceConfig = VisibilityConfigs[currentVisibilityConfig]
-    VisibleInfo.tier = {
-        tier = sourceConfig.tier.tier,
-        ativacoes = sourceConfig.tier.ativacoes,
-        previsao = sourceConfig.tier.previsao,
-        danoMinimo = sourceConfig.tier.danoMinimo,
-        danoMedio = sourceConfig.tier.danoMedio,
-        danoMaximo = sourceConfig.tier.danoMaximo,
-        tempoDecorrido = sourceConfig.tier.tempoDecorrido
-    }
-    VisibleInfo.charm = {
-        charm = sourceConfig.charm.charm,
-        ativacoes = sourceConfig.charm.ativacoes,
-        previsao = sourceConfig.charm.previsao,
-        danoMinimo = sourceConfig.charm.danoMinimo,
-        danoMedio = sourceConfig.charm.danoMedio,
-        danoMaximo = sourceConfig.charm.danoMaximo,
-        tempoDecorrido = sourceConfig.charm.tempoDecorrido
-    }
-    VisibleInfo.heal = {
-        heal = sourceConfig.heal.heal,
-        ativacoes = sourceConfig.heal.ativacoes,
-        previsao = sourceConfig.heal.previsao,
-        curaMinima = sourceConfig.heal.curaMinima,
-        curaMedia = sourceConfig.heal.curaMedia,
-        curaMaxima = sourceConfig.heal.curaMaxima,
-        tempoDecorrido = sourceConfig.heal.tempoDecorrido
-    }
+    -- Atualizar configuração do grupo específico
+    if groupType == "charm" then
+        charmVisibilityConfig = newConfig
+    elseif groupType == "tier" then
+        tierVisibilityConfig = newConfig
+    elseif groupType == "heal" then
+        healVisibilityConfig = newConfig
+    end
     
-    print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
+    -- Aplicar nova configuração apenas para o grupo específico
+    local sourceConfig = VisibilityConfigs[newConfig]
     
-    -- Atualizar apenas o texto dos HUDs existentes (sem afetar visibilidade)
-    updateHudTexts()
+    if groupType == "charm" then
+        VisibleInfo.charm = {
+            charm = sourceConfig.charm.charm,
+            ativacoes = sourceConfig.charm.ativacoes,
+            previsao = sourceConfig.charm.previsao,
+            danoMinimo = sourceConfig.charm.danoMinimo,
+            danoMedio = sourceConfig.charm.danoMedio,
+            danoMaximo = sourceConfig.charm.danoMaximo,
+            tempoDecorrido = sourceConfig.charm.tempoDecorrido
+        }
+    elseif groupType == "tier" then
+        VisibleInfo.tier = {
+            tier = sourceConfig.tier.tier,
+            ativacoes = sourceConfig.tier.ativacoes,
+            previsao = sourceConfig.tier.previsao,
+            danoMinimo = sourceConfig.tier.danoMinimo,
+            danoMedio = sourceConfig.tier.danoMedio,
+            danoMaximo = sourceConfig.tier.danoMaximo,
+            tempoDecorrido = sourceConfig.tier.tempoDecorrido
+        }
+    elseif groupType == "heal" then
+        VisibleInfo.heal = {
+            heal = sourceConfig.heal.heal,
+            ativacoes = sourceConfig.heal.ativacoes,
+            previsao = sourceConfig.heal.previsao,
+            curaMinima = sourceConfig.heal.curaMinima,
+            curaMedia = sourceConfig.heal.curaMedia,
+            curaMaxima = sourceConfig.heal.curaMaxima,
+            tempoDecorrido = sourceConfig.heal.tempoDecorrido
+        }
+    end
+    
+    print("[" .. groupType:upper() .. "] Configuração alterada para: " .. newConfig)
+    
+    -- Atualizar apenas o texto dos HUDs do grupo específico
+    updateGroupHudTexts(groupType)
 end
 
 -- Função genérica para criar ícone principal e de visibilidade
@@ -572,7 +626,7 @@ local function createMainIcon(x, y, id, groupType)
     
     -- Callback para alternar configurações de visibilidade
     mainIcon:setCallback(function()
-        cycleVisibilityConfig()
+        cycleVisibilityConfig(groupType)
     end)
     
     -- Criar ícone de visibilidade
