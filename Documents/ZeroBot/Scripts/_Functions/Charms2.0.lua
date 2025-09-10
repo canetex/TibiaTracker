@@ -410,6 +410,7 @@ end
 
 -- Função para alternar configurações de visibilidade
 local function cycleVisibilityConfig()
+    print("[DEBUG] cycleVisibilityConfig - FUNÇÃO CHAMADA!")
     local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
     local currentIndex = 1
     
