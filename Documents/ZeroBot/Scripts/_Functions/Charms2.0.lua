@@ -385,6 +385,13 @@ local function createHudText(name, data, damage, timeElapsed, type)
     return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
+local function createHud(x, y, text)
+    local hud = HUD.new(x, y, text, true)
+    hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
+    hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
+    return hud
+end
+
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
     print("[DEBUG] updateAllHuds iniciada - charm:" .. tostring(charmGroupVisible) .. " tier:" .. tostring(tierGroupVisible) .. " heal:" .. tostring(healGroupVisible))
@@ -766,12 +773,6 @@ local function updateGlobalCooldown(type, name, cooldownData)
     end
 end
 
-local function createHud(x, y, text)
-    local hud = HUD.new(x, y, text, true)
-    hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
-    hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
-    return hud
-end
 
 -- Função genérica para zerar contador específico
 local function resetCounter(type, name)
