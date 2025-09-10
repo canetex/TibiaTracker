@@ -411,32 +411,34 @@ local function cycleVisibilityConfig()
     print("[DEBUG] Aplicando " .. currentVisibilityConfig .. " - danoMin:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
     print("[DEBUG] Verificando TUDO diretamente - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs.TUDO.charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
     
+    -- Copiar valores, não referências (usar createVisibilityConfig para garantir cópia limpa)
+    local sourceConfig = VisibilityConfigs[currentVisibilityConfig]
     VisibleInfo.tier = {
-        tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
-        ativacoes = VisibilityConfigs[currentVisibilityConfig].tier.ativacoes,
-        previsao = VisibilityConfigs[currentVisibilityConfig].tier.previsao,
-        danoMinimo = VisibilityConfigs[currentVisibilityConfig].tier.danoMinimo,
-        danoMedio = VisibilityConfigs[currentVisibilityConfig].tier.danoMedio,
-        danoMaximo = VisibilityConfigs[currentVisibilityConfig].tier.danoMaximo,
-        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].tier.tempoDecorrido
+        tier = sourceConfig.tier.tier,
+        ativacoes = sourceConfig.tier.ativacoes,
+        previsao = sourceConfig.tier.previsao,
+        danoMinimo = sourceConfig.tier.danoMinimo,
+        danoMedio = sourceConfig.tier.danoMedio,
+        danoMaximo = sourceConfig.tier.danoMaximo,
+        tempoDecorrido = sourceConfig.tier.tempoDecorrido
     }
     VisibleInfo.charm = {
-        charm = VisibilityConfigs[currentVisibilityConfig].charm.charm,
-        ativacoes = VisibilityConfigs[currentVisibilityConfig].charm.ativacoes,
-        previsao = VisibilityConfigs[currentVisibilityConfig].charm.previsao,
-        danoMinimo = VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo,
-        danoMedio = VisibilityConfigs[currentVisibilityConfig].charm.danoMedio,
-        danoMaximo = VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo,
-        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido
+        charm = sourceConfig.charm.charm,
+        ativacoes = sourceConfig.charm.ativacoes,
+        previsao = sourceConfig.charm.previsao,
+        danoMinimo = sourceConfig.charm.danoMinimo,
+        danoMedio = sourceConfig.charm.danoMedio,
+        danoMaximo = sourceConfig.charm.danoMaximo,
+        tempoDecorrido = sourceConfig.charm.tempoDecorrido
     }
     VisibleInfo.heal = {
-        heal = VisibilityConfigs[currentVisibilityConfig].heal.heal,
-        ativacoes = VisibilityConfigs[currentVisibilityConfig].heal.ativacoes,
-        previsao = VisibilityConfigs[currentVisibilityConfig].heal.previsao,
-        curaMinima = VisibilityConfigs[currentVisibilityConfig].heal.curaMinima,
-        curaMedia = VisibilityConfigs[currentVisibilityConfig].heal.curaMedia,
-        curaMaxima = VisibilityConfigs[currentVisibilityConfig].heal.curaMaxima,
-        tempoDecorrido = VisibilityConfigs[currentVisibilityConfig].heal.tempoDecorrido
+        heal = sourceConfig.heal.heal,
+        ativacoes = sourceConfig.heal.ativacoes,
+        previsao = sourceConfig.heal.previsao,
+        curaMinima = sourceConfig.heal.curaMinima,
+        curaMedia = sourceConfig.heal.curaMedia,
+        curaMaxima = sourceConfig.heal.curaMaxima,
+        tempoDecorrido = sourceConfig.heal.tempoDecorrido
     }
     
     -- Atualizar todos os HUDs existentes
