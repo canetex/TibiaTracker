@@ -357,34 +357,6 @@ local function createHudText(name, data, damage, timeElapsed, type)
     return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
 end
 
--- Função para atualizar todos os HUDs existentes
-local function updateAllHuds()
-    local dataGroups = {
-        {data = charms, type = "charm", visible = charmGroupVisible},
-        {data = tiers, type = "tier", visible = tierGroupVisible},
-        {data = heals, type = "heal", visible = healGroupVisible}
-    }
-    
-    print("[DEBUG] Atualizando HUDs - Configuração atual: " .. currentVisibilityConfig)
-    print("[DEBUG] Configuração original TUDO.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
-    print("[DEBUG] VisibleInfo.charm.ativacoes: " .. tostring(VisibleInfo.charm.ativacoes))
-    print("[DEBUG] VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
-    print("[DEBUG] VisibleInfo.charm.danoMedio: " .. tostring(VisibleInfo.charm.danoMedio))
-    print("[DEBUG] VisibleInfo.charm.danoMaximo: " .. tostring(VisibleInfo.charm.danoMaximo))
-    
-    for _, group in ipairs(dataGroups) do
-        for name, item in pairs(group.data) do
-            if item.hud.text and item.hud.text.setText and item.hud.text.setVisible then
-                local timeElapsed = getTimeElapsedString(item.first)
-                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
-                print("[DEBUG] HUD Text para " .. name .. ": " .. hudText)
-                item.hud.text:setText(hudText)
-                item.hud.text:setVisible(group.visible)
-            end
-        end
-    end
-end
-
 -- Função para alternar configurações de visibilidade
 local function cycleVisibilityConfig()
     local configs = {"TUDO", "DAMAGE", "ATIVACOES"}
