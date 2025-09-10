@@ -68,11 +68,17 @@ local VISIBILITY_ICON_OFFSET = 30  -- Distância do ícone principal
 
 -- Função geradora de configurações de visibilidade
 local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, danoMax, tempo)
-    return {
+    print("[DEBUG] createVisibilityConfig - Parâmetros: ativacoes=" .. tostring(ativacoes) .. " previsao=" .. tostring(previsao) .. " danoMin=" .. tostring(danoMin) .. " danoMed=" .. tostring(danoMed) .. " danoMax=" .. tostring(danoMax) .. " tempo=" .. tostring(tempo))
+    
+    local config = {
         tier = { tier = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
         charm = { charm = true, ativacoes = ativacoes, previsao = previsao, danoMinimo = danoMin, danoMedio = danoMed, danoMaximo = danoMax, tempoDecorrido = tempo },
         heal = { heal = true, ativacoes = ativacoes, previsao = previsao, curaMinima = danoMin, curaMedia = danoMed, curaMaxima = danoMax, tempoDecorrido = tempo }
     }
+    
+    print("[DEBUG] createVisibilityConfig - Resultado charm: danoMinimo=" .. tostring(config.charm.danoMinimo) .. " danoMedio=" .. tostring(config.charm.danoMedio) .. " danoMaximo=" .. tostring(config.charm.danoMaximo) .. " tempoDecorrido=" .. tostring(config.charm.tempoDecorrido))
+    
+    return config
 end
 
 -- Configurações de visibilidade predefinidas
