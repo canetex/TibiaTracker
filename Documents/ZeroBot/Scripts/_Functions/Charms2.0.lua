@@ -409,6 +409,7 @@ local function cycleVisibilityConfig()
     
     -- Aplicar nova configuração (copiar valores, não referências)
     print("[DEBUG] Aplicando " .. currentVisibilityConfig .. " - danoMin:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs[currentVisibilityConfig].charm.tempoDecorrido))
+    print("[DEBUG] Verificando TUDO diretamente - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs.TUDO.charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
     
     VisibleInfo.tier = {
         tier = VisibilityConfigs[currentVisibilityConfig].tier.tier,
