@@ -212,6 +212,18 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     
     local mainPos = mainIcon:getPos()
     local mainX, mainY = mainPos.x, mainPos.y
+    
+    -- Se a posição for 0,0, usar as posições das variáveis globais
+    if mainX == 0 and mainY == 0 then
+        if groupType == "charm" then
+            mainX, mainY = ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION
+        elseif groupType == "tier" then
+            mainX, mainY = ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION
+        elseif groupType == "heal" then
+            mainX, mainY = ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION
+        end
+    end
+    
     local visibilityX = mainX + VISIBILITY_ICON_OFFSET
     local visibilityY = mainY
     
@@ -236,6 +248,34 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     end
     
     return visibilityIcon
+end
+
+-- Função para atualizar todos os HUDs existentes
+local function updateAllHuds()
+    local dataGroups = {
+        {data = charms, type = "charm", visible = charmGroupVisible},
+        {data = tiers, type = "tier", visible = tierGroupVisible},
+        {data = heals, type = "heal", visible = healGroupVisible}
+    }
+    
+    print("[DEBUG] Atualizando HUDs - Configuração atual: " .. currentVisibilityConfig)
+    print("[DEBUG] Configuração original TUDO.danoMinimo: " .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo))
+    print("[DEBUG] VisibleInfo.charm.ativacoes: " .. tostring(VisibleInfo.charm.ativacoes))
+    print("[DEBUG] VisibleInfo.charm.danoMinimo: " .. tostring(VisibleInfo.charm.danoMinimo))
+    print("[DEBUG] VisibleInfo.charm.danoMedio: " .. tostring(VisibleInfo.charm.danoMedio))
+    print("[DEBUG] VisibleInfo.charm.danoMaximo: " .. tostring(VisibleInfo.charm.danoMaximo))
+    
+    for _, group in ipairs(dataGroups) do
+        for name, item in pairs(group.data) do
+            if item.hud.text and item.hud.text.setText and item.hud.text.setVisible then
+                local timeElapsed = getTimeElapsedString(item.first)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                print("[DEBUG] HUD Text para " .. name .. ": " .. hudText)
+                item.hud.text:setText(hudText)
+                item.hud.text:setVisible(group.visible)
+            end
+        end
+    end
 end
 
 -- Função para alternar visibilidade de um grupo
@@ -699,8 +739,6 @@ local function processGroup(groupType, name, damage, patterns, iconConfig, data,
     
     return true, foundCount
 end
-
--- Função para atualizar todos os HUDs existentes
 
 -- ================================================================
 -- FUNÇÕES AUXILIARES E UTILITÁRIAS
