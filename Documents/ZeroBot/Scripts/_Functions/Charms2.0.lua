@@ -400,7 +400,6 @@ end
 
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
-    print("[DEBUG] updateAllHuds - Configurações: charm=" .. charmVisibilityConfig .. " tier=" .. tierVisibilityConfig .. " heal=" .. healVisibilityConfig)
     local dataGroups = {
         {data = charms, type = "charm", visible = charmGroupVisible},
         {data = tiers, type = "tier", visible = tierGroupVisible},
@@ -412,7 +411,6 @@ local function updateAllHuds()
             if item.hud.text then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
-                print("[DEBUG] HUD " .. name .. " - Texto: " .. hudText)
                 
                 if group.visible then
                     -- Se deve estar visível, mostrar e atualizar texto
@@ -1109,23 +1107,23 @@ end
 
 -- Padrões consolidados para detectar mensagens de heal (case insensitive, 's' facultativo, texto antes/depois facultativo)
 local healPatterns = {
-    -- Self heal
-    {pattern = ".*[Yy]ou heal?ed? yourself for (%d+) hitpoints?.*", type = "Self"},
+    -- Charm heal (deve vir primeiro para não conflitar com outros)
+    {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?%. %(([^)]+) charm%).*", type = "Charm"},
+    {pattern = ".*[Yy]ou gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%).*", type = "Charm"},
+    
+    -- Player heal - From (você recebe cura de outro player) - deve vir antes de Imbuiments
+    {pattern = ".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*", type = "PlayerFrom"},
     
     -- Player heal - To (você cura alguém)
     {pattern = ".*[Yy]ou heal ([^%s]+) for (%d+) hitpoints?.*", type = "PlayerTo"},
     
-    -- Player heal - From (você recebe cura)
-    {pattern = ".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*", type = "PlayerFrom"},
+    -- Self heal
+    {pattern = ".*[Yy]ou heal?ed? yourself for (%d+) hitpoints?.*", type = "Self"},
     
-    -- Imbuiments heal
+    -- Imbuiments heal (deve vir por último para não conflitar)
     {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?.*", type = "Imbuiments"},
     {pattern = ".*[Yy]ou gain?ed? (%d+) (hitpoints?|mana).*", type = "Imbuiments"},
-    {pattern = ".*[Yy]ou recover (%d+) hitpoints?.*", type = "Imbuiments"},
-    
-    -- Charm heal
-    {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?%. %(([^)]+) charm%).*", type = "Charm"},
-    {pattern = ".*[Yy]ou gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%).*", type = "Charm"}
+    {pattern = ".*[Yy]ou recover (%d+) hitpoints?.*", type = "Imbuiments"}
 }
 
 local function findHealsProc(text)
