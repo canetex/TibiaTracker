@@ -400,7 +400,7 @@ end
 
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
-    print("[DEBUG] updateAllHuds - Configuração atual: " .. currentVisibilityConfig)
+    print("[DEBUG] updateAllHuds - Configurações: charm=" .. charmVisibilityConfig .. " tier=" .. tierVisibilityConfig .. " heal=" .. healVisibilityConfig)
     local dataGroups = {
         {data = charms, type = "charm", visible = charmGroupVisible},
         {data = tiers, type = "tier", visible = tierGroupVisible},
