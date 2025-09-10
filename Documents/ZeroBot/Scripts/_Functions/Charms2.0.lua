@@ -82,6 +82,9 @@ local VisibilityConfigs = {
     ATIVACOES = createVisibilityConfig(true, true, false, false, false, false)
 }
 
+-- Debug temporário: verificar se TUDO foi criado corretamente
+print("[DEBUG] TUDO criado - danoMin:" .. tostring(VisibilityConfigs.TUDO.charm.danoMinimo) .. " danoMed:" .. tostring(VisibilityConfigs.TUDO.charm.danoMedio) .. " danoMax:" .. tostring(VisibilityConfigs.TUDO.charm.danoMaximo) .. " tempo:" .. tostring(VisibilityConfigs.TUDO.charm.tempoDecorrido))
+
 
 -- Controla quais informações são exibidas no HUD quando disponiveis
 local VisibleInfo = VisibilityConfigs.TUDO
