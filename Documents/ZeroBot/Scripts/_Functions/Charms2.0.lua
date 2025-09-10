@@ -267,12 +267,51 @@ local function updateAllHuds()
     
     for _, group in ipairs(dataGroups) do
         for name, item in pairs(group.data) do
-            if item.hud.text and item.hud.text.setText and item.hud.text.setVisible then
+            if item.hud.text then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 print("[DEBUG] HUD Text para " .. name .. ": " .. hudText)
-                item.hud.text:setText(hudText)
-                item.hud.text:setVisible(group.visible)
+                
+                if group.visible then
+                    -- Se deve estar visível, atualizar texto
+                    if item.hud.text.setText then
+                        item.hud.text:setText(hudText)
+                    end
+                else
+                    -- Se deve estar oculto, deletar o HUD
+                    if item.hud.text.delete then
+                        item.hud.text:delete()
+                        item.hud.text = nil
+                        print("[DEBUG] HUD " .. name .. " deletado (oculto)")
+                    end
+                end
+            elseif group.visible then
+                -- Se deve estar visível mas não tem HUD, criar um novo
+                local timeElapsed = getTimeElapsedString(item.first)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                
+                -- Determinar posição baseada no tipo
+                local iconX, iconY = 0, 0
+                if group.type == "charm" then
+                    iconX, iconY = ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION
+                elseif group.type == "tier" then
+                    iconX, iconY = ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION
+                elseif group.type == "heal" then
+                    iconX, iconY = ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION
+                end
+                
+                local x = iconX - 35
+                local y = iconY + 40 + (15 * #group.data)
+                item.hud.text = createHud(x, y, hudText)
+                
+                -- Adicionar callback para zerar contador
+                if item.hud.text and item.hud.text.setCallback then
+                    item.hud.text:setCallback(function()
+                        resetCounter(group.type, name)
+                    end)
+                end
+                
+                print("[DEBUG] HUD " .. name .. " criado (visível)")
             end
         end
     end
@@ -625,7 +664,6 @@ local function createHud(x, y, text)
     local hud = HUD.new(x, y, text, true)
     hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
     hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
-    hud:setVisible(true)  -- Garantir que o HUD seja visível por padrão
     return hud
 end
 
@@ -1124,20 +1162,9 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
             print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
             setPos(item.hud.text, newX, newY)
             
-            -- Garantir que o HUD permaneça visível após reposicionamento
-            if item.hud.text.setVisible then
-                local groupVisible = (iconType == "CHARM" and charmGroupVisible) or 
-                                   (iconType == "TIER" and tierGroupVisible) or 
-                                   (iconType == "HEAL" and healGroupVisible)
-                item.hud.text:setVisible(groupVisible)
-                print("[DEBUG] " .. iconType .. " - HUD " .. name .. " visibilidade: " .. tostring(groupVisible))
-                
-                -- Verificar se o HUD realmente está visível após setVisible
-                local actualPos = item.hud.text:getPos()
-                print("[DEBUG] " .. iconType .. " - HUD " .. name .. " posição real: " .. actualPos.x .. ", " .. actualPos.y)
-            else
-                print("[DEBUG] " .. iconType .. " - ERRO: HUD " .. name .. " não tem setVisible")
-            end
+            -- Verificar se o HUD realmente está visível após setVisible
+            local actualPos = item.hud.text:getPos()
+            print("[DEBUG] " .. iconType .. " - HUD " .. name .. " posição real: " .. actualPos.x .. ", " .. actualPos.y)
         else
             print("[DEBUG] " .. iconType .. " - ERRO: HUD " .. name .. " não tem text ou setPos")
         end
