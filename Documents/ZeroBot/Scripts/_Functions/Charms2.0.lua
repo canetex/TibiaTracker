@@ -246,8 +246,10 @@ local function toggleGroupVisibility(groupType)
         healGroupVisible = not healGroupVisible
     end
     
-    print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. 
-          (groupType == "charm" and charmGroupVisible or groupType == "tier" and tierGroupVisible or healGroupVisible) and "visível" or "oculto")
+    local isVisible = (groupType == "charm" and charmGroupVisible) or 
+                     (groupType == "tier" and tierGroupVisible) or 
+                     (groupType == "heal" and healGroupVisible)
+    print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. (isVisible and "visível" or "oculto"))
     
     updateAllHuds()
 end
@@ -1098,7 +1100,9 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
     end
     
     -- Reposicionar ícone de visibilidade
-    manageVisibilityIcon(iconType == "CHARM" and charmIcon or iconType == "TIER" and tierIcon or healIcon, nil, visibilityIcon)
+    if visibilityIcon then
+        manageVisibilityIcon(iconType == "CHARM" and charmIcon or iconType == "TIER" and tierIcon or healIcon, nil, visibilityIcon)
+    end
 end
 
 -- Sistema de eventos para drag
