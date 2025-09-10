@@ -625,6 +625,7 @@ local function createHud(x, y, text)
     local hud = HUD.new(x, y, text, true)
     hud:setColor(TEXT_COLOR.R, TEXT_COLOR.G, TEXT_COLOR.B)
     hud:setHorizontalAlignment(Enums.HorizontalAlign.Left)
+    hud:setVisible(true)  -- Garantir que o HUD seja visível por padrão
     return hud
 end
 
@@ -1113,6 +1114,8 @@ end
 -- Função para reposicionar HUDs quando ícone é arrastado
 local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
     print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
+    print("[DEBUG] " .. iconType .. " - Estados de visibilidade: charm=" .. tostring(charmGroupVisible) .. " tier=" .. tostring(tierGroupVisible) .. " heal=" .. tostring(healGroupVisible))
+    
     local index = 0
     for name, item in pairs(data) do
         if item.hud.text and item.hud.text.setPos then
@@ -1128,7 +1131,15 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
                                    (iconType == "HEAL" and healGroupVisible)
                 item.hud.text:setVisible(groupVisible)
                 print("[DEBUG] " .. iconType .. " - HUD " .. name .. " visibilidade: " .. tostring(groupVisible))
+                
+                -- Verificar se o HUD realmente está visível após setVisible
+                local actualPos = item.hud.text:getPos()
+                print("[DEBUG] " .. iconType .. " - HUD " .. name .. " posição real: " .. actualPos.x .. ", " .. actualPos.y)
+            else
+                print("[DEBUG] " .. iconType .. " - ERRO: HUD " .. name .. " não tem setVisible")
             end
+        else
+            print("[DEBUG] " .. iconType .. " - ERRO: HUD " .. name .. " não tem text ou setPos")
         end
         index = index + 1
     end
