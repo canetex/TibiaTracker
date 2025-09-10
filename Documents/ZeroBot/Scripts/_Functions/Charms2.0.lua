@@ -394,6 +394,7 @@ end
 
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
+    print("[DEBUG] updateAllHuds - Configuração atual: " .. currentVisibilityConfig)
     local dataGroups = {
         {data = charms, type = "charm", visible = charmGroupVisible},
         {data = tiers, type = "tier", visible = tierGroupVisible},
@@ -405,6 +406,7 @@ local function updateAllHuds()
             if item.hud.text then
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                print("[DEBUG] HUD " .. name .. " - Texto: " .. hudText)
                 
                 if group.visible then
                     -- Se deve estar visível, mostrar e atualizar texto
@@ -500,8 +502,6 @@ local function cycleVisibilityConfig()
     currentVisibilityConfig = configs[nextIndex]
     
     -- Aplicar nova configuração (copiar valores, não referências)
-    
-    -- Copiar valores, não referências (usar createVisibilityConfig para garantir cópia limpa)
     local sourceConfig = VisibilityConfigs[currentVisibilityConfig]
     VisibleInfo.tier = {
         tier = sourceConfig.tier.tier,
@@ -531,10 +531,10 @@ local function cycleVisibilityConfig()
         tempoDecorrido = sourceConfig.heal.tempoDecorrido
     }
     
+    print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
+    
     -- Atualizar todos os HUDs existentes
     updateAllHuds()
-    
-    print("[CHARMS] Configuração alterada para: " .. currentVisibilityConfig)
 end
 
 -- Função genérica para criar ícone principal e de visibilidade
