@@ -1154,11 +1154,29 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
     print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
     print("[DEBUG] " .. iconType .. " - Estados de visibilidade: charm=" .. tostring(charmGroupVisible) .. " tier=" .. tostring(tierGroupVisible) .. " heal=" .. tostring(healGroupVisible))
     
+    -- Obter posição real do ícone principal (não a posição do evento)
+    local mainIcon = nil
+    if iconType == "CHARM" then
+        mainIcon = charmIcon
+    elseif iconType == "TIER" then
+        mainIcon = tierIcon
+    elseif iconType == "HEAL" then
+        mainIcon = healIcon
+    end
+    
+    local realPos = mainIcon and mainIcon:getPos() or currentPos
+    print("[DEBUG] " .. iconType .. " - Posição real do ícone: " .. realPos.x .. ", " .. realPos.y)
+    
     local index = 0
     for name, item in pairs(data) do
         if item.hud.text and item.hud.text.setPos then
-            local newX = currentPos.x - 35
-            local newY = currentPos.y + 40 + (15 * index)
+            local newX = realPos.x - 35
+            local newY = realPos.y + 40 + (15 * index)
+            
+            -- Garantir que as posições sejam válidas (não negativas)
+            newX = math.max(0, newX)
+            newY = math.max(0, newY)
+            
             print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
             setPos(item.hud.text, newX, newY)
             
@@ -1173,7 +1191,7 @@ local function repositionHUDs(iconType, currentPos, data, visibilityIcon)
     
     -- Reposicionar ícone de visibilidade
     if visibilityIcon then
-        manageVisibilityIcon(iconType == "CHARM" and charmIcon or iconType == "TIER" and tierIcon or healIcon, nil, visibilityIcon)
+        manageVisibilityIcon(mainIcon, nil, visibilityIcon)
     end
 end
 
