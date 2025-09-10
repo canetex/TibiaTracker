@@ -250,6 +250,68 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     return visibilityIcon
 end
 
+local function getTimeElapsedString(first)
+    local timeDif = os.time() - first
+    local minutes = math.floor(timeDif / 60)
+    local seconds = timeDif % 60
+    
+    if minutes > 0 then
+        return string.format("%dm %ds", minutes, seconds)
+    else
+        return string.format("%ds", seconds)
+    end
+end
+
+-- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
+local function createHudText(name, data, damage, timeElapsed, type)
+    local config = VisibleInfo[type] or VisibleInfo.charm
+    local parts = {}
+    
+    print("[DEBUG] createHudText - " .. name .. " (tipo: " .. type .. ")")
+    print("[DEBUG] createHudText - config[" .. type .. "]: " .. tostring(config[type]))
+    print("[DEBUG] createHudText - config.ativacoes: " .. tostring(config.ativacoes))
+    print("[DEBUG] createHudText - config.previsao: " .. tostring(config.previsao))
+    print("[DEBUG] createHudText - config.danoMinimo: " .. tostring(config.danoMinimo))
+    print("[DEBUG] createHudText - config.danoMedio: " .. tostring(config.danoMedio))
+    print("[DEBUG] createHudText - config.danoMaximo: " .. tostring(config.danoMaximo))
+    print("[DEBUG] createHudText - config.tempoDecorrido: " .. tostring(config.tempoDecorrido))
+    
+    -- Nome do item
+    if config[type] then
+        table.insert(parts, "[" .. name .. "]")
+    end
+    
+    -- Ativações
+    if config.ativacoes then
+        table.insert(parts, "\u{1F5E1}: " .. data.count)
+    end
+    
+    if config.previsao then
+        table.insert(parts, "\u{1F553}: " .. data.inAHour)
+    end
+    
+    -- Dano/Cura
+    if damage > 0 then
+        local isHeal = type == "heal"
+        local damageConfig = isHeal and 
+            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima} or
+            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo}
+        
+        if damageConfig.min then table.insert(parts, "\u{2B07}: " .. data.lowest) end
+        if damageConfig.avg then table.insert(parts, "\u{1F503}: " .. string.format("%.1f", data.average)) end
+        if damageConfig.max then table.insert(parts, "\u{2B06}: " .. data.higher) end
+    end
+    
+    -- Tempo
+    if config.tempoDecorrido then
+        table.insert(parts, "TEMPO: " .. timeElapsed)
+    end
+    
+    local result = #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
+    print("[DEBUG] createHudText - resultado final: " .. result)
+    return result
+end
+
 -- Função para atualizar todos os HUDs existentes
 local function updateAllHuds()
     local dataGroups = {
@@ -345,56 +407,6 @@ local function toggleGroupVisibility(groupType)
     updateAllHuds()
 end
 
-local function getTimeElapsedString(first)
-    local timeDif = os.time() - first
-    local minutes = math.floor(timeDif / 60)
-    local seconds = timeDif % 60
-    
-    if minutes > 0 then
-        return string.format("%dm %ds", minutes, seconds)
-    else
-        return string.format("%ds", seconds)
-    end
-end
-
--- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
-local function createHudText(name, data, damage, timeElapsed, type)
-    local config = VisibleInfo[type] or VisibleInfo.charm
-    local parts = {}
-    
-    -- Nome do item
-    if config[type] then
-        table.insert(parts, "[" .. name .. "]")
-    end
-    
-    -- Ativações
-    if config.ativacoes then
-        table.insert(parts, "\u{1F5E1}: " .. data.count)
-    end
-    
-    if config.previsao then
-        table.insert(parts, "\u{1F553}: " .. data.inAHour)
-    end
-    
-    -- Dano/Cura
-    if damage > 0 then
-        local isHeal = type == "heal"
-        local damageConfig = isHeal and 
-            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima} or
-            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo}
-        
-        if damageConfig.min then table.insert(parts, "\u{2B07}: " .. data.lowest) end
-        if damageConfig.avg then table.insert(parts, "\u{1F503}: " .. string.format("%.1f", data.average)) end
-        if damageConfig.max then table.insert(parts, "\u{2B06}: " .. data.higher) end
-    end
-    
-    -- Tempo
-    if config.tempoDecorrido then
-        table.insert(parts, "TEMPO: " .. timeElapsed)
-    end
-    
-    return #parts > 0 and table.concat(parts, " - ") or "[" .. name .. "]: Nenhuma informação habilitada"
-end
 
 -- Função para alternar configurações de visibilidade
 local function cycleVisibilityConfig()
@@ -1213,15 +1225,14 @@ Game.registerEvent(Game.Events.HUD_DRAG, function(hudId, x, y)
     end
     
     if iconType and data and mainIcon then
-        -- Usar a posição real do ícone, não as coordenadas do evento
+        -- Obter a posição real do ícone usando getPos()
         local realPos = mainIcon:getPos()
-        print("[DEBUG] " .. iconType .. " - Posição do evento: " .. x .. ", " .. y)
-        print("[DEBUG] " .. iconType .. " - Posição real do ícone: " .. realPos.x .. ", " .. realPos.y)
+        print("[DEBUG] " .. iconType .. " - Detectado drag! Posição real: " .. realPos.x .. ", " .. realPos.y)
         
-        -- Reposicionar HUDs imediatamente usando a posição real
+        -- Reposicionar HUDs imediatamente
         repositionHUDs(iconType, realPos, data, visibilityIcon)
         
-        -- Agendar salvamento com delay usando a posição real
+        -- Agendar salvamento com delay
         scheduleSave(iconType, realPos)
     end
 end)
