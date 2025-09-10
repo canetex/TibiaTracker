@@ -1112,10 +1112,10 @@ local healPatterns = {
     {pattern = ".*[Yy]ou gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%).*", type = "Charm"},
     
     -- Player heal - From (você recebe cura de outro player) - deve vir antes de Imbuiments
-    {pattern = ".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*", type = "PlayerFrom"},
+    {pattern = ".*[Yy]ou were healed by ([^%d]+) for (%d+) hitpoints?.*", type = "PlayerFrom"},
     
     -- Player heal - To (você cura alguém)
-    {pattern = ".*[Yy]ou heal ([^%s]+) for (%d+) hitpoints?.*", type = "PlayerTo"},
+    {pattern = ".*[Yy]ou heal ([^%d]+) for (%d+) hitpoints?.*", type = "PlayerTo"},
     
     -- Self heal
     {pattern = ".*[Yy]ou heal?ed? yourself for (%d+) hitpoints?.*", type = "Self"},
@@ -1146,16 +1146,16 @@ local function findHealsProc(text)
         print("[DEBUG HEAL] Player heal detectado: " .. text)
         -- Testar padrões manualmente
         if text:find("healed by") then
-            local testMatch = {text:match(".*[Yy]ou were healed by ([^%s]+) for (%d+) hitpoints?.*")}
+            local testMatch = {text:match(".*[Yy]ou were healed by ([^%d]+) for (%d+) hitpoints?.*")}
             print("[DEBUG HEAL] Teste PlayerFrom - Matches: " .. #testMatch)
             if #testMatch > 0 then
-                print("[DEBUG HEAL] Player: " .. testMatch[1] .. ", Amount: " .. testMatch[2])
+                print("[DEBUG HEAL] Player: '" .. testMatch[1] .. "', Amount: " .. testMatch[2])
             end
         elseif text:find("You heal") and not text:find("yourself") then
-            local testMatch = {text:match(".*[Yy]ou heal ([^%s]+) for (%d+) hitpoints?.*")}
+            local testMatch = {text:match(".*[Yy]ou heal ([^%d]+) for (%d+) hitpoints?.*")}
             print("[DEBUG HEAL] Teste PlayerTo - Matches: " .. #testMatch)
             if #testMatch > 0 then
-                print("[DEBUG HEAL] Player: " .. testMatch[1] .. ", Amount: " .. testMatch[2])
+                print("[DEBUG HEAL] Player: '" .. testMatch[1] .. "', Amount: " .. testMatch[2])
             end
         end
     end
