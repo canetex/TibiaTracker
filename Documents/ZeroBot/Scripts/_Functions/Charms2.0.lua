@@ -666,12 +666,18 @@ local function handleIconDrag(iconType, icon, lastPos, iconX, iconY, visibilityI
     end
 
     local currentIconPos = icon:getPos()
+    print("[DEBUG] " .. iconType .. " - Posição atual: " .. currentIconPos.x .. ", " .. currentIconPos.y .. " | Última: " .. lastPos.x .. ", " .. lastPos.y)
+    
     if hasDragged(currentIconPos, lastPos) then
+        print("[DEBUG] " .. iconType .. " - Detectado arrasto! Reposicionando HUDs...")
         lastPos = currentIconPos
         local index = 0
-        for _, item in pairs(data) do
+        for name, item in pairs(data) do
             if item.hud.text and item.hud.text.setPos then
-                setPos(item.hud.text, currentIconPos.x - 35, currentIconPos.y + 40 + (15 * index))
+                local newX = currentIconPos.x - 35
+                local newY = currentIconPos.y + 40 + (15 * index)
+                print("[DEBUG] " .. iconType .. " - Reposicionando HUD " .. name .. " para: " .. newX .. ", " .. newY)
+                setPos(item.hud.text, newX, newY)
             end
             index = index + 1
         end
