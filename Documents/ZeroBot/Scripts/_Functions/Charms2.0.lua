@@ -201,16 +201,16 @@ local healVisibilityConfig = "TUDO"
 -- ================================================================
 local print_ativo = {
     erros = true,              -- Erros do sistema
-    messageCheck = true,       -- Verificação de mensagens
-    messageFound = true,       -- Mensagens com Tier/Charm encontradas
-    messageNotFound = true,    -- Mensagens com Tier/Charm não encontradas
+    messageCheck = false,      -- Verificação de mensagens
+    messageFound = false,      -- Mensagens com Tier/Charm encontradas
+    messageNotFound = false,   -- Mensagens com Tier/Charm não encontradas
     testProgram = false,       -- Testes do programa
     cooldown = false,          -- Informações de cooldown
-    statistics = true          -- Estatísticas detalhadas
+    statistics = false         -- Estatísticas detalhadas
 }
 
 -- Configurações do sistema
-local ActiveTestHud = true
+local ActiveTestHud = false
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
@@ -453,14 +453,8 @@ local function updateAllHuds()
     
     for _, group in ipairs(dataGroups) do
         if group.type == "creature" then
-            checkAndPrint("statistics", "=== PROCESSANDO GRUPO CREATURE ===")
-            checkAndPrint("statistics", "CreatureGroupVisible: " .. tostring(group.visible))
-            checkAndPrint("statistics", "Creatures data: " .. tostring(group.data))
-            checkAndPrint("statistics", "Creatures count: " .. (group.data and #group.data or 0))
-            
             -- Tratamento simplificado para criaturas - igual aos outros grupos
             for name, item in pairs(group.data) do
-                checkAndPrint("statistics", "Processando criatura: " .. name)
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
@@ -1416,9 +1410,6 @@ end
 
 -- Função para detectar e processar dano por criatura
 local function detectCreatureDamage(text, lastDamage)
-    checkAndPrint("statistics", "=== DETECTCREATUREDAMAGE ===")
-    checkAndPrint("statistics", "Texto: " .. text)
-    checkAndPrint("statistics", "LastDamage: " .. tostring(lastDamage))
     
     -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
     local damageDealtPatterns = {
@@ -1450,10 +1441,8 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano causado (apenas danos próprios)
     for i, pattern in ipairs(damageDealtPatterns) do
-        checkAndPrint("statistics", "Testando padrão dealt " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
-            checkAndPrint("statistics", "MATCH DEALT: " .. creatureName .. " - " .. damage)
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
                 processCreatureDamage(creatureName, damageValue, "dealt")
@@ -1464,10 +1453,8 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano sofrido (apenas danos próprios)
     for i, pattern in ipairs(damageReceivedPatterns) do
-        checkAndPrint("statistics", "Testando padrão received " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
-            checkAndPrint("statistics", "MATCH RECEIVED: " .. creatureName .. " - " .. damage)
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
                 processCreatureDamage(creatureName, damageValue, "received")
@@ -1481,19 +1468,12 @@ end
 
 -- Função para processar dano de criatura
 local function processCreatureDamage(creatureName, damage, damageType)
-    checkAndPrint("statistics", "=== PROCESSCREATUREDAMAGE ===")
-    checkAndPrint("statistics", "CreatureName: " .. tostring(creatureName))
-    checkAndPrint("statistics", "Damage: " .. tostring(damage))
-    checkAndPrint("statistics", "DamageType: " .. tostring(damageType))
-    
     if not creatureName or not damage or not damageType then 
-        checkAndPrint("erros", "Parâmetros inválidos para processCreatureDamage")
         return 
     end
     
     -- Criar chave única para a criatura e tipo de dano
     local creatureKey = creatureName .. "_" .. damageType
-    checkAndPrint("statistics", "CreatureKey: " .. creatureKey)
     
     -- Processar ativação no grupo de criaturas
     local success, newFoundCount = processGroup("creature", creatureKey, damage, {}, 
@@ -1713,14 +1693,12 @@ if ActiveTestHud then
     testHUD:setColor(255, 255, 0)
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
-        checkAndPrint("statistics", "=== SIMULANDO DADOS DE CRIATURA ===")
         -- Simular dados de criatura
         processCreatureDamage("hellhunter inferniarch", 125, "dealt")
         processCreatureDamage("hellhunter inferniarch", 100, "received")
         processCreatureDamage("spellreaper inferniarch", 200, "dealt")
         processCreatureDamage("spellreaper inferniarch", 150, "received")
         updateAllHuds()
-        checkAndPrint("statistics", "=== FIM DA SIMULAÇÃO ===")
     end)
 end
 
