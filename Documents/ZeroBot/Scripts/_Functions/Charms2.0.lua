@@ -201,16 +201,16 @@ local healVisibilityConfig = "TUDO"
 -- ================================================================
 local print_ativo = {
     erros = true,              -- Erros do sistema
-    messageCheck = false,      -- Verificação de mensagens
-    messageFound = false,      -- Mensagens com Tier/Charm encontradas
-    messageNotFound = false,   -- Mensagens com Tier/Charm não encontradas
+    messageCheck = true,       -- Verificação de mensagens
+    messageFound = true,       -- Mensagens com Tier/Charm encontradas
+    messageNotFound = true,    -- Mensagens com Tier/Charm não encontradas
     testProgram = false,       -- Testes do programa
     cooldown = false,          -- Informações de cooldown
-    statistics = false         -- Estatísticas detalhadas
+    statistics = true          -- Estatísticas detalhadas
 }
 
 -- Configurações do sistema
-local ActiveTestHud = false
+local ActiveTestHud = true
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
@@ -453,8 +453,14 @@ local function updateAllHuds()
     
     for _, group in ipairs(dataGroups) do
         if group.type == "creature" then
+            checkAndPrint("statistics", "=== PROCESSANDO GRUPO CREATURE ===")
+            checkAndPrint("statistics", "CreatureGroupVisible: " .. tostring(group.visible))
+            checkAndPrint("statistics", "Creatures data: " .. tostring(group.data))
+            checkAndPrint("statistics", "Creatures count: " .. (group.data and #group.data or 0))
+            
             -- Tratamento simplificado para criaturas - igual aos outros grupos
             for name, item in pairs(group.data) do
+                checkAndPrint("statistics", "Processando criatura: " .. name)
                 local timeElapsed = getTimeElapsedString(item.first)
                 local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
