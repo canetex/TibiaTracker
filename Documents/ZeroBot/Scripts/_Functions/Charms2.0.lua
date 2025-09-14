@@ -48,18 +48,22 @@ local TEXT_COLOR = {
     } 
 
 -- Posições dos ícones (serão ajustadas automaticamente para resoluções menores)
-local ICON_CHARM_X_POSITION = 893
-local ICON_CHARM_Y_POSITION = 772
+local ICON_CHARM_X_POSITION = 434
+local ICON_CHARM_Y_POSITION = 985
 local ICON_CHARM_ID = 36726
 
-local ICON_TIER_X_POSITION = 445
-local ICON_TIER_Y_POSITION = 451
+local ICON_TIER_X_POSITION = 437
+local ICON_TIER_Y_POSITION = 878
 local ICON_TIER_ID = 30278
 
-local ICON_HEAL_X_POSITION = 375
-local ICON_HEAL_Y_POSITION = 720
+local ICON_HEAL_X_POSITION = 1044
+local ICON_HEAL_Y_POSITION = 933
 -- local ICON_HEAL_ID = 11604
 local ICON_HEAL_ID = 19077
+
+local ICON_CREATURE_X_POSITION = 1205
+local ICON_CREATURE_Y_POSITION = 802
+local ICON_CREATURE_ID = 5595
 
 -- Função para carregar posições salvas dos ícones
 local function loadIconPositions()
@@ -78,6 +82,8 @@ local function loadIconPositions()
     local tierY = content:match("ICON_TIER_Y_POSITION = (%d+)")
     local healX = content:match("ICON_HEAL_X_POSITION = (%d+)")
     local healY = content:match("ICON_HEAL_Y_POSITION = (%d+)")
+    local creatureX = content:match("ICON_CREATURE_X_POSITION = (%d+)")
+    local creatureY = content:match("ICON_CREATURE_Y_POSITION = (%d+)")
     
     if charmX and charmY then
         ICON_CHARM_X_POSITION = tonumber(charmX)
@@ -91,6 +97,10 @@ local function loadIconPositions()
         ICON_HEAL_X_POSITION = tonumber(healX)
         ICON_HEAL_Y_POSITION = tonumber(healY)
     end
+    if creatureX and creatureY then
+        ICON_CREATURE_X_POSITION = tonumber(creatureX)
+        ICON_CREATURE_Y_POSITION = tonumber(creatureY)
+    end
 end
 
 -- Carregar posições salvas
@@ -102,7 +112,7 @@ local VISIBILITY_ICON_SCALE = 0.4
 local VISIBILITY_ICON_OFFSET = 30  -- Distância do ícone principal
 
 -- Função geradora de configurações de visibilidade
-local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, danoMax, tempo)
+local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, danoMax, danoTotal, tempo)
     -- Criar cópias independentes para cada tipo
     return {
         tier = { 
@@ -112,6 +122,7 @@ local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, dan
             danoMinimo = danoMin, 
             danoMedio = danoMed, 
             danoMaximo = danoMax, 
+            danoTotal = danoTotal,
             tempoDecorrido = tempo 
         },
         charm = { 
@@ -121,6 +132,7 @@ local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, dan
             danoMinimo = danoMin, 
             danoMedio = danoMed, 
             danoMaximo = danoMax, 
+            danoTotal = danoTotal,
             tempoDecorrido = tempo 
         },
         heal = { 
@@ -130,6 +142,7 @@ local function createVisibilityConfig(ativacoes, previsao, danoMin, danoMed, dan
             curaMinima = danoMin, 
             curaMedia = danoMed, 
             curaMaxima = danoMax, 
+            curaTotal = danoTotal,
             tempoDecorrido = tempo 
         }
     }
@@ -137,9 +150,9 @@ end
 
 -- Configurações de visibilidade predefinidas
 local VisibilityConfigs = {
-    TUDO = createVisibilityConfig(true, true, true, true, true, true),
-    DAMAGE = createVisibilityConfig(false, false, true, true, true, false),
-    ATIVACOES = createVisibilityConfig(true, true, false, false, false, false)
+    TUDO = createVisibilityConfig(true, true, true, true, true, true, true),
+    DAMAGE = createVisibilityConfig(false, false, true, true, true, true, false),
+    ATIVACOES = createVisibilityConfig(true, true, false, false, false, false, false)
 }
 
 
@@ -153,6 +166,7 @@ local VisibleInfo = {
         danoMinimo = VisibilityConfigs.TUDO.tier.danoMinimo,
         danoMedio = VisibilityConfigs.TUDO.tier.danoMedio,
         danoMaximo = VisibilityConfigs.TUDO.tier.danoMaximo,
+        danoTotal = VisibilityConfigs.TUDO.tier.danoTotal,
         tempoDecorrido = VisibilityConfigs.TUDO.tier.tempoDecorrido
     },
     charm = {
@@ -162,6 +176,7 @@ local VisibleInfo = {
         danoMinimo = VisibilityConfigs.TUDO.charm.danoMinimo,
         danoMedio = VisibilityConfigs.TUDO.charm.danoMedio,
         danoMaximo = VisibilityConfigs.TUDO.charm.danoMaximo,
+        danoTotal = VisibilityConfigs.TUDO.charm.danoTotal,
         tempoDecorrido = VisibilityConfigs.TUDO.charm.tempoDecorrido
     },
     heal = {
@@ -171,6 +186,7 @@ local VisibleInfo = {
         curaMinima = VisibilityConfigs.TUDO.heal.curaMinima,
         curaMedia = VisibilityConfigs.TUDO.heal.curaMedia,
         curaMaxima = VisibilityConfigs.TUDO.heal.curaMaxima,
+        curaTotal = VisibilityConfigs.TUDO.heal.curaTotal,
         tempoDecorrido = VisibilityConfigs.TUDO.heal.tempoDecorrido
     }
 }
@@ -230,7 +246,11 @@ local testMessages = {
     "You heal Test Player for 1 hitpoint",
     "You heal Test Player for 563 hitpoints",
     "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
-    "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot)."
+    "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
+    "You lose 50 hitpoints due to an attack by a dragon",
+    "A dragon hits you for 75 hitpoints",
+    "You lose 25 hitpoints due to demon",
+    "demon hits you for 30 hitpoints"
 }
 
 -- DO NOT TOUCH BELOW THIS LINE // NÃO TOQUE ABAIXO DESTA LINHA --
@@ -246,10 +266,12 @@ local testMessages = {
 if Client.getGameWindowDimensions().width < ICON_CHARM_X_POSITION then ICON_CHARM_X_POSITION = 155 end
 if Client.getGameWindowDimensions().width < ICON_TIER_X_POSITION then ICON_TIER_X_POSITION = 165 end
 if Client.getGameWindowDimensions().width < ICON_HEAL_X_POSITION then ICON_HEAL_X_POSITION = 175 end
+if Client.getGameWindowDimensions().width < ICON_CREATURE_X_POSITION then ICON_CREATURE_X_POSITION = 185 end
 
 if Client.getGameWindowDimensions().height < ICON_CHARM_Y_POSITION then ICON_CHARM_Y_POSITION = 155 end
 if Client.getGameWindowDimensions().height < ICON_TIER_Y_POSITION then ICON_TIER_Y_POSITION = 165 end
 if Client.getGameWindowDimensions().height < ICON_HEAL_Y_POSITION then ICON_HEAL_Y_POSITION = 175 end
+if Client.getGameWindowDimensions().height < ICON_CREATURE_Y_POSITION then ICON_CREATURE_Y_POSITION = 185 end
 
 local charms = {}
 local charmsFound = 0
@@ -257,6 +279,8 @@ local tiers = {}
 local tiersFound = 0
 local heals = {}
 local healsFound = 0
+local creatures = {}
+local creaturesFound = 0
 
 -- Tabela unificada de cooldowns
 local cooldowns = {
@@ -279,16 +303,20 @@ local tierIcon = nil
 local tierIconLastPos = nil
 local healIcon = nil
 local healIconLastPos = nil
+local creatureIcon = nil
+local creatureIconLastPos = nil
 
 -- Ícones de visibilidade
 local charmVisibilityIcon = nil
 local tierVisibilityIcon = nil
 local healVisibilityIcon = nil
+local creatureVisibilityIcon = nil
 
 -- Estados de visibilidade dos grupos
 local charmGroupVisible = true
-local tierGroupVisible = true
+local tierGroupVisible = false
 local healGroupVisible = true
+local creatureGroupVisible = true
 local oneHourInSeconds = 3600
 
 -- ================================================================
@@ -312,6 +340,8 @@ local function manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
             mainX, mainY = ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION
         elseif groupType == "heal" then
             mainX, mainY = ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION
+        elseif groupType == "creature" then
+            mainX, mainY = ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION
         end
     end
     
@@ -348,8 +378,64 @@ local function getTimeElapsedString(first)
     end
 end
 
+-- Função especial para criar texto do HUD de criaturas
+local function createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+    local parts = {}
+    
+    -- Nome da criatura
+    table.insert(parts, "[" .. creatureName .. "]")
+    
+    -- Dano Causado
+    if dealtData then
+        local dealtParts = {}
+        table.insert(dealtParts, "CAUSADO:")
+        table.insert(dealtParts, "\u{2B07}:" .. dealtData.lowest)
+        table.insert(dealtParts, "\u{1F503}:" .. string.format("%.1f", dealtData.average))
+        table.insert(dealtParts, "\u{2B06}:" .. dealtData.higher)
+        table.insert(dealtParts, "\u{1F4CA}:" .. (dealtData.totalSum or 0))
+        table.insert(parts, table.concat(dealtParts, " "))
+    end
+    
+    -- Dano Sofrido
+    if receivedData then
+        local receivedParts = {}
+        table.insert(receivedParts, "SOFRIDO:")
+        table.insert(receivedParts, "\u{2B07}:" .. receivedData.lowest)
+        table.insert(receivedParts, "\u{1F503}:" .. string.format("%.1f", receivedData.average))
+        table.insert(receivedParts, "\u{2B06}:" .. receivedData.higher)
+        table.insert(receivedParts, "\u{1F4CA}:" .. (receivedData.totalSum or 0))
+        table.insert(parts, table.concat(receivedParts, " "))
+    end
+    
+    -- Tempo
+    table.insert(parts, "TEMPO: " .. timeElapsed)
+    
+    return table.concat(parts, " | ")
+end
+
 -- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
 local function createHudText(name, data, damage, timeElapsed, type)
+    -- Se for criatura, usar função especial
+    if type == "creature" then
+        local creatureName = name:match("^(.+)_(dealt|received)$")
+        if creatureName then
+            local damageType = name:match("_(dealt|received)$")
+            local dealtData = damageType == "dealt" and data or nil
+            local receivedData = damageType == "received" and data or nil
+            
+            -- Buscar dados complementares
+            if damageType == "dealt" then
+                local receivedKey = creatureName .. "_received"
+                receivedData = creatures[receivedKey]
+            else
+                local dealtKey = creatureName .. "_dealt"
+                dealtData = creatures[dealtKey]
+            end
+            
+            return createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+        end
+    end
+    
     local config = VisibleInfo[type] or VisibleInfo.charm
     local parts = {}
     
@@ -371,12 +457,13 @@ local function createHudText(name, data, damage, timeElapsed, type)
     if damage > 0 then
         local isHeal = type == "heal"
         local damageConfig = isHeal and 
-            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima} or
-            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo}
+            {min = config.curaMinima, avg = config.curaMedia, max = config.curaMaxima, total = config.curaTotal} or
+            {min = config.danoMinimo, avg = config.danoMedio, max = config.danoMaximo, total = config.danoTotal}
         
         if damageConfig.min then table.insert(parts, "\u{2B07}: " .. data.lowest) end
         if damageConfig.avg then table.insert(parts, "\u{1F503}: " .. string.format("%.1f", data.average)) end
         if damageConfig.max then table.insert(parts, "\u{2B06}: " .. data.higher) end
+        if damageConfig.total then table.insert(parts, "\u{1F4CA}: " .. (data.totalSum or 0)) end
     end
     
     -- Tempo
@@ -403,57 +490,143 @@ local function updateAllHuds()
     local dataGroups = {
         {data = charms, type = "charm", visible = charmGroupVisible},
         {data = tiers, type = "tier", visible = tierGroupVisible},
-        {data = heals, type = "heal", visible = healGroupVisible}
+        {data = heals, type = "heal", visible = healGroupVisible},
+        {data = creatures, type = "creature", visible = creatureGroupVisible}
     }
     
     for _, group in ipairs(dataGroups) do
-        for name, item in pairs(group.data) do
-            if item.hud.text then
-                local timeElapsed = getTimeElapsedString(item.first)
-                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+        if group.type == "creature" then
+            -- Tratamento especial para criaturas - agrupar por nome
+            local creatureGroups = {}
+            for name, item in pairs(group.data) do
+                local creatureName = name:match("^(.+)_(dealt|received)$")
+                if creatureName then
+                    if not creatureGroups[creatureName] then
+                        creatureGroups[creatureName] = {}
+                    end
+                    local damageType = name:match("_(dealt|received)$")
+                    creatureGroups[creatureName][damageType] = item
+                end
+            end
+            
+            -- Criar HUDs para cada criatura
+            local creatureIndex = 0
+            for creatureName, data in pairs(creatureGroups) do
+                local dealtData = data.dealt
+                local receivedData = data.received
+                local timeElapsed = ""
                 
-                if group.visible then
-                    -- Se deve estar visível, mostrar e atualizar texto
-                    if item.hud.text then
+                -- Usar tempo do primeiro dado disponível
+                if dealtData then
+                    timeElapsed = getTimeElapsedString(dealtData.first)
+                elseif receivedData then
+                    timeElapsed = getTimeElapsedString(receivedData.first)
+                end
+                
+                local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+                
+                -- Verificar se já existe HUD para esta criatura
+                local existingHud = nil
+                if dealtData and dealtData.hud.text then
+                    existingHud = dealtData.hud.text
+                elseif receivedData and receivedData.hud.text then
+                    existingHud = receivedData.hud.text
+                end
+                
+                if existingHud then
+                    -- Atualizar HUD existente
+                    if group.visible then
+                        -- Se deve estar visível, mostrar e atualizar texto
+                        if existingHud.show then
+                            existingHud:show()
+                        end
+                        if existingHud.setText then
+                            existingHud:setText(hudText)
+                        end
+                    else
+                        -- Se deve estar oculto, esconder o HUD
+                        if existingHud.hide then
+                            existingHud:hide()
+                        end
+                    end
+                elseif group.visible then
+                    -- Criar novo HUD
+                    local iconX, iconY = ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION
+                    local x = iconX - 35
+                    local y = iconY + 40 + (15 * creatureIndex)
+                    local newHud = createHud(x, y, hudText)
+                    
+                    -- Adicionar callback para zerar contador
+                    if newHud and newHud.setCallback then
+                        newHud:setCallback(function()
+                            -- Zerar ambos os tipos de dano
+                            if dealtData then
+                                resetCounter("creature", creatureName .. "_dealt")
+                            end
+                            if receivedData then
+                                resetCounter("creature", creatureName .. "_received")
+                            end
+                        end)
+                    end
+                    
+                    -- Armazenar referência do HUD nos dados
+                    if dealtData then
+                        dealtData.hud.text = newHud
+                    end
+                    if receivedData then
+                        receivedData.hud.text = newHud
+                    end
+                end
+                
+                creatureIndex = creatureIndex + 1
+            end
+        else
+            -- Tratamento normal para outros grupos
+            for name, item in pairs(group.data) do
+                if item.hud.text then
+                    local timeElapsed = getTimeElapsedString(item.first)
+                    local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                    
+                    if group.visible then
+                        -- Se deve estar visível, mostrar e atualizar texto
                         if item.hud.text.show then
                             item.hud.text:show()
                         end
                         if item.hud.text.setText then
                             item.hud.text:setText(hudText)
                         end
+                    else
+                        -- Se deve estar oculto, esconder o HUD
+                        if item.hud.text.hide then
+                            item.hud.text:hide()
+                        end
                     end
-                else
-                    -- Se deve estar oculto, esconder o HUD
-                    if item.hud.text and item.hud.text.hide then
-                        item.hud.text:hide()
+                elseif group.visible then
+                    -- Se deve estar visível mas não tem HUD, criar um novo
+                    local timeElapsed = getTimeElapsedString(item.first)
+                    local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                    
+                    -- Determinar posição baseada no tipo
+                    local iconX, iconY = 0, 0
+                    if group.type == "charm" then
+                        iconX, iconY = ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION
+                    elseif group.type == "tier" then
+                        iconX, iconY = ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION
+                    elseif group.type == "heal" then
+                        iconX, iconY = ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION
+                    end
+                    
+                    local x = iconX - 35
+                    local y = iconY + 40 + (15 * #group.data)
+                    item.hud.text = createHud(x, y, hudText)
+                    
+                    -- Adicionar callback para zerar contador
+                    if item.hud.text and item.hud.text.setCallback then
+                        item.hud.text:setCallback(function()
+                            resetCounter(group.type, name)
+                        end)
                     end
                 end
-            elseif group.visible then
-                -- Se deve estar visível mas não tem HUD, criar um novo
-                local timeElapsed = getTimeElapsedString(item.first)
-                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
-                
-                -- Determinar posição baseada no tipo
-                local iconX, iconY = 0, 0
-                if group.type == "charm" then
-                    iconX, iconY = ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION
-                elseif group.type == "tier" then
-                    iconX, iconY = ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION
-                elseif group.type == "heal" then
-                    iconX, iconY = ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION
-                end
-                
-                local x = iconX - 35
-                local y = iconY + 40 + (15 * #group.data)
-                item.hud.text = createHud(x, y, hudText)
-                
-                -- Adicionar callback para zerar contador
-                if item.hud.text and item.hud.text.setCallback then
-                    item.hud.text:setCallback(function()
-                        resetCounter(group.type, name)
-                    end)
-                end
-                
             end
         end
     end
@@ -464,14 +637,128 @@ local function updateHudTexts()
     local dataGroups = {
         {data = charms, type = "charm"},
         {data = tiers, type = "tier"},
-        {data = heals, type = "heal"}
+        {data = heals, type = "heal"},
+        {data = creatures, type = "creature"}
     }
     
     for _, group in ipairs(dataGroups) do
-        for name, item in pairs(group.data) do
+        if group.type == "creature" then
+            -- Tratamento especial para criaturas - agrupar por nome
+            local creatureGroups = {}
+            for name, item in pairs(group.data) do
+                local creatureName = name:match("^(.+)_(dealt|received)$")
+                if creatureName then
+                    if not creatureGroups[creatureName] then
+                        creatureGroups[creatureName] = {}
+                    end
+                    local damageType = name:match("_(dealt|received)$")
+                    creatureGroups[creatureName][damageType] = item
+                end
+            end
+            
+            -- Atualizar HUDs para cada criatura
+            for creatureName, data in pairs(creatureGroups) do
+                local dealtData = data.dealt
+                local receivedData = data.received
+                local timeElapsed = ""
+                
+                -- Usar tempo do primeiro dado disponível
+                if dealtData then
+                    timeElapsed = getTimeElapsedString(dealtData.first)
+                elseif receivedData then
+                    timeElapsed = getTimeElapsedString(receivedData.first)
+                end
+                
+                local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+                
+                -- Atualizar HUD existente
+                local existingHud = nil
+                if dealtData and dealtData.hud.text then
+                    existingHud = dealtData.hud.text
+                elseif receivedData and receivedData.hud.text then
+                    existingHud = receivedData.hud.text
+                end
+                
+                if existingHud and existingHud.setText then
+                    existingHud:setText(hudText)
+                end
+            end
+        else
+            -- Tratamento normal para outros grupos
+            for name, item in pairs(group.data) do
+                if item.hud.text then
+                    local timeElapsed = getTimeElapsedString(item.first)
+                    local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                    
+                    -- Apenas atualizar o texto, sem afetar visibilidade
+                    if item.hud.text.setText then
+                        item.hud.text:setText(hudText)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Função para atualizar apenas o texto dos HUDs de um grupo específico
+local function updateGroupHudTexts(groupType)
+    if groupType == "creature" then
+        -- Tratamento especial para criaturas - agrupar por nome
+        local creatureGroups = {}
+        for name, item in pairs(creatures) do
+            local creatureName = name:match("^(.+)_(dealt|received)$")
+            if creatureName then
+                if not creatureGroups[creatureName] then
+                    creatureGroups[creatureName] = {}
+                end
+                local damageType = name:match("_(dealt|received)$")
+                creatureGroups[creatureName][damageType] = item
+            end
+        end
+        
+        -- Atualizar HUDs para cada criatura
+        for creatureName, data in pairs(creatureGroups) do
+            local dealtData = data.dealt
+            local receivedData = data.received
+            local timeElapsed = ""
+            
+            -- Usar tempo do primeiro dado disponível
+            if dealtData then
+                timeElapsed = getTimeElapsedString(dealtData.first)
+            elseif receivedData then
+                timeElapsed = getTimeElapsedString(receivedData.first)
+            end
+            
+            local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+            
+            -- Atualizar HUD existente
+            local existingHud = nil
+            if dealtData and dealtData.hud.text then
+                existingHud = dealtData.hud.text
+            elseif receivedData and receivedData.hud.text then
+                existingHud = receivedData.hud.text
+            end
+            
+            if existingHud and existingHud.setText then
+                existingHud:setText(hudText)
+            end
+        end
+    else
+        local data = nil
+        if groupType == "charm" then
+            data = charms
+        elseif groupType == "tier" then
+            data = tiers
+        elseif groupType == "heal" then
+            data = heals
+        else
+            return -- Grupo inválido
+        end
+        
+        for name, item in pairs(data) do
             if item.hud.text then
                 local timeElapsed = getTimeElapsedString(item.first)
-                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, groupType)
                 
                 -- Apenas atualizar o texto, sem afetar visibilidade
                 if item.hud.text.setText then
@@ -482,38 +769,13 @@ local function updateHudTexts()
     end
 end
 
--- Função para atualizar apenas o texto dos HUDs de um grupo específico
-local function updateGroupHudTexts(groupType)
-    local data = nil
-    if groupType == "charm" then
-        data = charms
-    elseif groupType == "tier" then
-        data = tiers
-    elseif groupType == "heal" then
-        data = heals
-    else
-        return -- Grupo inválido
-    end
-    
-    for name, item in pairs(data) do
-        if item.hud.text then
-            local timeElapsed = getTimeElapsedString(item.first)
-            local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, groupType)
-            
-            -- Apenas atualizar o texto, sem afetar visibilidade
-            if item.hud.text.setText then
-                item.hud.text:setText(hudText)
-            end
-        end
-    end
-end
-
 -- Função para alternar visibilidade de um grupo
 local function toggleGroupVisibility(groupType)
     local groupConfigs = {
         charm = {var = "charmGroupVisible", name = "charms"},
         tier = {var = "tierGroupVisible", name = "tiers"},
-        heal = {var = "healGroupVisible", name = "heals"}
+        heal = {var = "healGroupVisible", name = "heals"},
+        creature = {var = "creatureGroupVisible", name = "creatures"}
     }
     
     local config = groupConfigs[groupType]
@@ -526,11 +788,14 @@ local function toggleGroupVisibility(groupType)
         tierGroupVisible = not tierGroupVisible
     elseif groupType == "heal" then
         healGroupVisible = not healGroupVisible
+    elseif groupType == "creature" then
+        creatureGroupVisible = not creatureGroupVisible
     end
     
     local isVisible = (groupType == "charm" and charmGroupVisible) or 
                      (groupType == "tier" and tierGroupVisible) or 
-                     (groupType == "heal" and healGroupVisible)
+                     (groupType == "heal" and healGroupVisible) or
+                     (groupType == "creature" and creatureGroupVisible)
     print("[" .. groupType:upper() .. "] Grupo de " .. config.name .. " " .. (isVisible and "visível" or "oculto"))
     
     updateAllHuds()
@@ -550,6 +815,8 @@ local function cycleVisibilityConfig(groupType)
         currentConfig = tierVisibilityConfig
     elseif groupType == "heal" then
         currentConfig = healVisibilityConfig
+    elseif groupType == "creature" then
+        currentConfig = "TUDO" -- Configuração padrão para criaturas
     else
         return -- Grupo inválido
     end
@@ -573,6 +840,9 @@ local function cycleVisibilityConfig(groupType)
         tierVisibilityConfig = newConfig
     elseif groupType == "heal" then
         healVisibilityConfig = newConfig
+    elseif groupType == "creature" then
+        -- Para criaturas, sempre usar configuração TUDO por enquanto
+        newConfig = "TUDO"
     end
     
     -- Aplicar nova configuração apenas para o grupo específico
@@ -586,6 +856,7 @@ local function cycleVisibilityConfig(groupType)
             danoMinimo = sourceConfig.charm.danoMinimo,
             danoMedio = sourceConfig.charm.danoMedio,
             danoMaximo = sourceConfig.charm.danoMaximo,
+            danoTotal = sourceConfig.charm.danoTotal,
             tempoDecorrido = sourceConfig.charm.tempoDecorrido
         }
     elseif groupType == "tier" then
@@ -596,6 +867,7 @@ local function cycleVisibilityConfig(groupType)
             danoMinimo = sourceConfig.tier.danoMinimo,
             danoMedio = sourceConfig.tier.danoMedio,
             danoMaximo = sourceConfig.tier.danoMaximo,
+            danoTotal = sourceConfig.tier.danoTotal,
             tempoDecorrido = sourceConfig.tier.tempoDecorrido
         }
     elseif groupType == "heal" then
@@ -606,7 +878,20 @@ local function cycleVisibilityConfig(groupType)
             curaMinima = sourceConfig.heal.curaMinima,
             curaMedia = sourceConfig.heal.curaMedia,
             curaMaxima = sourceConfig.heal.curaMaxima,
+            curaTotal = sourceConfig.heal.curaTotal,
             tempoDecorrido = sourceConfig.heal.tempoDecorrido
+        }
+    elseif groupType == "creature" then
+        -- Para criaturas, usar configuração similar ao tier
+        VisibleInfo.creature = {
+            creature = true,
+            ativacoes = true,
+            previsao = true,
+            danoMinimo = true,
+            danoMedio = true,
+            danoMaximo = true,
+            danoTotal = true,
+            tempoDecorrido = true
         }
     end
     
@@ -829,7 +1114,7 @@ end
 
 -- Função genérica para zerar contador específico
 local function resetCounter(type, name)
-    local dataGroups = {charm = charms, tier = tiers, heal = heals}
+    local dataGroups = {charm = charms, tier = tiers, heal = heals, creature = creatures}
     local data = dataGroups[type]
     if not data or not data[name] then return end
     
@@ -868,11 +1153,19 @@ local function createOrUpdateHud(data, name, iconX, iconY, foundCount, hudText, 
         end
         
         -- Aplicar visibilidade do grupo
-        if data[name].hud.text and data[name].hud.text.setVisible then
-            local groupVisibility = (type == "charm" and charmGroupVisible) or 
-                                   (type == "tier" and tierGroupVisible) or 
-                                   (type == "heal" and healGroupVisible)
-            data[name].hud.text:setVisible(groupVisibility)
+        local groupVisibility = (type == "charm" and charmGroupVisible) or 
+                               (type == "tier" and tierGroupVisible) or 
+                               (type == "heal" and healGroupVisible) or
+                               (type == "creature" and creatureGroupVisible)
+        
+        if groupVisibility then
+            if data[name].hud.text and data[name].hud.text.show then
+                data[name].hud.text:show()
+            end
+        else
+            if data[name].hud.text and data[name].hud.text.hide then
+                data[name].hud.text:hide()
+            end
         end
         
         return foundCount + 1
@@ -986,11 +1279,14 @@ local function saveIconPosition(name, value, which)
         newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
         newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
     elseif which == "ICON_TIER" then
-        newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
-        newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
+        newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
+        newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
     elseif which == "ICON_HEAL" then
-        newContent = newContent:gsub("local healGroupVisible = false", "local healGroupVisible = " .. tostring(healGroupVisible))
-        newContent = newContent:gsub("local healGroupVisible = false", "local healGroupVisible = " .. tostring(healGroupVisible))
+        newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
+        newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
+    elseif which == "ICON_CREATURE" then
+        newContent = newContent:gsub("local creatureGroupVisible = true", "local creatureGroupVisible = " .. tostring(creatureGroupVisible))
+        newContent = newContent:gsub("local creatureGroupVisible = true", "local creatureGroupVisible = " .. tostring(creatureGroupVisible))
     end
     
     -- Salvar configuração de visibilidade atual
@@ -1263,9 +1559,116 @@ local function detectTiers(text, lastDamage)
     return false
 end
 
+-- Função para detectar e processar dano por criatura
+local function detectCreatureDamage(text, lastDamage)
+    
+    -- Padrões para detectar dano causado a criaturas
+    local damageDealtPatterns = {
+        -- Padrão: "A [nome da criatura] loses X hitpoints due to your critical attack"
+        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+critical%s+attack",
+        -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
+        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack",
+        -- Padrão: "A [nome da criatura] loses X hitpoints due to your [spell]"
+        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+[^%.]+",
+        -- Padrão: "A [nome da criatura] loses X hitpoints"
+        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?",
+        -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
+        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack",
+        -- Padrão: "[nome do jogador] loses X hitpoints due to an attack by a [criatura]" (dano causado pelo jogador)
+        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+an%s+attack%s+by%s+a%s+([^%s]+(?:%s+[^%s]+)*)"
+    }
+    
+    -- Padrões para detectar dano sofrido de criaturas
+    local damageReceivedPatterns = {
+        -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
+        "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
+        -- Padrão: "You lose X mana due to an attack by a [criatura]"
+        "You lose (%d+) mana due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
+        -- Padrão: "You lose X hitpoints due to [criatura]"
+        "You lose (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*)",
+        -- Padrão: "You lose X mana due to [criatura]"
+        "You lose (%d+) mana due to ([^%s]+(?:%s+[^%s]+)*)",
+        -- Padrão: "A [criatura] hits you for X hitpoints"
+        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        -- Padrão: "[criatura] hits you for X hitpoints"
+        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        -- Padrão: "A [criatura] loses X hitpoints due to an attack by [jogador]" (dano sofrido pelo jogador)
+        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+an%s+attack%s+by%s+([^%s]+(?:%s+[^%s]+)*)"
+    }
+    
+    -- Verificar dano causado
+    for i, pattern in ipairs(damageDealtPatterns) do
+        local creatureName, damage = text:match(pattern)
+        if creatureName and damage then
+            local damageValue = tonumber(damage)
+            if damageValue and damageValue > 0 then
+                processCreatureDamage(creatureName, damageValue, "dealt")
+                return true
+            end
+        end
+        
+        -- Para o último padrão que tem dois grupos de captura
+        if i == #damageDealtPatterns then
+            local playerName, damage, creatureName = text:match(pattern)
+            if playerName and damage and creatureName then
+                local damageValue = tonumber(damage)
+                if damageValue and damageValue > 0 then
+                    processCreatureDamage(creatureName, damageValue, "dealt")
+                    return true
+                end
+            end
+        end
+    end
+    
+    -- Verificar dano sofrido
+    for i, pattern in ipairs(damageReceivedPatterns) do
+        local creatureName, damage = text:match(pattern)
+        if creatureName and damage then
+            local damageValue = tonumber(damage)
+            if damageValue and damageValue > 0 then
+                processCreatureDamage(creatureName, damageValue, "received")
+                return true
+            end
+        end
+        
+        -- Para o último padrão que tem dois grupos de captura
+        if i == #damageReceivedPatterns then
+            local creatureName, damage, playerName = text:match(pattern)
+            if creatureName and damage and playerName then
+                local damageValue = tonumber(damage)
+                if damageValue and damageValue > 0 then
+                    processCreatureDamage(creatureName, damageValue, "received")
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
+-- Função para processar dano de criatura
+local function processCreatureDamage(creatureName, damage, damageType)
+    if not creatureName or not damage or not damageType then return end
+    
+    -- Criar chave única para a criatura e tipo de dano
+    local creatureKey = creatureName .. "_" .. damageType
+    
+    -- Processar ativação no grupo de criaturas
+    local success, newFoundCount = processGroup("creature", creatureKey, damage, {}, 
+        {x = ICON_CREATURE_X_POSITION, y = ICON_CREATURE_Y_POSITION}, creatures, creaturesFound)
+    if success then 
+        creaturesFound = newFoundCount
+    end
+end
+
 Game.registerEvent(Game.Events.TEXT_MESSAGE, function(data)
     -- Processar charms e heals primeiro
     if findCharmsProc(data.text) or findHealsProc(data.text) then return end
+
+    -- Detectar dano por criatura
+    local lastDamage = tonumber(data.text:match("(%d+) hitpoints?.*") or 0)
+    if detectCreatureDamage(data.text, lastDamage) then return end
 
     -- Verificar versão do bot para tiers
     if getBotVersion() < 1712 then
@@ -1274,7 +1677,6 @@ Game.registerEvent(Game.Events.TEXT_MESSAGE, function(data)
     end
 
     -- Detectar tiers
-    local lastDamage = tonumber(data.text:match("(%d+) hitpoints?.*") or 0)
     detectTiers(data.text, lastDamage)
 end)
 
@@ -1284,7 +1686,8 @@ local SAVE_DELAY = 2000  -- 2 segundos de delay para salvar
 local lastSavedPositions = {
     charm = { x = ICON_CHARM_X_POSITION, y = ICON_CHARM_Y_POSITION },
     tier = { x = ICON_TIER_X_POSITION, y = ICON_TIER_Y_POSITION },
-    heal = { x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION }
+    heal = { x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION },
+    creature = { x = ICON_CREATURE_X_POSITION, y = ICON_CREATURE_Y_POSITION }
 }
 
 -- Função para salvar posições com delay (só se a posição mudou)
@@ -1311,6 +1714,9 @@ local function scheduleSave(iconType, currentPos)
             elseif iconType == "HEAL" then
                 ICON_HEAL_X_POSITION = currentPos.x
                 ICON_HEAL_Y_POSITION = currentPos.y
+            elseif iconType == "CREATURE" then
+                ICON_CREATURE_X_POSITION = currentPos.x
+                ICON_CREATURE_Y_POSITION = currentPos.y
             end
             
         end
@@ -1339,14 +1745,21 @@ local function repositionHUDs(iconType, realPos, data, visibilityIcon)
     -- Reposicionar ícone de visibilidade
     if visibilityIcon then
         local mainIcon = nil
+        local groupType = nil
         if iconType == "CHARM" then
             mainIcon = charmIcon
+            groupType = "charm"
         elseif iconType == "TIER" then
             mainIcon = tierIcon
+            groupType = "tier"
         elseif iconType == "HEAL" then
             mainIcon = healIcon
+            groupType = "heal"
+        elseif iconType == "CREATURE" then
+            mainIcon = creatureIcon
+            groupType = "creature"
         end
-        manageVisibilityIcon(mainIcon, nil, visibilityIcon)
+        manageVisibilityIcon(mainIcon, groupType, visibilityIcon)
     end
 end
 
@@ -1373,6 +1786,11 @@ Game.registerEvent(Game.Events.HUD_DRAG, function(hudId, x, y)
         data = heals
         visibilityIcon = healVisibilityIcon
         mainIcon = healIcon
+    elseif creatureIcon and hudId == creatureIcon:getId() then
+        iconType = "CREATURE"
+        data = creatures
+        visibilityIcon = creatureVisibilityIcon
+        mainIcon = creatureIcon
     end
     
     if iconType and data and mainIcon then
@@ -1403,12 +1821,62 @@ end
 -- HUD para teste de padrões
 local testHUD = nil
 
+-- Função para testar padrões de criatura
+local function testCreaturePatterns()
+    checkAndPrint("testProgram", "=== TESTE DE PADRÕES DE CRIATURA ===")
+    
+    local testCreatureMessages = {
+        "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
+        "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
+        "You lose 50 hitpoints due to an attack by a dragon",
+        "A dragon hits you for 75 hitpoints",
+        "You lose 25 hitpoints due to demon",
+        "demon hits you for 30 hitpoints",
+        "A dragon loses 100 hitpoints due to your critical attack",
+        "A dragon loses 150 hitpoints due to your attack",
+        "You lose 40 mana due to an attack by a demon"
+    }
+    
+    for i, testMsg in ipairs(testCreatureMessages) do
+        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
+        local result = detectCreatureDamage(testMsg, 0)
+        checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    
+    checkAndPrint("testProgram", "=== FIM DO TESTE DE CRIATURA ===")
+end
+
+-- Função para simular dano de criatura e testar HUDs
+local function simulateCreatureDamage()
+    checkAndPrint("testProgram", "=== SIMULANDO DANO DE CRIATURA ===")
+    
+    -- Simular dano causado
+    processCreatureDamage("Dragon", 100, "dealt")
+    processCreatureDamage("Dragon", 150, "dealt")
+    processCreatureDamage("Dragon", 200, "dealt")
+    
+    -- Simular dano sofrido
+    processCreatureDamage("Dragon", 50, "received")
+    processCreatureDamage("Dragon", 75, "received")
+    
+    -- Forçar atualização dos HUDs
+    updateAllHuds()
+    
+    checkAndPrint("testProgram", "=== FIM DA SIMULAÇÃO ===")
+end
+
 if ActiveTestHud then
-    testHUD = HUD.new(50, 50, "Test Charm Patterns", true)
+    testHUD = HUD.new(50, 50, "Test Creature Damage", true)
     testHUD:setColor(255, 255, 0)
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
-        runAllTests()
+        simulateCreatureDamage()
     end)
 end
+
+-- Criar ícones principais após todas as funções serem definidas
+charmIcon, charmVisibilityIcon = createMainIcon(ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION, ICON_CHARM_ID, "charm")
+tierIcon, tierVisibilityIcon = createMainIcon(ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, ICON_TIER_ID, "tier")
+healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
+creatureIcon, creatureVisibilityIcon = createMainIcon(ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION, ICON_CREATURE_ID, "creature")
  
