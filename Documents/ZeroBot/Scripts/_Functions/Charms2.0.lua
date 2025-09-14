@@ -1450,8 +1450,10 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano causado
     for i, pattern in ipairs(damageDealtPatterns) do
+        checkAndPrint("statistics", "Testando padrão dealt " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
+            checkAndPrint("statistics", "MATCH DEALT: " .. creatureName .. " - " .. damage)
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
                 processCreatureDamage(creatureName, damageValue, "dealt")
@@ -1463,6 +1465,7 @@ local function detectCreatureDamage(text, lastDamage)
         if i == #damageDealtPatterns then
             local playerName, damage, creatureName = text:match(pattern)
             if playerName and damage and creatureName then
+                checkAndPrint("statistics", "MATCH DEALT (2 grupos): " .. creatureName .. " - " .. damage)
                 local damageValue = tonumber(damage)
                 if damageValue and damageValue > 0 then
                     processCreatureDamage(creatureName, damageValue, "dealt")
@@ -1474,8 +1477,10 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano sofrido
     for i, pattern in ipairs(damageReceivedPatterns) do
+        checkAndPrint("statistics", "Testando padrão received " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
+            checkAndPrint("statistics", "MATCH RECEIVED: " .. creatureName .. " - " .. damage)
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
                 processCreatureDamage(creatureName, damageValue, "received")
@@ -1487,6 +1492,7 @@ local function detectCreatureDamage(text, lastDamage)
         if i == #damageReceivedPatterns then
             local creatureName, damage, playerName = text:match(pattern)
             if creatureName and damage and playerName then
+                checkAndPrint("statistics", "MATCH RECEIVED (2 grupos): " .. creatureName .. " - " .. damage)
                 local damageValue = tonumber(damage)
                 if damageValue and damageValue > 0 then
                     processCreatureDamage(creatureName, damageValue, "received")
