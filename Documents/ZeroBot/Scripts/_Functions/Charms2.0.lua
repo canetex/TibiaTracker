@@ -201,16 +201,16 @@ local healVisibilityConfig = "TUDO"
 -- ================================================================
 local print_ativo = {
     erros = true,              -- Erros do sistema
-    messageCheck = true,       -- Verificação de mensagens
-    messageFound = true,       -- Mensagens com Tier/Charm encontradas
-    messageNotFound = true,    -- Mensagens com Tier/Charm não encontradas
+    messageCheck = false,      -- Verificação de mensagens
+    messageFound = false,      -- Mensagens com Tier/Charm encontradas
+    messageNotFound = false,   -- Mensagens com Tier/Charm não encontradas
     testProgram = false,       -- Testes do programa
     cooldown = false,          -- Informações de cooldown
-    statistics = true          -- Estatísticas detalhadas
+    statistics = false         -- Estatísticas detalhadas
 }
 
 -- Configurações do sistema
-local ActiveTestHud = true
+local ActiveTestHud = false
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
@@ -1414,7 +1414,7 @@ local function detectCreatureDamage(text, lastDamage)
     checkAndPrint("statistics", "Texto: " .. text)
     checkAndPrint("statistics", "LastDamage: " .. tostring(lastDamage))
     
-    -- Padrões para detectar dano causado a criaturas
+    -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
     local damageDealtPatterns = {
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your critical attack"
         "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+critical%s+attack",
@@ -1422,15 +1422,11 @@ local function detectCreatureDamage(text, lastDamage)
         "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack",
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your [spell]"
         "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+[^%.]+",
-        -- Padrão: "A [nome da criatura] loses X hitpoints"
-        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack",
-        -- Padrão: "[nome do jogador] loses X hitpoints due to an attack by a [criatura]" (dano causado pelo jogador)
-        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+an%s+attack%s+by%s+a%s+([^%s]+(?:%s+[^%s]+)*)"
+        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack"
     }
     
-    -- Padrões para detectar dano sofrido de criaturas
+    -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
     local damageReceivedPatterns = {
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
         "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
@@ -1443,12 +1439,10 @@ local function detectCreatureDamage(text, lastDamage)
         -- Padrão: "A [criatura] hits you for X hitpoints"
         "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
         -- Padrão: "[criatura] hits you for X hitpoints"
-        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
-        -- Padrão: "A [criatura] loses X hitpoints due to an attack by [jogador]" (dano sofrido pelo jogador)
-        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+an%s+attack%s+by%s+([^%s]+(?:%s+[^%s]+)*)"
+        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
     }
     
-    -- Verificar dano causado
+    -- Verificar dano causado (apenas danos próprios)
     for i, pattern in ipairs(damageDealtPatterns) do
         checkAndPrint("statistics", "Testando padrão dealt " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
@@ -1460,22 +1454,9 @@ local function detectCreatureDamage(text, lastDamage)
                 return true
             end
         end
-        
-        -- Para o último padrão que tem dois grupos de captura
-        if i == #damageDealtPatterns then
-            local playerName, damage, creatureName = text:match(pattern)
-            if playerName and damage and creatureName then
-                checkAndPrint("statistics", "MATCH DEALT (2 grupos): " .. creatureName .. " - " .. damage)
-                local damageValue = tonumber(damage)
-                if damageValue and damageValue > 0 then
-                    processCreatureDamage(creatureName, damageValue, "dealt")
-                    return true
-                end
-            end
-        end
     end
     
-    -- Verificar dano sofrido
+    -- Verificar dano sofrido (apenas danos próprios)
     for i, pattern in ipairs(damageReceivedPatterns) do
         checkAndPrint("statistics", "Testando padrão received " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
@@ -1485,19 +1466,6 @@ local function detectCreatureDamage(text, lastDamage)
             if damageValue and damageValue > 0 then
                 processCreatureDamage(creatureName, damageValue, "received")
                 return true
-            end
-        end
-        
-        -- Para o último padrão que tem dois grupos de captura
-        if i == #damageReceivedPatterns then
-            local creatureName, damage, playerName = text:match(pattern)
-            if creatureName and damage and playerName then
-                checkAndPrint("statistics", "MATCH RECEIVED (2 grupos): " .. creatureName .. " - " .. damage)
-                local damageValue = tonumber(damage)
-                if damageValue and damageValue > 0 then
-                    processCreatureDamage(creatureName, damageValue, "received")
-                    return true
-                end
             end
         end
     end
