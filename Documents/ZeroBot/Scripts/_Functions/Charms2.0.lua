@@ -52,8 +52,8 @@ local ICON_CHARM_X_POSITION = 434
 local ICON_CHARM_Y_POSITION = 985
 local ICON_CHARM_ID = 36726
 
-local ICON_TIER_X_POSITION = 437
-local ICON_TIER_Y_POSITION = 878
+local ICON_TIER_X_POSITION = 432
+local ICON_TIER_Y_POSITION = 858
 local ICON_TIER_ID = 30278
 
 local ICON_HEAL_X_POSITION = 1044
@@ -61,8 +61,8 @@ local ICON_HEAL_Y_POSITION = 933
 -- local ICON_HEAL_ID = 11604
 local ICON_HEAL_ID = 19077
 
-local ICON_CREATURE_X_POSITION = 1205
-local ICON_CREATURE_Y_POSITION = 802
+local ICON_CREATURE_X_POSITION = 1133
+local ICON_CREATURE_Y_POSITION = 762
 local ICON_CREATURE_ID = 5595
 
 -- Função para carregar posições salvas dos ícones
@@ -201,16 +201,16 @@ local healVisibilityConfig = "TUDO"
 -- ================================================================
 local print_ativo = {
     erros = true,              -- Erros do sistema
-    messageCheck = false,      -- Verificação de mensagens
-    messageFound = false,      -- Mensagens com Tier/Charm encontradas
-    messageNotFound = false,   -- Mensagens com Tier/Charm não encontradas
+    messageCheck = true,       -- Verificação de mensagens
+    messageFound = true,       -- Mensagens com Tier/Charm encontradas
+    messageNotFound = true,    -- Mensagens com Tier/Charm não encontradas
     testProgram = false,       -- Testes do programa
     cooldown = false,          -- Informações de cooldown
-    statistics = false         -- Estatísticas detalhadas
+    statistics = true          -- Estatísticas detalhadas
 }
 
 -- Configurações do sistema
-local ActiveTestHud = false
+local ActiveTestHud = true
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
@@ -314,7 +314,7 @@ local creatureVisibilityIcon = nil
 
 -- Estados de visibilidade dos grupos
 local charmGroupVisible = true
-local tierGroupVisible = false
+local tierGroupVisible = true
 local healGroupVisible = true
 local creatureGroupVisible = true
 local oneHourInSeconds = 3600
@@ -1128,8 +1128,8 @@ local function saveIconPosition(name, value, which)
         newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
         newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
     elseif which == "ICON_TIER" then
-        newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
-        newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
+        newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
+        newContent = newContent:gsub("local tierGroupVisible = true", "local tierGroupVisible = " .. tostring(tierGroupVisible))
     elseif which == "ICON_HEAL" then
         newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
         newContent = newContent:gsub("local healGroupVisible = true", "local healGroupVisible = " .. tostring(healGroupVisible))
@@ -1410,6 +1410,9 @@ end
 
 -- Função para detectar e processar dano por criatura
 local function detectCreatureDamage(text, lastDamage)
+    checkAndPrint("statistics", "=== DETECTCREATUREDAMAGE ===")
+    checkAndPrint("statistics", "Texto: " .. text)
+    checkAndPrint("statistics", "LastDamage: " .. tostring(lastDamage))
     
     -- Padrões para detectar dano causado a criaturas
     local damageDealtPatterns = {
@@ -1498,10 +1501,19 @@ end
 
 -- Função para processar dano de criatura
 local function processCreatureDamage(creatureName, damage, damageType)
-    if not creatureName or not damage or not damageType then return end
+    checkAndPrint("statistics", "=== PROCESSCREATUREDAMAGE ===")
+    checkAndPrint("statistics", "CreatureName: " .. tostring(creatureName))
+    checkAndPrint("statistics", "Damage: " .. tostring(damage))
+    checkAndPrint("statistics", "DamageType: " .. tostring(damageType))
+    
+    if not creatureName or not damage or not damageType then 
+        checkAndPrint("erros", "Parâmetros inválidos para processCreatureDamage")
+        return 
+    end
     
     -- Criar chave única para a criatura e tipo de dano
     local creatureKey = creatureName .. "_" .. damageType
+    checkAndPrint("statistics", "CreatureKey: " .. creatureKey)
     
     -- Processar ativação no grupo de criaturas
     local success, newFoundCount = processGroup("creature", creatureKey, damage, {}, 
@@ -1721,7 +1733,12 @@ if ActiveTestHud then
     testHUD:setColor(255, 255, 0)
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
-        simulateCreatureDamage()
+        -- Simular dados de criatura
+        processCreatureDamage("hellhunter inferniarch", 125, "dealt")
+        processCreatureDamage("hellhunter inferniarch", 100, "received")
+        processCreatureDamage("spellreaper inferniarch", 200, "dealt")
+        processCreatureDamage("spellreaper inferniarch", 150, "received")
+        updateAllHuds()
     end)
 end
 
