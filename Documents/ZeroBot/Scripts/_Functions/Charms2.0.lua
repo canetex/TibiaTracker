@@ -378,61 +378,18 @@ local function getTimeElapsedString(first)
     end
 end
 
--- Função especial para criar texto do HUD de criaturas
-local function createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
-    local parts = {}
-    
-    -- Nome da criatura
-    table.insert(parts, "[" .. creatureName .. "]")
-    
-    -- Dano Causado
-    if dealtData then
-        local dealtParts = {}
-        table.insert(dealtParts, "CAUSADO:")
-        table.insert(dealtParts, "\u{2B07}:" .. dealtData.lowest)
-        table.insert(dealtParts, "\u{1F503}:" .. string.format("%.1f", dealtData.average))
-        table.insert(dealtParts, "\u{2B06}:" .. dealtData.higher)
-        table.insert(dealtParts, "\u{1F4CA}:" .. (dealtData.totalSum or 0))
-        table.insert(parts, table.concat(dealtParts, " "))
-    end
-    
-    -- Dano Sofrido
-    if receivedData then
-        local receivedParts = {}
-        table.insert(receivedParts, "SOFRIDO:")
-        table.insert(receivedParts, "\u{2B07}:" .. receivedData.lowest)
-        table.insert(receivedParts, "\u{1F503}:" .. string.format("%.1f", receivedData.average))
-        table.insert(receivedParts, "\u{2B06}:" .. receivedData.higher)
-        table.insert(receivedParts, "\u{1F4CA}:" .. (receivedData.totalSum or 0))
-        table.insert(parts, table.concat(receivedParts, " "))
-    end
-    
-    -- Tempo
-    table.insert(parts, "TEMPO: " .. timeElapsed)
-    
-    return table.concat(parts, " | ")
-end
 
 -- Função genérica para criar texto do HUD com base nos controles de VisibleInfo
 local function createHudText(name, data, damage, timeElapsed, type)
-    -- Se for criatura, usar função especial
+    -- Se for criatura, usar formato simples
     if type == "creature" then
         local creatureName = name:match("^(.+)_(dealt|received)$")
         if creatureName then
             local damageType = name:match("_(dealt|received)$")
-            local dealtData = damageType == "dealt" and data or nil
-            local receivedData = damageType == "received" and data or nil
-            
-            -- Buscar dados complementares
-            if damageType == "dealt" then
-                local receivedKey = creatureName .. "_received"
-                receivedData = creatures[receivedKey]
-            else
-                local dealtKey = creatureName .. "_dealt"
-                dealtData = creatures[dealtKey]
-            end
-            
-            return createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
+            return string.format("[%s_%s] ↓:%d ⚡:%.1f ↑:%d 📊:%d | TEMPO: %s", 
+                creatureName, damageType:upper(), 
+                data.lowest or 0, data.average or 0, data.higher or 0, data.totalSum or 0, 
+                timeElapsed)
         end
     end
     
@@ -496,89 +453,39 @@ local function updateAllHuds()
     
     for _, group in ipairs(dataGroups) do
         if group.type == "creature" then
-            -- Tratamento especial para criaturas - agrupar por nome
-            local creatureGroups = {}
+            -- Tratamento simplificado para criaturas - igual aos outros grupos
             for name, item in pairs(group.data) do
-                local creatureName = name:match("^(.+)_(dealt|received)$")
-                if creatureName then
-                    if not creatureGroups[creatureName] then
-                        creatureGroups[creatureName] = {}
-                    end
-                    local damageType = name:match("_(dealt|received)$")
-                    creatureGroups[creatureName][damageType] = item
-                end
-            end
-            
-            -- Criar HUDs para cada criatura
-            local creatureIndex = 0
-            for creatureName, data in pairs(creatureGroups) do
-                local dealtData = data.dealt
-                local receivedData = data.received
-                local timeElapsed = ""
+                local timeElapsed = getTimeElapsedString(item.first)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
                 
-                -- Usar tempo do primeiro dado disponível
-                if dealtData then
-                    timeElapsed = getTimeElapsedString(dealtData.first)
-                elseif receivedData then
-                    timeElapsed = getTimeElapsedString(receivedData.first)
-                end
+                -- Determinar posição baseada no tipo
+                local iconX, iconY = ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION
+                local x = iconX - 35
+                local y = iconY + 40 + (15 * #group.data)
                 
-                local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
-                
-                -- Verificar se já existe HUD para esta criatura
-                local existingHud = nil
-                if dealtData and dealtData.hud.text then
-                    existingHud = dealtData.hud.text
-                elseif receivedData and receivedData.hud.text then
-                    existingHud = receivedData.hud.text
-                end
-                
-                if existingHud then
-                    -- Atualizar HUD existente
-                    if group.visible then
-                        -- Se deve estar visível, mostrar e atualizar texto
-                        if existingHud.show then
-                            existingHud:show()
-                        end
-                        if existingHud.setText then
-                            existingHud:setText(hudText)
-                        end
-                    else
-                        -- Se deve estar oculto, esconder o HUD
-                        if existingHud.hide then
-                            existingHud:hide()
-                        end
-                    end
-                elseif group.visible then
-                    -- Criar novo HUD
-                    local iconX, iconY = ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION
-                    local x = iconX - 35
-                    local y = iconY + 40 + (15 * creatureIndex)
-                    local newHud = createHud(x, y, hudText)
-                    
-                    -- Adicionar callback para zerar contador
-                    if newHud and newHud.setCallback then
-                        newHud:setCallback(function()
-                            -- Zerar ambos os tipos de dano
-                            if dealtData then
-                                resetCounter("creature", creatureName .. "_dealt")
-                            end
-                            if receivedData then
-                                resetCounter("creature", creatureName .. "_received")
-                            end
+                -- Criar HUD se não existir
+                if not item.hud.text then
+                    item.hud.text = createHud(x, y, hudText)
+                    if item.hud.text and item.hud.text.setCallback then
+                        item.hud.text:setCallback(function()
+                            resetCounter("creature", name)
                         end)
                     end
-                    
-                    -- Armazenar referência do HUD nos dados
-                    if dealtData then
-                        dealtData.hud.text = newHud
-                    end
-                    if receivedData then
-                        receivedData.hud.text = newHud
-                    end
                 end
                 
-                creatureIndex = creatureIndex + 1
+                -- Aplicar visibilidade
+                if group.visible then
+                    if item.hud.text and item.hud.text.show then
+                        item.hud.text:show()
+                    end
+                    if item.hud.text and item.hud.text.setText then
+                        item.hud.text:setText(hudText)
+                    end
+                else
+                    if item.hud.text and item.hud.text.hide then
+                        item.hud.text:hide()
+                    end
+                end
             end
         else
             -- Tratamento normal para outros grupos
@@ -643,44 +550,15 @@ local function updateHudTexts()
     
     for _, group in ipairs(dataGroups) do
         if group.type == "creature" then
-            -- Tratamento especial para criaturas - agrupar por nome
-            local creatureGroups = {}
+            -- Tratamento simplificado para criaturas - igual aos outros grupos
             for name, item in pairs(group.data) do
-                local creatureName = name:match("^(.+)_(dealt|received)$")
-                if creatureName then
-                    if not creatureGroups[creatureName] then
-                        creatureGroups[creatureName] = {}
+                if item.hud.text then
+                    local timeElapsed = getTimeElapsedString(item.first)
+                    local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, group.type)
+                    
+                    if item.hud.text.setText then
+                        item.hud.text:setText(hudText)
                     end
-                    local damageType = name:match("_(dealt|received)$")
-                    creatureGroups[creatureName][damageType] = item
-                end
-            end
-            
-            -- Atualizar HUDs para cada criatura
-            for creatureName, data in pairs(creatureGroups) do
-                local dealtData = data.dealt
-                local receivedData = data.received
-                local timeElapsed = ""
-                
-                -- Usar tempo do primeiro dado disponível
-                if dealtData then
-                    timeElapsed = getTimeElapsedString(dealtData.first)
-                elseif receivedData then
-                    timeElapsed = getTimeElapsedString(receivedData.first)
-                end
-                
-                local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
-                
-                -- Atualizar HUD existente
-                local existingHud = nil
-                if dealtData and dealtData.hud.text then
-                    existingHud = dealtData.hud.text
-                elseif receivedData and receivedData.hud.text then
-                    existingHud = receivedData.hud.text
-                end
-                
-                if existingHud and existingHud.setText then
-                    existingHud:setText(hudText)
                 end
             end
         else
@@ -703,44 +581,15 @@ end
 -- Função para atualizar apenas o texto dos HUDs de um grupo específico
 local function updateGroupHudTexts(groupType)
     if groupType == "creature" then
-        -- Tratamento especial para criaturas - agrupar por nome
-        local creatureGroups = {}
+        -- Tratamento simplificado para criaturas - igual aos outros grupos
         for name, item in pairs(creatures) do
-            local creatureName = name:match("^(.+)_(dealt|received)$")
-            if creatureName then
-                if not creatureGroups[creatureName] then
-                    creatureGroups[creatureName] = {}
+            if item.hud.text then
+                local timeElapsed = getTimeElapsedString(item.first)
+                local hudText = createHudText(name, item, item.damages[#item.damages] or 0, timeElapsed, groupType)
+                
+                if item.hud.text.setText then
+                    item.hud.text:setText(hudText)
                 end
-                local damageType = name:match("_(dealt|received)$")
-                creatureGroups[creatureName][damageType] = item
-            end
-        end
-        
-        -- Atualizar HUDs para cada criatura
-        for creatureName, data in pairs(creatureGroups) do
-            local dealtData = data.dealt
-            local receivedData = data.received
-            local timeElapsed = ""
-            
-            -- Usar tempo do primeiro dado disponível
-            if dealtData then
-                timeElapsed = getTimeElapsedString(dealtData.first)
-            elseif receivedData then
-                timeElapsed = getTimeElapsedString(receivedData.first)
-            end
-            
-            local hudText = createCreatureHudText(creatureName, dealtData, receivedData, timeElapsed)
-            
-            -- Atualizar HUD existente
-            local existingHud = nil
-            if dealtData and dealtData.hud.text then
-                existingHud = dealtData.hud.text
-            elseif receivedData and receivedData.hud.text then
-                existingHud = receivedData.hud.text
-            end
-            
-            if existingHud and existingHud.setText then
-                existingHud:setText(hudText)
             end
         end
     else
@@ -1659,6 +1508,8 @@ local function processCreatureDamage(creatureName, damage, damageType)
         {x = ICON_CREATURE_X_POSITION, y = ICON_CREATURE_Y_POSITION}, creatures, creaturesFound)
     if success then 
         creaturesFound = newFoundCount
+        -- Atualizar HUDs após processar
+        updateAllHuds()
     end
 end
 
