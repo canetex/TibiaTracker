@@ -1713,12 +1713,14 @@ if ActiveTestHud then
     testHUD:setColor(255, 255, 0)
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
+        checkAndPrint("statistics", "=== SIMULANDO DADOS DE CRIATURA ===")
         -- Simular dados de criatura
         processCreatureDamage("hellhunter inferniarch", 125, "dealt")
         processCreatureDamage("hellhunter inferniarch", 100, "received")
         processCreatureDamage("spellreaper inferniarch", 200, "dealt")
         processCreatureDamage("spellreaper inferniarch", 150, "received")
         updateAllHuds()
+        checkAndPrint("statistics", "=== FIM DA SIMULAÇÃO ===")
     end)
 end
 
