@@ -52,7 +52,7 @@ local TEXT_COLOR = {
 
 -- Posições dos ícones (serão ajustadas automaticamente para resoluções menores)
 local ICON_CHARM_X_POSITION = 121
-local ICON_CHARM_Y_POSITION = 136
+local ICON_CHARM_Y_POSITION = 137
 local ICON_CHARM_ID = 36726
 
 local ICON_TIER_X_POSITION = 124
@@ -64,8 +64,8 @@ local ICON_HEAL_Y_POSITION = 46
 -- local ICON_HEAL_ID = 11604
 local ICON_HEAL_ID = 19077
 
-local ICON_CREATURE_X_POSITION = 193
-local ICON_CREATURE_Y_POSITION = 42
+local ICON_CREATURE_X_POSITION = 129
+local ICON_CREATURE_Y_POSITION = 204
 local ICON_CREATURE_ID = 5595
 
 -- ================================================================
@@ -111,47 +111,11 @@ end
 -- ================================================================
 -- 2.2 FUNÇÕES DE ARQUIVO E PERSISTÊNCIA
 -- ================================================================
+local function getThisFilename() return debug.getinfo(1).source:gsub("Scripts/", "") end
+local filename = getThisFilename()
 
--- Função para carregar posições salvas dos ícones
-local function loadIconPositions()
-    local path = Engine.getScriptsDirectory() .. "/" .. filename
-    local file = io.open(path, "r")
-    if not file then return end
-    
-    local content = file:read("*all")
-    file:close()
-    if not content then return end
-    
-    -- Carregar posições dos ícones
-    local charmX = content:match("ICON_CHARM_X_POSITION = (%d+)")
-    local charmY = content:match("ICON_CHARM_Y_POSITION = (%d+)")
-    local tierX = content:match("ICON_TIER_X_POSITION = (%d+)")
-    local tierY = content:match("ICON_TIER_Y_POSITION = (%d+)")
-    local healX = content:match("ICON_HEAL_X_POSITION = (%d+)")
-    local healY = content:match("ICON_HEAL_Y_POSITION = (%d+)")
-    local creatureX = content:match("ICON_CREATURE_X_POSITION = (%d+)")
-    local creatureY = content:match("ICON_CREATURE_Y_POSITION = (%d+)")
-    
-    if charmX and charmY then
-        ICON_CHARM_X_POSITION = tonumber(charmX)
-        ICON_CHARM_Y_POSITION = tonumber(charmY)
-    end
-    if tierX and tierY then
-        ICON_TIER_X_POSITION = tonumber(tierX)
-        ICON_TIER_Y_POSITION = tonumber(tierY)
-    end
-    if healX and healY then
-        ICON_HEAL_X_POSITION = tonumber(healX)
-        ICON_HEAL_Y_POSITION = tonumber(healY)
-    end
-    if creatureX and creatureY then
-        ICON_CREATURE_X_POSITION = tonumber(creatureX)
-        ICON_CREATURE_Y_POSITION = tonumber(creatureY)
-    end
-end
 
--- Carregar posições salvas
-loadIconPositions()
+
 
 -- Ícones de visibilidade (ao lado dos ícones principais)
 local VISIBILITY_ICON_ID = 19369
@@ -1095,7 +1059,7 @@ end
 local function isTable(t) return type(t) == 'table' end
 local function hasDragged(currentPos, lastPos) return currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y end
 local function setPos(hud, x, y) hud:setPos(x, y) end
-local function getThisFilename() return debug.getinfo(1).source:gsub("Scripts/", "") end
+
 
 -- Função genérica para atualizar variáveis de cooldown globais
 local function updateGlobalCooldown(type, name, cooldownData)
@@ -1258,8 +1222,6 @@ local function openFile(path, mode)
     return file
 end
 
-local filename = getThisFilename()
-
 
 -- ================================================================
 -- FUNÇÕES DE UTILITÁRIOS
@@ -1286,8 +1248,8 @@ local function saveIconPosition(name, value, which)
     
     -- Salvar estados de visibilidade se for a primeira vez salvando
     if which == "ICON_CHARM" then
-        newContent = newContent:gsub("local charmGroupVisible = false", "local charmGroupVisible = " .. tostring(charmGroupVisible))
-        newContent = newContent:gsub("local charmGroupVisible = false", "local charmGroupVisible = " .. tostring(charmGroupVisible))
+        newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
+        newContent = newContent:gsub("local charmGroupVisible = true", "local charmGroupVisible = " .. tostring(charmGroupVisible))
     elseif which == "ICON_TIER" then
         newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
         newContent = newContent:gsub("local tierGroupVisible = false", "local tierGroupVisible = " .. tostring(tierGroupVisible))
