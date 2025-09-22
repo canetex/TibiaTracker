@@ -1483,32 +1483,18 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
     local damageDealtPatterns = {
-        -- Padrão: "A [nome da criatura] loses X hitpoints due to your critical attack"
-        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+critical%s+attack",
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
-        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack",
-        -- Padrão: "A [nome da criatura] loses X hitpoints due to your [spell]"
-        "A ([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+[^%.]+",
+        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%s]+(?:%s+[^%s]+)*)%s+loses%s+(%d+)%s+hitpoints?%s+due%s+to%s+your%s+attack"
+        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack"
     }
     
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
     local damageReceivedPatterns = {
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
         "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
-        -- Padrão: "You lose X hitpoints due to an attack by a [criatura]." (com ponto final)
-        "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)%.",
-        -- Padrão: "You lose X mana due to an attack by a [criatura]"
-        "You lose (%d+) mana due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
-        -- Padrão: "You lose X hitpoints due to [criatura]"
-        "You lose (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*)",
-        -- Padrão: "You lose X mana due to [criatura]"
-        "You lose (%d+) mana due to ([^%s]+(?:%s+[^%s]+)*)",
         -- Padrão: "A [criatura] hits you for X hitpoints"
-        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
-        -- Padrão: "[criatura] hits you for X hitpoints"
-        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
+        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
     }
     
     -- Verificar dano causado (apenas danos próprios)
