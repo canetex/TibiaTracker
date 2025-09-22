@@ -1478,6 +1478,28 @@ local function detectTiers(text, lastDamage)
     return false
 end
 
+-- Função para processar dano de criatura
+local function processCreatureDamage(creatureName, damage, damageType)
+    if not creatureName or not damage or not damageType then 
+        return false
+    end
+    
+    -- Criar chave única para a criatura e tipo de dano
+    local creatureKey = creatureName .. "_" .. damageType
+    
+    -- Processar ativação no grupo de criaturas
+    local success, newFoundCount = processGroup("creature", creatureKey, damage, {}, 
+        {x = ICON_CREATURE_X_POSITION, y = ICON_CREATURE_Y_POSITION}, creatures, creaturesFound)
+    if success then 
+        creaturesFound = newFoundCount
+        -- Atualizar HUDs após processar
+        updateAllHuds()
+        return true
+    end
+    
+    return false
+end
+
 -- Função para detectar e processar dano por criatura
 local function detectCreatureDamage(text, lastDamage)
     -- checkAndPrint("testProgram", "=== DETECTANDO CRIATURA: " .. text)
@@ -1533,28 +1555,6 @@ local function detectCreatureDamage(text, lastDamage)
         else
             checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " não capturou: " .. text)
         end
-    end
-    
-    return false
-end
-
--- Função para processar dano de criatura
-local function processCreatureDamage(creatureName, damage, damageType)
-    if not creatureName or not damage or not damageType then 
-        return false
-    end
-    
-    -- Criar chave única para a criatura e tipo de dano
-    local creatureKey = creatureName .. "_" .. damageType
-    
-    -- Processar ativação no grupo de criaturas
-    local success, newFoundCount = processGroup("creature", creatureKey, damage, {}, 
-        {x = ICON_CREATURE_X_POSITION, y = ICON_CREATURE_Y_POSITION}, creatures, creaturesFound)
-    if success then 
-        creaturesFound = newFoundCount
-        -- Atualizar HUDs após processar
-        updateAllHuds()
-        return true
     end
     
     return false
