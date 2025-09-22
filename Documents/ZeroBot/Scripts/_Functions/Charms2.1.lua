@@ -1285,171 +1285,7 @@ end
 -- 9.1 FUNÇÕES DE DEBUG E TESTE
 -- ================================================================
 
--- Função unificada de teste para padrões e configurações
-local function runAllTests()
-    print("=== INICIANDO TESTE COMPLETO DO SISTEMA ===")
-    checkAndPrint("testProgram", "=== TESTE COMPLETO DO SISTEMA ===")
-    
-    -- Teste de padrões de charms
-    print("\n--- TESTE DE PADRÕES DE CHARMS ---")
-    checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE CHARMS ---")
-    
-    local charmSuccessCount = 0
-    local charmTotalCount = 0
-    
-    for i, testMsg in ipairs(testMessages) do
-        print("Teste " .. i .. ": " .. testMsg)
-        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
-        
-        -- Testar diferentes tipos de detecção baseado no conteúdo da mensagem
-        local result = false
-        if testMsg:find("charm") then
-            result = findCharmsProc(testMsg)
-        elseif testMsg:find("heal") or testMsg:find("recover") or testMsg:find("gained") then
-            if findHealsProc then
-                result = findHealsProc(testMsg)
-            else
-                print("ERRO: Função findHealsProc não encontrada")
-            end
-        elseif testMsg:find("loses") or testMsg:find("hits you") or testMsg:find("due to") then
-            if detectCreatureDamage then
-                result = detectCreatureDamage(testMsg, 100)
-            else
-                print("ERRO: Função detectCreatureDamage não encontrada")
-            end
-        else
-            result = findCharmsProc(testMsg)
-        end
-        
-        charmTotalCount = charmTotalCount + 1
-        if result then
-            charmSuccessCount = charmSuccessCount + 1
-        end
-        
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-        checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    
-    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
-    
-    -- Teste de configurações de visibilidade
-    print("\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
-    checkAndPrint("testProgram", "\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
-    
-    local testData = {
-        count = 5, 
-        first = os.time() - 300, 
-        inAHour = 60,
-        damages = {100, 150, 200, 120, 180}, 
-        higher = 200, 
-        lowest = 100, 
-        average = 150,
-        totalSum = 750
-    }
-    local testDamage, testTimeElapsed = 150, "5m 0s"
-    local originalConfig = VisibleInfo.charm
-    
-    -- Teste múltiplas configurações
-    local configs = {
-        {name = "Todas habilitadas", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=true}},
-        {name = "Apenas ativações", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}},
-        {name = "Apenas dano", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=false}},
-        {name = "Nenhuma info", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}}
-    }
-    
-    for _, test in ipairs(configs) do
-        VisibleInfo.charm = test.config
-        local result = createHudText("Low Blow", testData, testDamage, testTimeElapsed, "charm")
-        print(test.name .. ": " .. result)
-        checkAndPrint("testProgram", test.name .. ": " .. result)
-    end
-    
-    VisibleInfo.charm = originalConfig
-    
-    -- Teste de detecção de tiers
-    print("\n--- TESTE DE DETECÇÃO DE TIERS ---")
-    local tierTestMessages = {
-        "You deal 150 damage. (critical attack)",
-        "You have been transcended.",
-        "You deal 200 damage. (perfect shoot)",
-        "You deal 100 damage. (active prey bonus)"
-    }
-    
-    local tierSuccessCount = 0
-    for i, testMsg in ipairs(tierTestMessages) do
-        print("Tier Teste " .. i .. ": " .. testMsg)
-        local result = false
-        -- Verificar se a função detectTiers existe e é local
-        if detectTiers then
-            result = detectTiers(testMsg, 150)
-        else
-            print("ERRO: Função detectTiers não encontrada")
-        end
-        if result then
-            tierSuccessCount = tierSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " sucessos")
-    
-    -- Teste de detecção de heals
-    print("\n--- TESTE DE DETECÇÃO DE HEALS ---")
-    local healTestMessages = {
-        "You heal yourself for 50 hitpoints",
-        "You were healed for 120 hitpoints",
-        "You were healed for 1 hitpoint. (vampiric embrace charm)",
-        "You were healed by Test Player for 100 hitpoints"
-    }
-    
-    local healSuccessCount = 0
-    for i, testMsg in ipairs(healTestMessages) do
-        print("Heal Teste " .. i .. ": " .. testMsg)
-        local result = false
-        if findHealsProc then
-            result = findHealsProc(testMsg)
-        else
-            print("ERRO: Função findHealsProc não encontrada")
-        end
-        if result then
-            healSuccessCount = healSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " sucessos")
-    
-    -- Teste de detecção de criaturas
-    print("\n--- TESTE DE DETECÇÃO DE CRIATURAS ---")
-    local creatureTestMessages = {
-        "A dragon loses 100 hitpoints due to your attack",
-        "You lose 50 hitpoints due to an attack by a dragon",
-        "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot)."
-    }
-    
-    local creatureSuccessCount = 0
-    for i, testMsg in ipairs(creatureTestMessages) do
-        print("Creature Teste " .. i .. ": " .. testMsg)
-        local result = false
-        if detectCreatureDamage then
-            result = detectCreatureDamage(testMsg, 100)
-        else
-            print("ERRO: Função detectCreatureDamage não encontrada")
-        end
-        if result then
-            creatureSuccessCount = creatureSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " sucessos")
-    
-    print("\n=== RESUMO DOS TESTES ===")
-    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
-    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " (" .. math.floor((tierSuccessCount/#tierTestMessages)*100) .. "%)")
-    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " (" .. math.floor((healSuccessCount/#healTestMessages)*100) .. "%)")
-    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " (" .. math.floor((creatureSuccessCount/#creatureTestMessages)*100) .. "%)")
-    
-    print("\n=== FIM DO TESTE COMPLETO ===")
-    checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
-end
+-- Função unificada de teste para padrões e configurações (será definida no final)
 
 local function findTiersProcs(tier, lastDamage)
     if not isTable(tierIcon) then
@@ -1931,6 +1767,152 @@ end
 -- ================================================================
 -- 10.1 FUNÇÕES DE INICIALIZAÇÃO
 -- ================================================================
+
+-- ================================================================
+-- 9.2 FUNÇÃO DE TESTE COMPLETA (DEFINIDA NO FINAL)
+-- ================================================================
+
+-- Função unificada de teste para padrões e configurações
+local function runAllTests()
+    print("=== INICIANDO TESTE COMPLETO DO SISTEMA ===")
+    checkAndPrint("testProgram", "=== TESTE COMPLETO DO SISTEMA ===")
+    
+    -- Teste de padrões de charms
+    print("\n--- TESTE DE PADRÕES DE CHARMS ---")
+    checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE CHARMS ---")
+    
+    local charmSuccessCount = 0
+    local charmTotalCount = 0
+    
+    for i, testMsg in ipairs(testMessages) do
+        print("Teste " .. i .. ": " .. testMsg)
+        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
+        
+        -- Testar diferentes tipos de detecção baseado no conteúdo da mensagem
+        local result = false
+        if testMsg:find("charm") then
+            result = findCharmsProc(testMsg)
+        elseif testMsg:find("heal") or testMsg:find("recover") or testMsg:find("gained") then
+            result = findHealsProc(testMsg)
+        elseif testMsg:find("loses") or testMsg:find("hits you") or testMsg:find("due to") then
+            result = detectCreatureDamage(testMsg, 100)
+        else
+            result = findCharmsProc(testMsg)
+        end
+        
+        charmTotalCount = charmTotalCount + 1
+        if result then
+            charmSuccessCount = charmSuccessCount + 1
+        end
+        
+        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+        checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    
+    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
+    
+    -- Teste de configurações de visibilidade
+    print("\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
+    checkAndPrint("testProgram", "\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
+    
+    local testData = {
+        count = 5, 
+        first = os.time() - 300, 
+        inAHour = 60,
+        damages = {100, 150, 200, 120, 180}, 
+        higher = 200, 
+        lowest = 100, 
+        average = 150,
+        totalSum = 750
+    }
+    local testDamage, testTimeElapsed = 150, "5m 0s"
+    local originalConfig = VisibleInfo.charm
+    
+    -- Teste múltiplas configurações
+    local configs = {
+        {name = "Todas habilitadas", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=true}},
+        {name = "Apenas ativações", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}},
+        {name = "Apenas dano", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=false}},
+        {name = "Nenhuma info", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}}
+    }
+    
+    for _, test in ipairs(configs) do
+        VisibleInfo.charm = test.config
+        local result = createHudText("Low Blow", testData, testDamage, testTimeElapsed, "charm")
+        print(test.name .. ": " .. result)
+        checkAndPrint("testProgram", test.name .. ": " .. result)
+    end
+    
+    VisibleInfo.charm = originalConfig
+    
+    -- Teste de detecção de tiers
+    print("\n--- TESTE DE DETECÇÃO DE TIERS ---")
+    local tierTestMessages = {
+        "You deal 150 damage. (critical attack)",
+        "You have been transcended.",
+        "You deal 200 damage. (perfect shoot)",
+        "You deal 100 damage. (active prey bonus)"
+    }
+    
+    local tierSuccessCount = 0
+    for i, testMsg in ipairs(tierTestMessages) do
+        print("Tier Teste " .. i .. ": " .. testMsg)
+        local result = detectTiers(testMsg, 150)
+        if result then
+            tierSuccessCount = tierSuccessCount + 1
+        end
+        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " sucessos")
+    
+    -- Teste de detecção de heals
+    print("\n--- TESTE DE DETECÇÃO DE HEALS ---")
+    local healTestMessages = {
+        "You heal yourself for 50 hitpoints",
+        "You were healed for 120 hitpoints",
+        "You were healed for 1 hitpoint. (vampiric embrace charm)",
+        "You were healed by Test Player for 100 hitpoints"
+    }
+    
+    local healSuccessCount = 0
+    for i, testMsg in ipairs(healTestMessages) do
+        print("Heal Teste " .. i .. ": " .. testMsg)
+        local result = findHealsProc(testMsg)
+        if result then
+            healSuccessCount = healSuccessCount + 1
+        end
+        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " sucessos")
+    
+    -- Teste de detecção de criaturas
+    print("\n--- TESTE DE DETECÇÃO DE CRIATURAS ---")
+    local creatureTestMessages = {
+        "A dragon loses 100 hitpoints due to your attack",
+        "You lose 50 hitpoints due to an attack by a dragon",
+        "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot)."
+    }
+    
+    local creatureSuccessCount = 0
+    for i, testMsg in ipairs(creatureTestMessages) do
+        print("Creature Teste " .. i .. ": " .. testMsg)
+        local result = detectCreatureDamage(testMsg, 100)
+        if result then
+            creatureSuccessCount = creatureSuccessCount + 1
+        end
+        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " sucessos")
+    
+    print("\n=== RESUMO DOS TESTES ===")
+    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
+    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " (" .. math.floor((tierSuccessCount/#tierTestMessages)*100) .. "%)")
+    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " (" .. math.floor((healSuccessCount/#healTestMessages)*100) .. "%)")
+    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " (" .. math.floor((creatureSuccessCount/#creatureTestMessages)*100) .. "%)")
+    
+    print("\n=== FIM DO TESTE COMPLETO ===")
+    checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
+end
 
 -- Criar ícones principais após todas as funções serem definidas
 charmIcon, charmVisibilityIcon = createMainIcon(ICON_CHARM_X_POSITION, ICON_CHARM_Y_POSITION, ICON_CHARM_ID, "charm")
