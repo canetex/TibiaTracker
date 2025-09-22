@@ -1758,22 +1758,35 @@ local function runAllTests()
         
         -- Processar charms e heals primeiro
         local result = false
-        if findCharmsProc(eventData.text) or findHealsProc(eventData.text) then 
+        local processedBy = "none"
+        
+        if findCharmsProc(eventData.text) then 
             result = true
+            processedBy = "charms"
+        elseif findHealsProc(eventData.text) then
+            result = true
+            processedBy = "heals"
         else
             -- Detectar dano por criatura
             local lastDamage = tonumber(eventData.text:match("(%d+) hitpoints?.*") or 0)
             if detectCreatureDamage(eventData.text, lastDamage) then 
                 result = true
+                processedBy = "creatures"
             else
                 -- Verificar versão do bot para tiers
                 if getBotVersion() >= 1712 then
                     -- Detectar tiers
                     if detectTiers(eventData.text, lastDamage) then
                         result = true
+                        processedBy = "tiers"
                     end
                 end
             end
+        end
+        
+        -- Debug: mostrar qual função processou a mensagem
+        if testMsg.creature and processedBy ~= "creatures" then
+            checkAndPrint("testProgram", "ERRO: Mensagem de criatura processada por " .. processedBy .. ": " .. eventData.text)
         end
         
         charmTotalCount = charmTotalCount + 1
