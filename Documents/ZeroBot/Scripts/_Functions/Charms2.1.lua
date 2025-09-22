@@ -114,7 +114,7 @@ end
 
 -- Função para carregar posições salvas dos ícones
 local function loadIconPositions()
-    local path = Engine.getScriptsDirectory() .. "/_Functions/Charms2.1.lua"
+    local path = Engine.getScriptsDirectory() .. "/" .. filename
     local file = io.open(path, "r")
     if not file then return end
     
@@ -1710,7 +1710,7 @@ local function scheduleSave(iconType, currentPos)
         -- Só salva se a posição realmente mudou
         local lastPos = lastSavedPositions[iconType:lower()]
         if currentPos.x ~= lastPos.x or currentPos.y ~= lastPos.y then
-            local mainFilename = "_Functions/Charms2.1.lua"
+            local mainFilename = filename
             saveIconPosition(mainFilename, currentPos, "ICON_" .. iconType)
             lastSavedPositions[iconType:lower()] = { x = currentPos.x, y = currentPos.y }
             
