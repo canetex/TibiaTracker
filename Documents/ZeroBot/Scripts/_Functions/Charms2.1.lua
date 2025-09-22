@@ -294,9 +294,9 @@ local testMessages = {
     {message =  "You recover 80 hitpoints", type = "heal", value = 80 , heal = "Self", id=19 },
     {message =  "You were healed for 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=20 },
     {message =  "You were healed for 17 hitpoints", type = "heal", value = 17 , heal = "Self", id=21 },
-    {message =  "You were healed for 1 hitpoint. (vampiric embrace charm)", type = "heal", value = 1 , heal = "Vampiric Embrace", id=22 },
-    {message =  "You were healed for 18 hitpoints. (vampiric embrace charm)", type = "heal", value = 18 , heal = "Vampiric Embrace", id=23 },
-    {message =  "You were healed for 57 hitpoints. (vampiric embrace charm)", type = "heal", value = 57 , heal = "Vampiric Embrace", id=24 },
+    {message =  "You were healed for 1 hitpoint. (vampiric embrace charm)", type = {"charm", "heal"} , value = 1 , heal = "Vampiric Embrace", id=22 },
+    {message =  "You were healed for 18 hitpoints. (vampiric embrace charm)", type = {"charm", "heal"}, value = 18 , heal = "Vampiric Embrace", id=23 },
+    {message =  "You were healed for 57 hitpoints. (vampiric embrace charm)", type = {"charm", "heal"}, value = 57 , heal = "Vampiric Embrace", id=24 },
     {message =  "You healed yourself for 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=25 },
     {message =  "You healed yourself for 736 hitpoints", type = "heal", value = 736 , heal = "Self", id=26 },
     {message =  "You were healed by Test Player for 1 hitpoint", type = "heal", value = 1 , heal = "By Test Player", id=27 },
@@ -331,7 +331,7 @@ local testMessages = {
     {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby", id=56 },
     {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse", id=57 },
     {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse", id=58 },
-    {message =  "You lose 406 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 406 , creature = "By Spellreaper Inferniarch", id=59 },
+    {message =  "You lose 406 hitpoints due to an attack by a spellreaper Demon.", type = "creature", value = 406 , creature = "By Spellreaper Demon", id=59 },
     {message =  "You lose 17 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 17 , creature = "By Spellreaper Inferniarch", id=60 },
 }
 
@@ -915,7 +915,7 @@ local function checkAndUpdateCooldown(cooldownData)
     -- Verificar se ainda está em cooldown
     if lastTime > 0 and currentTime < lastTime then
         local remaining = lastTime - currentTime
-        print("DEBUG COOLDOWN: ERRO - Cooldown ativo: " .. remaining .. "s restantes")
+        
         checkAndPrint("testProgram", "DEBUG COOLDOWN: ERRO - Cooldown ativo: " .. remaining .. "s restantes")
         checkAndPrint("cooldown", "Cooldown ativo: " .. remaining .. "s restantes")
         return false
@@ -923,7 +923,7 @@ local function checkAndUpdateCooldown(cooldownData)
     
     -- Atualizar cooldown para o próximo uso
     cooldownData.lastTime = currentTime + cooldown
-    print("DEBUG COOLDOWN: Cooldown atualizado - novo lastTime: " .. cooldownData.lastTime)
+    
     checkAndPrint("testProgram", "DEBUG COOLDOWN: Cooldown atualizado - novo lastTime: " .. cooldownData.lastTime)
     return true
 end
@@ -1013,19 +1013,19 @@ end
 -- @param cooldownData: dados de cooldown (opcional)
 -- @return: true se processado com sucesso, false se em cooldown
 local function processActivation(data, name, damage, cooldownData)
-    print("DEBUG PROCESSACTIVATION: Iniciando processActivation - Name: " .. name .. ", Damage: " .. damage)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Iniciando processActivation - Name: " .. name .. ", Damage: " .. damage)
     
     -- Validar parâmetros de entrada
     if not validateInput(data, "table", true) then
-        print("DEBUG PROCESSACTIVATION: ERRO - data deve ser uma tabela")
+        
         checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - data deve ser uma tabela")
         checkAndPrint("erros", "Erro: data deve ser uma tabela")
         return false
     end
     
     if not validateInput(name, "string", false) then
-        print("DEBUG PROCESSACTIVATION: ERRO - name deve ser uma string não vazia")
+        
         checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - name deve ser uma string não vazia")
         checkAndPrint("erros", "Erro: name deve ser uma string não vazia")
         return false
@@ -1033,21 +1033,21 @@ local function processActivation(data, name, damage, cooldownData)
     
     if not damage or type(damage) ~= "number" or damage < 0 then
         damage = 0 -- Valor padrão para dano inválido
-        print("DEBUG PROCESSACTIVATION: Damage ajustado para 0")
+        
         checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Damage ajustado para 0")
     end
     
     -- Verificar cooldown se especificado
-    print("DEBUG PROCESSACTIVATION: Verificando cooldown para " .. name)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Verificando cooldown para " .. name)
     
     if not checkAndUpdateCooldown(cooldownData) then
-        print("DEBUG PROCESSACTIVATION: ERRO - Cooldown ativo para " .. name)
+        
         checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - Cooldown ativo para " .. name)
         return false
     end
     
-    print("DEBUG PROCESSACTIVATION: Cooldown OK para " .. name)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Cooldown OK para " .. name)
     
     -- Inicializar ou atualizar dados
@@ -1173,28 +1173,28 @@ end
 
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
-    print("DEBUG PROCESSGROUP: Iniciando processGroup - Type: " .. groupType .. ", Name: " .. name .. ", Damage: " .. damage)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSGROUP: Iniciando processGroup - Type: " .. groupType .. ", Name: " .. name .. ", Damage: " .. damage)
     
     -- Validar entrada
     if not name or type(name) ~= "string" or name == "" then
-        print("DEBUG PROCESSGROUP: ERRO - Nome inválido: " .. tostring(name))
+    
         checkAndPrint("testProgram", "DEBUG PROCESSGROUP: ERRO - Nome inválido: " .. tostring(name))
         return false, foundCount
     end
     
     -- Configurar cooldown
     local cooldownData = getCooldownData(groupType, name)
-    print("DEBUG PROCESSGROUP: CooldownData obtido para " .. name)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSGROUP: CooldownData obtido para " .. name)
     
     -- Processar ativação
     local success = processActivation(data, name, damage, cooldownData)
-    print("DEBUG PROCESSGROUP: processActivation retornou: " .. tostring(success) .. " para " .. name)
+    
     checkAndPrint("testProgram", "DEBUG PROCESSGROUP: processActivation retornou: " .. tostring(success) .. " para " .. name)
     
     if not success then 
-        print("DEBUG PROCESSGROUP: processActivation falhou para " .. name)
+    
         checkAndPrint("testProgram", "DEBUG PROCESSGROUP: processActivation falhou para " .. name)
         return false, foundCount 
     end
@@ -1463,30 +1463,30 @@ local function findHealsProc(text)
     local healName = nil
     if healType == "Self Heal" then
         healName = "Self"
-        print("DEBUG HEAL: Nome determinado - Self")
+    
         checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Self")
     elseif healType == "Imbuiments Heal" then
         -- Verificar se é mana ou hitpoints baseado no texto
         if text:find("mana") then
             healName = "Void Leech"
-            print("DEBUG HEAL: Nome determinado - Void Leech (mana)")
+    
             checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Void Leech (mana)")
         else
             healName = "Vampirism"
-            print("DEBUG HEAL: Nome determinado - Vampirism (hitpoints)")
+    
             checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Vampirism (hitpoints)")
         end
     elseif healType == "PlayerFrom Heal" then
         healName = "From_" .. playerName
-        print("DEBUG HEAL: Nome determinado - From_" .. playerName)
+    
         checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - From_" .. playerName)
     elseif healType == "PlayerTo Heal" then
         healName = "To_" .. playerName
-        print("DEBUG HEAL: Nome determinado - To_" .. playerName)
+    
         checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - To_" .. playerName)
     elseif healType == "Charm Heal" then
         healName = "Charm_" .. charmName
-        print("DEBUG HEAL: Nome determinado - Charm_" .. charmName)
+    
         checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Charm_" .. charmName)
     end
     
@@ -1495,7 +1495,7 @@ local function findHealsProc(text)
         healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
     end
 
-    print("DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
+    
     checkAndPrint("testProgram", "DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
 
     local success, newFoundCount = processGroup("heal", healName, healAmount, healPatterns, 
@@ -1503,10 +1503,10 @@ local function findHealsProc(text)
     
     if success then 
         healsFound = newFoundCount
-        print("DEBUG HEAL: processGroup retornou TRUE para " .. healName .. ", healsFound: " .. healsFound)
+    
         checkAndPrint("testProgram", "DEBUG HEAL: processGroup retornou TRUE para " .. healName .. ", healsFound: " .. healsFound)
     else
-        print("DEBUG HEAL: processGroup retornou FALSE para " .. healName)
+    
         checkAndPrint("testProgram", "DEBUG HEAL: processGroup retornou FALSE para " .. healName)
     end
 
@@ -1591,12 +1591,16 @@ end
 local function detectCreatureDamage(text, lastDamage)
     -- checkAndPrint("testProgram", "=== DETECTANDO CRIATURA: " .. text)
     
-    -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
+    -- Padrões para detectar dano causado a criaturas (próprios e de outros jogadores)
     local damageDealtPatterns = {
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
         "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack"
+        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack",
+        -- Padrão: "A [nome da criatura] loses X hitpoints due to [jogador] attack"
+        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack",
+        -- Padrão: "[nome da criatura] loses X hitpoints due to [jogador] attack"
+        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack"
     }
     
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
@@ -1615,15 +1619,21 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Debug: testar padrão manualmente (removido - já confirmado que funciona)
     
-    -- Verificar dano causado (apenas danos próprios)
+    -- Verificar dano causado (próprios e de outros jogadores)
     for i, pattern in ipairs(damageDealtPatterns) do
         -- checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
-        local creatureName, damage = text:match(pattern)
-        if creatureName and damage then
+        local matches = {text:match(pattern)}
+        if #matches > 0 then
+            local creatureName, damage, playerName = matches[1], matches[2], matches[3]
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
-                checkAndPrint("testProgram", "DEALT Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
-                processCreatureDamage(creatureName, damageValue, "dealt")
+                -- Se há nome do jogador, incluir na chave da criatura
+                local creatureKey = creatureName
+                if playerName then
+                    creatureKey = creatureName .. "_by_" .. playerName
+                end
+                checkAndPrint("testProgram", "DEALT Padrão " .. i .. " capturou: " .. creatureKey .. " - " .. damageValue)
+                processCreatureDamage(creatureKey, damageValue, "dealt")
                 return true
             end
         end
@@ -1900,14 +1910,14 @@ local function runAllTests(messageIds)
                 checkAndPrint("testProgram", "DEBUG: Mensagem ID " .. id .. " NÃO encontrada!")
             end
         end
-        print("--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
+    
         checkAndPrint("testProgram", "--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
-        print("DEBUG: Total de mensagens para testar: " .. #messagesToTest)
+    
         checkAndPrint("testProgram", "DEBUG: Total de mensagens para testar: " .. #messagesToTest)
     else
         -- Testar todas as mensagens
         messagesToTest = testMessages
-        print("\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
+    
         checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
     end
     
@@ -1969,10 +1979,10 @@ local function runAllTests(messageIds)
         -- checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
     end
     
-    print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
+    checkAndPrint("testProgram", "\n--- Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
     
     -- Teste de configurações de visibilidade
-    print("\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
+    
     checkAndPrint("testProgram", "\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
     
     local testData = {
@@ -1999,7 +2009,7 @@ local function runAllTests(messageIds)
     for _, test in ipairs(configs) do
         VisibleInfo.charm = test.config
         local result = createHudText("Low Blow", testData, testDamage, testTimeElapsed, "charm")
-        print(test.name .. ": " .. result)
+    
         checkAndPrint("testProgram", test.name .. ": " .. result)
     end
     
@@ -2007,54 +2017,50 @@ local function runAllTests(messageIds)
     
     
     
-    print("\n=== RESUMO DOS TESTES ===")
-    print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
     
+    checkAndPrint("testProgram", "\n=== RESUMO DOS TESTES ===")
+    checkAndPrint("testProgram", "\nMensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
     -- Mostrar informações que deveriam estar em cada HUD
-    print("\n=== INFORMAÇÕES DOS HUDS ===")
+    
     checkAndPrint("testProgram", "\n=== INFORMAÇÕES DOS HUDS ===")
     
     -- HUD de Charms
-    print("\n--- HUD CHARMS ---")
+    
     checkAndPrint("testProgram", "\n--- HUD CHARMS ---")
     for charmName, data in pairs(charms) do
         if data.count > 0 then
-            print("[" .. charmName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
             checkAndPrint("testProgram", "[" .. charmName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
         end
     end
     
     -- HUD de Tiers
-    print("\n--- HUD TIERS ---")
+    
     checkAndPrint("testProgram", "\n--- HUD TIERS ---")
     for tierName, data in pairs(tiers) do
         if data.count > 0 then
-            print("[" .. tierName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
             checkAndPrint("testProgram", "[" .. tierName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
         end
     end
     
     -- HUD de Heals
-    print("\n--- HUD HEALS ---")
+    
     checkAndPrint("testProgram", "\n--- HUD HEALS ---")
     for healName, data in pairs(heals) do
         if data.count > 0 then
-            print("[" .. healName .. "] - Ativações: " .. data.count .. " - Cura: " .. data.totalSum)
             checkAndPrint("testProgram", "[" .. healName .. "] - Ativações: " .. data.count .. " - Cura: " .. data.totalSum)
         end
     end
     
     -- HUD de Creatures
-    print("\n--- HUD CREATURES ---")
+    
     checkAndPrint("testProgram", "\n--- HUD CREATURES ---")
     for creatureName, data in pairs(creatures) do
         if data.count > 0 then
-            print("[" .. creatureName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
             checkAndPrint("testProgram", "[" .. creatureName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
         end
     end
     
-    print("\n=== FIM DO TESTE COMPLETO ===")
+    
     checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
 end
 
@@ -2064,7 +2070,8 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        runAllTests({47,50,12}) -- Testa todas as mensagens por padrão
+        -- runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
+        runAllTests({23,32}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
