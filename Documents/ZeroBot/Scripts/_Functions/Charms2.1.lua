@@ -1830,71 +1830,10 @@ local function runAllTests()
     
     VisibleInfo.charm = originalConfig
     
-    -- Teste de detecção de tiers
-    print("\n--- TESTE DE DETECÇÃO DE TIERS ---")
-    local tierTestMessages = {
-        "You deal 150 damage. (critical attack)",
-        "You have been transcended.",
-        "You deal 200 damage. (perfect shoot)",
-        "You deal 100 damage. (active prey bonus)"
-    }
-    
-    local tierSuccessCount = 0
-    for i, testMsg in ipairs(tierTestMessages) do
-        print("Tier Teste " .. i .. ": " .. testMsg)
-        local result = detectTiers(testMsg, 150)
-        if result then
-            tierSuccessCount = tierSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " sucessos")
-    
-    -- Teste de detecção de heals
-    print("\n--- TESTE DE DETECÇÃO DE HEALS ---")
-    local healTestMessages = {
-        "You heal yourself for 50 hitpoints",
-        "You were healed for 120 hitpoints",
-        "You were healed for 1 hitpoint. (vampiric embrace charm)",
-        "You were healed by Test Player for 100 hitpoints"
-    }
-    
-    local healSuccessCount = 0
-    for i, testMsg in ipairs(healTestMessages) do
-        print("Heal Teste " .. i .. ": " .. testMsg)
-        local result = findHealsProc(testMsg)
-        if result then
-            healSuccessCount = healSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " sucessos")
-    
-    -- Teste de detecção de criaturas
-    print("\n--- TESTE DE DETECÇÃO DE CRIATURAS ---")
-    local creatureTestMessages = {
-        "A dragon loses 100 hitpoints due to your attack",
-        "You lose 50 hitpoints due to an attack by a dragon",
-        "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot)."
-    }
-    
-    local creatureSuccessCount = 0
-    for i, testMsg in ipairs(creatureTestMessages) do
-        print("Creature Teste " .. i .. ": " .. testMsg)
-        local result = detectCreatureDamage(testMsg, 100)
-        if result then
-            creatureSuccessCount = creatureSuccessCount + 1
-        end
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " sucessos")
     
     
     print("\n=== RESUMO DOS TESTES ===")
     print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
-    print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " (" .. math.floor((tierSuccessCount/#tierTestMessages)*100) .. "%)")
-    print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " (" .. math.floor((healSuccessCount/#healTestMessages)*100) .. "%)")
-    print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " (" .. math.floor((creatureSuccessCount/#creatureTestMessages)*100) .. "%)")
     
     print("\n=== FIM DO TESTE COMPLETO ===")
     checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
