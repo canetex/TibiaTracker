@@ -1545,15 +1545,15 @@ local function detectCreatureDamage(text, lastDamage)
         if creatureName and damage then
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
-                checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
+                -- checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
                 local processResult = processCreatureDamage(creatureName, damageValue, "received")
-                checkAndPrint("testProgram", "processCreatureDamage retornou: " .. tostring(processResult))
+                -- checkAndPrint("testProgram", "processCreatureDamage retornou: " .. tostring(processResult))
                 return true
             else
-                checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " capturou mas damageValue inválido: " .. tostring(damageValue))
+                -- checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " capturou mas damageValue inválido: " .. tostring(damageValue))
             end
         else
-            checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " não capturou: " .. text)
+            -- checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " não capturou: " .. text)
         end
     end
     
@@ -1790,15 +1790,15 @@ local function runAllTests()
             end
         end
         
-        -- Debug: mostrar se detectCreatureDamage foi chamada
-        if testMsg.creature then
-            checkAndPrint("testProgram", "DEBUG: detectCreatureDamage chamada para: " .. eventData.text)
-        end
+        -- Debug: mostrar se detectCreatureDamage foi chamada (removido - sistema funcionando)
+        -- if testMsg.creature then
+        --     checkAndPrint("testProgram", "DEBUG: detectCreatureDamage chamada para: " .. eventData.text)
+        -- end
         
-        -- Debug: mostrar qual função processou a mensagem
-        if testMsg.creature and processedBy ~= "creatures" then
-            checkAndPrint("testProgram", "ERRO: Mensagem de criatura processada por " .. processedBy .. ": " .. eventData.text)
-        end
+        -- Debug: mostrar qual função processou a mensagem (removido - sistema funcionando)
+        -- if testMsg.creature and processedBy ~= "creatures" then
+        --     checkAndPrint("testProgram", "ERRO: Mensagem de criatura processada por " .. processedBy .. ": " .. eventData.text)
+        -- end
         
         charmTotalCount = charmTotalCount + 1
         if result then
