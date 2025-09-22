@@ -1727,30 +1727,6 @@ end
 -- HUD para teste de padrões
 local testHUD = nil
 
--- Função para testar padrões de criatura
-local function testCreaturePatterns()
-    checkAndPrint("testProgram", "=== TESTE DE PADRÕES DE CRIATURA ===")
-    
-    local testCreatureMessages = {
-        "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
-        "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
-        "You lose 50 hitpoints due to an attack by a dragon",
-        "A dragon hits you for 75 hitpoints",
-        "You lose 25 hitpoints due to demon",
-        "demon hits you for 30 hitpoints",
-        "A dragon loses 100 hitpoints due to your critical attack",
-        "A dragon loses 150 hitpoints due to your attack",
-        "You lose 40 mana due to an attack by a demon"
-    }
-    
-    for i, testMsg in ipairs(testCreatureMessages) do
-        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
-        local result = detectCreatureDamage(testMsg, 0)
-        checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-    end
-    
-    checkAndPrint("testProgram", "=== FIM DO TESTE DE CRIATURA ===")
-end
 
 
 
