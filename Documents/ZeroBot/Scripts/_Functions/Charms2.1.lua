@@ -1480,7 +1480,7 @@ end
 
 -- Função para detectar e processar dano por criatura
 local function detectCreatureDamage(text, lastDamage)
-    checkAndPrint("testProgram", "=== DETECTANDO CRIATURA: " .. text)
+    -- checkAndPrint("testProgram", "=== DETECTANDO CRIATURA: " .. text)
     
     -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
     local damageDealtPatterns = {
@@ -1500,7 +1500,7 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano causado (apenas danos próprios)
     for i, pattern in ipairs(damageDealtPatterns) do
-        checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
+        -- checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
             local damageValue = tonumber(damage)
@@ -1514,7 +1514,7 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano sofrido (apenas danos próprios)
     for i, pattern in ipairs(damageReceivedPatterns) do
-        checkAndPrint("testProgram", "Testando padrão RECEIVED " .. i .. ": " .. pattern)
+        -- checkAndPrint("testProgram", "Testando padrão RECEIVED " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
             local damageValue = tonumber(damage)
@@ -1747,8 +1747,8 @@ local function runAllTests()
     
     -- Simular o processamento real de mensagens usando o sistema de eventos
     for i, testMsg in ipairs(testMessages) do
-        print("Teste " .. i .. ": " .. testMsg.message)
-        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
+        -- print("Teste " .. i .. ": " .. testMsg.message)
+        -- checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
         
         -- Simular o evento TEXT_MESSAGE com a mensagem de teste
         local eventData = { text = testMsg.message }
@@ -1778,8 +1778,8 @@ local function runAllTests()
             charmSuccessCount = charmSuccessCount + 1
         end
         
-        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
-        checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+        -- print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+        -- checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
     end
     
     print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
