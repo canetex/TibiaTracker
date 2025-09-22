@@ -273,43 +273,47 @@ local ActiveTestHud = true
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
-    "You gained 35 mana. (void's call charm)",
-    "You deal 150 damage. (low blow charm)",
-    "You deal 200 damage. [savage blow charm]",
-    "You deal 300 damage. charm 'zap'",
-    "You deal 100 damage. (freeze charm)",
-    "You deal 250 damage. (curse charm)",
-    "You deal 180 damage. (paralyze charm)",
-    "You gained 50 mana. (zap charm)",
-    "You deal 1 hitpoint. (freeze charm)",
-    "You deal 400 hitpoints. (freeze charm)",
-    "You have been transcended.",
-    "You heal yourself for 50 hitpoints",
-    "You are healed for 120 hitpoints",
-    "You gain 1 hitpoint",
-    "You gain 200 hitpoints",
-    "You gained 6 mana",
-    "You gained 8 mana. (void's call charm)",
-    "You recover 1 hitpoint",
-    "You recover 80 hitpoints",
-    "You were healed for 1 hitpoint",
-    "You were healed for 17 hitpoints",
-    "You were healed for 1 hitpoint. (vampiric embrace charm)",
-    "You were healed for 18 hitpoints. (vampiric embrace charm)",
-    "You were healed for 57 hitpoints. (vampiric embrace charm)",
-    "You healed yourself for 1 hitpoint",
-    "You healed yourself for 736 hitpoints",
-    "You were healed by Test Player for 1 hitpoint",
-    "You were healed by Test Player for 1181 hitpoints",
-    "You were healed by Test Player for 1344 hitpoints",
-    "You heal Test Player for 1 hitpoint",
-    "You heal Test Player for 563 hitpoints",
-    "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
-    "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).",
-    "You lose 50 hitpoints due to an attack by a dragon",
-    "A dragon hits you for 75 hitpoints",
-    "You lose 25 hitpoints due to demon",
-    "demon hits you for 30 hitpoints"
+    {message =  "You gained 35 mana. (void's call charm)", type = "charm", value = 35 , charm = "Void's Call" },
+    { message = "You deal 150 damage. (low blow charm)", type = {"charm","creature"}, value = 150 , charm = "Low Blow" },
+    {message =  "You deal 200 damage. [savage blow charm]", type = {"charm","creature"}, value = 200 , charm = "Savage Blow" },
+    {message =  "You deal 300 damage. charm 'zap'", type = {"charm","creature"}, value = 300 , charm = "Zap" },
+    {message =  "You deal 100 damage. (freeze charm)", type = {"charm","creature"}, value = 100 , charm = "Freeze" },
+    {message =  "You deal 250 damage. (curse charm)", type = {"charm","creature"}, value = 250 , charm = "Curse" },
+    {message =  "You deal 180 damage. (paralyze charm)", type = {"charm","creature"}, value = 180 , charm = "Paralyze" },
+    {message =  "You gained 50 mana. (zap charm)", type = "charm", value = 50 , charm = "Zap" },
+    {message =  "You deal 1 hitpoint. (freeze charm)", type = {"charm","creature"}, value = 1 , charm = "Freeze" },
+    {message =  "You deal 400 hitpoints. (freeze charm)", type = {"charm","creature"}, value = 400 , charm = "Freeze" },
+    {message =  "You have been transcended.", type = "creature", value = 0 , creature = "Transcended" },
+    {message =  "You heal yourself for 50 hitpoints", type = "heal", value = 50 , heal = "Self"},
+    {message =  "You are healed for 120 hitpoints", type = "heal", value = 120 , heal = "Self"},
+    {message =  "You gain 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
+    {message =  "You gain 200 hitpoints", type = "heal", value = 200 , heal = "Self"},
+    {message =  "You gained 6 mana", type = "heal", value = 6 , heal = "Self"},
+    {message =  "You gained 8 mana. (void's call charm)", type = "heal", value = 8 , heal = "Void's Call"},
+    {message =  "You recover 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
+    {message =  "You recover 80 hitpoints", type = "heal", value = 80 , heal = "Self"},
+    {message =  "You were healed for 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
+    {message =  "You were healed for 17 hitpoints", type = "heal", value = 17 , heal = "Self"},
+    {message =  "You were healed for 1 hitpoint. (vampiric embrace charm)", type = "heal", value = 1 , heal = "Vampiric Embrace"},
+    {message =  "You were healed for 18 hitpoints. (vampiric embrace charm)", type = "heal", value = 18 , heal = "Vampiric Embrace"},
+    {message =  "You were healed for 57 hitpoints. (vampiric embrace charm)", type = "heal", value = 57 , heal = "Vampiric Embrace"},
+    {message =  "You healed yourself for 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
+    {message =  "You healed yourself for 736 hitpoints", type = "heal", value = 736 , heal = "Self"},
+    {message =  "You were healed by Test Player for 1 hitpoint", type = "heal", value = 1 , heal = "By Test Player"},
+    {message =  "You were healed by Test Player for 1181 hitpoints", type = "heal", value = 1181 , heal = "By Test Player"},
+    {message =  "You were healed by Test Player for 1344 hitpoints", type = "heal", value = 1344 , heal = "By Test Player"},
+    {message =  "You heal Test Player2 for 1 hitpoint", type = "heal", value = 1 , heal = "to Test Player2"},
+    {message =  "You heal Test Player2 for 563 hitpoints", type = "heal", value = 563 , heal = "to Test Player2"},
+    {message =  "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 125 , creature = "By Biruleibe Baby"},
+    {message =  "A hyena  loses 225 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 225 , creature = "By Biruleibe Baby"},
+    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Biruleibe Baby"},
+    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}", value = 462 , creature = "Biruleibe Baby"},
+    {message =  "You lose 50 hitpoints due to an attack by a dragon", type = "creature", value = 50 , creature = "By Dragon"},
+    {message =  "A dragon hits you for 75 hitpoints", type = "creature", value = 75 , creature = "By Dragon"},
+    {message =  "You lose 25 hitpoints due to demon", type = "creature", value = 25 , creature = "By Demon"},
+    {message =  "demon hits you for 30 hitpoints", type = "creature", value = 30 , creature = "By Demon"},
+    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack.", type = "creature", value = 1 , creature = "By Self"},
+    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack", type = "creature", value = 462 , creature = "By Self"},
 }
 
 -- DO NOT TOUCH BELOW THIS LINE // NÃO TOQUE ABAIXO DESTA LINHA --
@@ -1761,27 +1765,39 @@ local function runAllTests()
     print("=== INICIANDO TESTE COMPLETO DO SISTEMA ===")
     checkAndPrint("testProgram", "=== TESTE COMPLETO DO SISTEMA ===")
     
-    -- Teste de padrões de charms
-    print("\n--- TESTE DE PADRÕES DE CHARMS ---")
-    checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE CHARMS ---")
+    -- Teste de padrões de mensagens usando o sistema real de eventos
+    print("\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
+    checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
     
     local charmSuccessCount = 0
     local charmTotalCount = 0
     
+    -- Simular o processamento real de mensagens usando o sistema de eventos
     for i, testMsg in ipairs(testMessages) do
         print("Teste " .. i .. ": " .. testMsg)
         checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
         
-        -- Testar diferentes tipos de detecção baseado no conteúdo da mensagem
+        -- Simular o evento TEXT_MESSAGE com a mensagem de teste
+        local eventData = { text = testMsg }
+        
+        -- Processar charms e heals primeiro
         local result = false
-        if testMsg:find("charm") then
-            result = findCharmsProc(testMsg)
-        elseif testMsg:find("heal") or testMsg:find("recover") or testMsg:find("gained") then
-            result = findHealsProc(testMsg)
-        elseif testMsg:find("loses") or testMsg:find("hits you") or testMsg:find("due to") then
-            result = detectCreatureDamage(testMsg, 100)
+        if findCharmsProc(eventData.text) or findHealsProc(eventData.text) then 
+            result = true
         else
-            result = findCharmsProc(testMsg)
+            -- Detectar dano por criatura
+            local lastDamage = tonumber(eventData.text:match("(%d+) hitpoints?.*") or 0)
+            if detectCreatureDamage(eventData.text, lastDamage) then 
+                result = true
+            else
+                -- Verificar versão do bot para tiers
+                if getBotVersion() >= 1712 then
+                    -- Detectar tiers
+                    if detectTiers(eventData.text, lastDamage) then
+                        result = true
+                    end
+                end
+            end
         end
         
         charmTotalCount = charmTotalCount + 1
@@ -1793,7 +1809,7 @@ local function runAllTests()
         checkAndPrint("testProgram", "Resultado: " .. (result and "SUCESSO" or "FALHOU"))
     end
     
-    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
+    print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " sucessos")
     
     -- Teste de configurações de visibilidade
     print("\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
@@ -1936,7 +1952,7 @@ local function runAllTests()
     end
     
     print("\n=== RESUMO DOS TESTES ===")
-    print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
+    print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
     print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " (" .. math.floor((tierSuccessCount/#tierTestMessages)*100) .. "%)")
     print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " (" .. math.floor((healSuccessCount/#healTestMessages)*100) .. "%)")
     print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " (" .. math.floor((creatureSuccessCount/#creatureTestMessages)*100) .. "%)")
