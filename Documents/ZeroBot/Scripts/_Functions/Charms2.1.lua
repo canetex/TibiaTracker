@@ -892,20 +892,35 @@ end
 -- @param cooldownData: tabela com lastTime e cooldown
 -- @return: true se pode ativar, false se ainda em cooldown
 local function checkAndUpdateCooldown(cooldownData)
-    if not cooldownData then return true end
+    print("DEBUG COOLDOWN: Iniciando checkAndUpdateCooldown")
+    checkAndPrint("testProgram", "DEBUG COOLDOWN: Iniciando checkAndUpdateCooldown")
+    
+    if not cooldownData then 
+        print("DEBUG COOLDOWN: cooldownData é nil, retornando true")
+        checkAndPrint("testProgram", "DEBUG COOLDOWN: cooldownData é nil, retornando true")
+        return true 
+    end
     
     local lastTime = cooldownData.lastTime
     local cooldown = cooldownData.cooldown
     local currentTime = os.time()
     
+    print("DEBUG COOLDOWN: lastTime=" .. tostring(lastTime) .. ", cooldown=" .. tostring(cooldown) .. ", currentTime=" .. currentTime)
+    checkAndPrint("testProgram", "DEBUG COOLDOWN: lastTime=" .. tostring(lastTime) .. ", cooldown=" .. tostring(cooldown) .. ", currentTime=" .. currentTime)
+    
     -- Verificar se ainda está em cooldown
     if lastTime > 0 and currentTime < lastTime then
-        checkAndPrint("cooldown", "Cooldown ativo: " .. (lastTime - currentTime) .. "s restantes")
+        local remaining = lastTime - currentTime
+        print("DEBUG COOLDOWN: ERRO - Cooldown ativo: " .. remaining .. "s restantes")
+        checkAndPrint("testProgram", "DEBUG COOLDOWN: ERRO - Cooldown ativo: " .. remaining .. "s restantes")
+        checkAndPrint("cooldown", "Cooldown ativo: " .. remaining .. "s restantes")
         return false
     end
     
     -- Atualizar cooldown para o próximo uso
     cooldownData.lastTime = currentTime + cooldown
+    print("DEBUG COOLDOWN: Cooldown atualizado - novo lastTime: " .. cooldownData.lastTime)
+    checkAndPrint("testProgram", "DEBUG COOLDOWN: Cooldown atualizado - novo lastTime: " .. cooldownData.lastTime)
     return true
 end
 
@@ -1474,7 +1489,7 @@ local function findHealsProc(text)
 
     print("DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
     checkAndPrint("testProgram", "DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
-    
+
     local success, newFoundCount = processGroup("heal", healName, healAmount, healPatterns, 
         {x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION}, heals, healsFound)
     
