@@ -1498,6 +1498,12 @@ local function detectCreatureDamage(text, lastDamage)
         "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
     }
     
+    -- Debug: testar padrão manualmente
+    local testText = "You lose 406 hitpoints due to an attack by a spellreaper inferniarch."
+    local testPattern = "You lose (%d+) hitpoints? due to an attack by a ([^%.]+)"
+    local testDamage, testCreature = testText:match(testPattern)
+    checkAndPrint("testProgram", "TESTE PADRÃO: '" .. testPattern .. "' em '" .. testText .. "' = " .. tostring(testDamage) .. " - " .. tostring(testCreature))
+    
     -- Debug: testar padrão manualmente (removido - já confirmado que funciona)
     
     -- Verificar dano causado (apenas danos próprios)
