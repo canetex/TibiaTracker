@@ -1480,6 +1480,7 @@ end
 
 -- Função para detectar e processar dano por criatura
 local function detectCreatureDamage(text, lastDamage)
+    checkAndPrint("testProgram", "=== DETECTANDO CRIATURA: " .. text)
     
     -- Padrões para detectar dano causado a criaturas (apenas danos próprios)
     local damageDealtPatterns = {
@@ -1499,10 +1500,12 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano causado (apenas danos próprios)
     for i, pattern in ipairs(damageDealtPatterns) do
+        checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
+                checkAndPrint("testProgram", "DEALT Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
                 processCreatureDamage(creatureName, damageValue, "dealt")
                 return true
             end
@@ -1511,11 +1514,12 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano sofrido (apenas danos próprios)
     for i, pattern in ipairs(damageReceivedPatterns) do
+        checkAndPrint("testProgram", "Testando padrão RECEIVED " .. i .. ": " .. pattern)
         local creatureName, damage = text:match(pattern)
         if creatureName and damage then
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
-                checkAndPrint("testProgram", "Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
+                checkAndPrint("testProgram", "RECEIVED Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
                 processCreatureDamage(creatureName, damageValue, "received")
                 return true
             end
