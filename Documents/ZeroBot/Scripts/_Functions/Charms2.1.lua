@@ -1823,6 +1823,50 @@ local function runAllTests()
     print("\n=== RESUMO DOS TESTES ===")
     print("Mensagens processadas: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
     
+    -- Mostrar informações que deveriam estar em cada HUD
+    print("\n=== INFORMAÇÕES DOS HUDS ===")
+    checkAndPrint("testProgram", "\n=== INFORMAÇÕES DOS HUDS ===")
+    
+    -- HUD de Charms
+    print("\n--- HUD CHARMS ---")
+    checkAndPrint("testProgram", "\n--- HUD CHARMS ---")
+    for charmName, data in pairs(charms) do
+        if data.count > 0 then
+            print("[" .. charmName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+            checkAndPrint("testProgram", "[" .. charmName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+        end
+    end
+    
+    -- HUD de Tiers
+    print("\n--- HUD TIERS ---")
+    checkAndPrint("testProgram", "\n--- HUD TIERS ---")
+    for tierName, data in pairs(tiers) do
+        if data.count > 0 then
+            print("[" .. tierName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+            checkAndPrint("testProgram", "[" .. tierName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+        end
+    end
+    
+    -- HUD de Heals
+    print("\n--- HUD HEALS ---")
+    checkAndPrint("testProgram", "\n--- HUD HEALS ---")
+    for healName, data in pairs(heals) do
+        if data.count > 0 then
+            print("[" .. healName .. "] - Ativações: " .. data.count .. " - Cura: " .. data.totalSum)
+            checkAndPrint("testProgram", "[" .. healName .. "] - Ativações: " .. data.count .. " - Cura: " .. data.totalSum)
+        end
+    end
+    
+    -- HUD de Creatures
+    print("\n--- HUD CREATURES ---")
+    checkAndPrint("testProgram", "\n--- HUD CREATURES ---")
+    for creatureName, data in pairs(creatures) do
+        if data.count > 0 then
+            print("[" .. creatureName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+            checkAndPrint("testProgram", "[" .. creatureName .. "] - Ativações: " .. data.count .. " - Dano: " .. data.totalSum)
+        end
+    end
+    
     print("\n=== FIM DO TESTE COMPLETO ===")
     checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
 end
