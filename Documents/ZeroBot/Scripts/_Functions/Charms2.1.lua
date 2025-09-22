@@ -288,51 +288,51 @@ local testMessages = {
     {message =  "You are healed for 120 hitpoints", type = "heal", value = 120 , heal = "Self", id=13 },
     {message =  "You gain 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=14 },
     {message =  "You gain 200 hitpoints", type = "heal", value = 200 , heal = "Self", id=15 },
-    {message =  "You gained 6 mana", type = "heal", value = 6 , heal = "Self"},
-    {message =  "You gained 8 mana. (void's call charm)", type = "heal", value = 8 , heal = "Void's Call"},
-    {message =  "You recover 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
-    {message =  "You recover 80 hitpoints", type = "heal", value = 80 , heal = "Self"},
-    {message =  "You were healed for 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
-    {message =  "You were healed for 17 hitpoints", type = "heal", value = 17 , heal = "Self"},
-    {message =  "You were healed for 1 hitpoint. (vampiric embrace charm)", type = "heal", value = 1 , heal = "Vampiric Embrace"},
-    {message =  "You were healed for 18 hitpoints. (vampiric embrace charm)", type = "heal", value = 18 , heal = "Vampiric Embrace"},
-    {message =  "You were healed for 57 hitpoints. (vampiric embrace charm)", type = "heal", value = 57 , heal = "Vampiric Embrace"},
-    {message =  "You healed yourself for 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
-    {message =  "You healed yourself for 736 hitpoints", type = "heal", value = 736 , heal = "Self"},
-    {message =  "You were healed by Test Player for 1 hitpoint", type = "heal", value = 1 , heal = "By Test Player"},
-    {message =  "You were healed by Test Player for 1181 hitpoints", type = "heal", value = 1181 , heal = "By Test Player"},
-    {message =  "You were healed by Test Player for 1344 hitpoints", type = "heal", value = 1344 , heal = "By Test Player"},
-    {message =  "You heal Test Player2 for 1 hitpoint", type = "heal", value = 1 , heal = "to Test Player2"},
-    {message =  "You heal Test Player2 for 563 hitpoints", type = "heal", value = 563 , heal = "to Test Player2"},
-    {message =  "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 125 , creature = "By Biruleibe Baby"},
-    {message =  "A hyena  loses 225 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 225 , creature = "By Biruleibe Baby"},
-    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Biruleibe Baby"},
-    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}, value = 462 , creature = "Biruleibe Baby"},
-    {message =  "You lose 50 hitpoints due to an attack by a dragon", type = "creature", value = 50 , creature = "By Dragon"},
-    {message =  "A dragon hits you for 75 hitpoints", type = "creature", value = 75 , creature = "By Dragon"},
-    {message =  "You lose 25 hitpoints due to demon", type = "creature", value = 25 , creature = "By Demon"},
-    {message =  "demon hits you for 30 hitpoints", type = "creature", value = 30 , creature = "By Demon"},
-    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack.", type = "creature", value = 1 , creature = "By Self"},
-    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack", type = "creature", value = 462 , creature = "By Self"},
-    {message =  "You were healed by Biruleibe Baby for 1690 hitpoints", type = "heal", value = 1690 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 200 hitpoints", type = "heal", value = 200 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 100 hitpoints", type = "heal", value = 100 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 50 hitpoints", type = "heal", value = 50 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 10 hitpoints", type = "heal", value = 10 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 1 hitpoint", type = "heal", value = 1 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 1000 hitpoints", type = "heal", value = 1000 , heal = "By Biruleibe Baby"},
-    {message =  "You were healed by Biruleibe Baby for 10000 hitpoints", type = "heal", value = 10000 , heal = "By Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 563 hitpoints.", type = "heal", value = 563 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 10000 hitpoints.", type = "heal", value = 10000 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 1 hitpoint.", type = "heal", value = 1 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 10 hitpoints.", type = "heal", value = 10 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 100 hitpoints.", type = "heal", value = 100 , heal = "to Biruleibe Baby"},
-    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby"},
-    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse"},
-    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse"},
-    {message =  "You lose 406 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 406 , creature = "By Spellreaper Inferniarch"},
-    {message =  "You lose 17 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 17 , creature = "By Spellreaper Inferniarch"},
+    {message =  "You gained 6 mana", type = "heal", value = 6 , heal = "Self", id=16 },
+    {message =  "You gained 8 mana. (void's call charm)", type = "heal", value = 8 , heal = "Void's Call", id=17 },
+    {message =  "You recover 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=18 },
+    {message =  "You recover 80 hitpoints", type = "heal", value = 80 , heal = "Self", id=19 },
+    {message =  "You were healed for 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=20 },
+    {message =  "You were healed for 17 hitpoints", type = "heal", value = 17 , heal = "Self", id=21 },
+    {message =  "You were healed for 1 hitpoint. (vampiric embrace charm)", type = "heal", value = 1 , heal = "Vampiric Embrace", id=22 },
+    {message =  "You were healed for 18 hitpoints. (vampiric embrace charm)", type = "heal", value = 18 , heal = "Vampiric Embrace", id=23 },
+    {message =  "You were healed for 57 hitpoints. (vampiric embrace charm)", type = "heal", value = 57 , heal = "Vampiric Embrace", id=24 },
+    {message =  "You healed yourself for 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=25 },
+    {message =  "You healed yourself for 736 hitpoints", type = "heal", value = 736 , heal = "Self", id=26 },
+    {message =  "You were healed by Test Player for 1 hitpoint", type = "heal", value = 1 , heal = "By Test Player", id=27 },
+    {message =  "You were healed by Test Player for 1181 hitpoints", type = "heal", value = 1181 , heal = "By Test Player", id=28 },
+    {message =  "You were healed by Test Player for 1344 hitpoints", type = "heal", value = 1344 , heal = "By Test Player", id=29 },
+    {message =  "You heal Test Player2 for 1 hitpoint", type = "heal", value = 1 , heal = "to Test Player2", id=30 },
+    {message =  "You heal Test Player2 for 563 hitpoints", type = "heal", value = 563 , heal = "to Test Player2", id=31 },
+    {message =  "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 125 , creature = "By Biruleibe Baby", id=32 },
+    {message =  "A hyena  loses 225 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 225 , creature = "By Biruleibe Baby", id=33 },
+    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Biruleibe Baby", id=34 },
+    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}, value = 462 , creature = "Biruleibe Baby", id=35 },
+    {message =  "You lose 50 hitpoints due to an attack by a dragon", type = "creature", value = 50 , creature = "By Dragon", id=36 },
+    {message =  "A dragon hits you for 75 hitpoints", type = "creature", value = 75 , creature = "By Dragon", id=37 },
+    {message =  "You lose 25 hitpoints due to demon", type = "creature", value = 25 , creature = "By Demon", id=38 },
+    {message =  "demon hits you for 30 hitpoints", type = "creature", value = 30 , creature = "By Demon", id=39 },
+    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack.", type = "creature", value = 1 , creature = "By Self", id=40 },
+    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack", type = "creature", value = 462 , creature = "By Self", id=41 },
+    {message =  "You were healed by Biruleibe Baby for 1690 hitpoints", type = "heal", value = 1690 , heal = "By Biruleibe Baby", id=42 },
+    {message =  "You were healed by Biruleibe Baby for 200 hitpoints", type = "heal", value = 200 , heal = "By Biruleibe Baby", id=43 },
+    {message =  "You were healed by Biruleibe Baby for 100 hitpoints", type = "heal", value = 100 , heal = "By Biruleibe Baby", id=44 },
+    {message =  "You were healed by Biruleibe Baby for 50 hitpoints", type = "heal", value = 50 , heal = "By Biruleibe Baby", id=45 },
+    {message =  "You were healed by Biruleibe Baby for 10 hitpoints", type = "heal", value = 10 , heal = "By Biruleibe Baby", id=46 },
+    {message =  "You were healed by Biruleibe Baby for 1 hitpoint", type = "heal", value = 1 , heal = "By Biruleibe Baby", id=47 },
+    {message =  "You were healed by Biruleibe Baby for 1000 hitpoints", type = "heal", value = 1000 , heal = "By Biruleibe Baby", id=48 },
+    {message =  "You were healed by Biruleibe Baby for 10000 hitpoints", type = "heal", value = 10000 , heal = "By Biruleibe Baby", id=49 },
+    {message =  "You heal Biruleibe Baby for 563 hitpoints.", type = "heal", value = 563 , heal = "to Biruleibe Baby", id=50 },
+    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby", id=51 },
+    {message =  "You heal Biruleibe Baby for 10000 hitpoints.", type = "heal", value = 10000 , heal = "to Biruleibe Baby", id=52 },
+    {message =  "You heal Biruleibe Baby for 1 hitpoint.", type = "heal", value = 1 , heal = "to Biruleibe Baby", id=53 },
+    {message =  "You heal Biruleibe Baby for 10 hitpoints.", type = "heal", value = 10 , heal = "to Biruleibe Baby", id=54 },
+    {message =  "You heal Biruleibe Baby for 100 hitpoints.", type = "heal", value = 100 , heal = "to Biruleibe Baby", id=55 },
+    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby", id=56 },
+    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse", id=57 },
+    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse", id=58 },
+    {message =  "You lose 406 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 406 , creature = "By Spellreaper Inferniarch", id=59 },
+    {message =  "You lose 17 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 17 , creature = "By Spellreaper Inferniarch", id=60 },
 }
 
 -- DO NOT TOUCH BELOW THIS LINE // NÃO TOQUE ABAIXO DESTA LINHA --
@@ -1746,20 +1746,79 @@ local testHUD = nil
 -- 9.2 FUNÇÃO DE TESTE COMPLETA (DEFINIDA NO FINAL)
 -- ================================================================
 
+-- Funções auxiliares para testes seletivos
+local function testHealMessages()
+    local healIds = {}
+    for i, testMsg in ipairs(testMessages) do
+        if testMsg.type == "heal" then
+            table.insert(healIds, testMsg.id)
+        end
+    end
+    return runAllTests(healIds)
+end
+
+local function testCreatureMessages()
+    local creatureIds = {}
+    for i, testMsg in ipairs(testMessages) do
+        if testMsg.type == "creature" then
+            table.insert(creatureIds, testMsg.id)
+        end
+    end
+    return runAllTests(creatureIds)
+end
+
+local function testCharmMessages()
+    local charmIds = {}
+    for i, testMsg in ipairs(testMessages) do
+        if testMsg.type == "charm" then
+            table.insert(charmIds, testMsg.id)
+        end
+    end
+    return runAllTests(charmIds)
+end
+
+local function testTierMessages()
+    local tierIds = {}
+    for i, testMsg in ipairs(testMessages) do
+        if testMsg.type == "tier" then
+            table.insert(tierIds, testMsg.id)
+        end
+    end
+    return runAllTests(tierIds)
+end
+
 -- Função unificada de teste para padrões e configurações
-local function runAllTests()
+-- @param messageIds: array opcional com IDs das mensagens a serem testadas (se vazio ou nil, testa todas)
+local function runAllTests(messageIds)
     print("=== INICIANDO TESTE COMPLETO DO SISTEMA ===")
     checkAndPrint("testProgram", "=== TESTE COMPLETO DO SISTEMA ===")
     
-    -- Teste de padrões de mensagens usando o sistema real de eventos
-    print("\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
-    checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
+    -- Determinar quais mensagens testar
+    local messagesToTest = {}
+    if messageIds and #messageIds > 0 then
+        -- Filtrar mensagens pelos IDs fornecidos
+        for _, id in ipairs(messageIds) do
+            for _, testMsg in ipairs(testMessages) do
+                if testMsg.id == id then
+                    table.insert(messagesToTest, testMsg)
+                    break
+                end
+            end
+        end
+        print("--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
+        checkAndPrint("testProgram", "--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
+    else
+        -- Testar todas as mensagens
+        messagesToTest = testMessages
+        print("\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
+        checkAndPrint("testProgram", "\n--- TESTE DE PADRÕES DE MENSAGENS (SISTEMA REAL) ---")
+    end
     
     local charmSuccessCount = 0
     local charmTotalCount = 0
     
     -- Simular o processamento real de mensagens usando o sistema de eventos
-    for i, testMsg in ipairs(testMessages) do
+    for i, testMsg in ipairs(messagesToTest) do
         -- print("Teste " .. i .. ": " .. testMsg.message)
         -- checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
         
@@ -1908,7 +1967,7 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        runAllTests()
+        runAllTests() -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
@@ -1918,5 +1977,43 @@ charmIcon, charmVisibilityIcon = createMainIcon(ICON_CHARM_X_POSITION, ICON_CHAR
 tierIcon, tierVisibilityIcon = createMainIcon(ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, ICON_TIER_ID, "tier")
 healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
 creatureIcon, creatureVisibilityIcon = createMainIcon(ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION, ICON_CREATURE_ID, "creature")
+
+-- ================================================================
+-- EXEMPLOS DE USO DAS FUNÇÕES DE TESTE
+-- ================================================================
+
+--[[
+EXEMPLOS DE USO:
+
+1. Testar todas as mensagens (comportamento padrão):
+   runAllTests()
+
+2. Testar apenas mensagens específicas por ID:
+   runAllTests({1, 5, 10, 15})  -- Testa apenas as mensagens com IDs 1, 5, 10 e 15
+
+3. Testar apenas mensagens de HEAL:
+   testHealMessages()
+
+4. Testar apenas mensagens de CREATURE:
+   testCreatureMessages()
+
+5. Testar apenas mensagens de CHARM:
+   testCharmMessages()
+
+6. Testar apenas mensagens de TIER:
+   testTierMessages()
+
+7. Testar mensagens de um tipo específico (exemplo: apenas heals de players):
+   local playerHealIds = {27, 28, 29, 42, 43, 44, 45, 46, 47, 48, 49}
+   runAllTests(playerHealIds)
+
+8. Testar mensagens de criaturas que causam dano:
+   local creatureDealtIds = {32, 33, 34, 35, 40, 41}
+   runAllTests(creatureDealtIds)
+
+9. Testar mensagens de criaturas que sofrem dano:
+   local creatureReceivedIds = {36, 37, 38, 39, 59, 60}
+   runAllTests(creatureReceivedIds)
+--]]
  
  
