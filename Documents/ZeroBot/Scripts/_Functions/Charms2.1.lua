@@ -1594,13 +1594,13 @@ local function detectCreatureDamage(text, lastDamage)
     -- Padrões para detectar dano causado a criaturas (próprios e de outros jogadores)
     local damageDealtPatterns = {
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
-        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack%.?",
+        "A ([^%.]+) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack%.?",
+        "([^%.]+) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "A [nome da criatura] loses X hitpoints due to [jogador] attack"
-        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?",
+        "A ([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to [jogador] attack"
-        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?"
+        "([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?"
     }
     
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
@@ -1617,7 +1617,7 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Debug: testar padrão manualmente
     local testText = "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack."
-    local testPattern = "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?"
+    local testPattern = "A ([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?"
     local testMatches = {testText:match(testPattern)}
     checkAndPrint("testProgram", "TESTE MANUAL: Texto: " .. testText)
     checkAndPrint("testProgram", "TESTE MANUAL: Padrão: " .. testPattern)
