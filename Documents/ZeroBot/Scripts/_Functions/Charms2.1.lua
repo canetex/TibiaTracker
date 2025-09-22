@@ -1301,7 +1301,18 @@ local function runAllTests()
         print("Teste " .. i .. ": " .. testMsg)
         checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
         
-        local result = findCharmsProc(testMsg)
+        -- Testar diferentes tipos de detecção baseado no conteúdo da mensagem
+        local result = false
+        if testMsg:find("charm") then
+            result = findCharmsProc(testMsg)
+        elseif testMsg:find("heal") or testMsg:find("recover") or testMsg:find("gained") then
+            result = findHealsProc(testMsg)
+        elseif testMsg:find("loses") or testMsg:find("hits you") or testMsg:find("due to") then
+            result = detectCreatureDamage(testMsg, 100)
+        else
+            result = findCharmsProc(testMsg)
+        end
+        
         charmTotalCount = charmTotalCount + 1
         if result then
             charmSuccessCount = charmSuccessCount + 1
@@ -1359,7 +1370,13 @@ local function runAllTests()
     local tierSuccessCount = 0
     for i, testMsg in ipairs(tierTestMessages) do
         print("Tier Teste " .. i .. ": " .. testMsg)
-        local result = detectTiers(testMsg, 150)
+        local result = false
+        -- Verificar se a função detectTiers existe e é local
+        if detectTiers then
+            result = detectTiers(testMsg, 150)
+        else
+            print("ERRO: Função detectTiers não encontrada")
+        end
         if result then
             tierSuccessCount = tierSuccessCount + 1
         end
