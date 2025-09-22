@@ -1411,6 +1411,7 @@ local function findHealsProc(text)
         return false
     end
     checkAndPrint("messageCheck", "Verificando texto para heals: " .. text)
+    checkAndPrint("testProgram", "DEBUG HEAL: findHealsProc chamada para: " .. text)
     
     local healAmount = nil
     local healType = nil
@@ -2088,8 +2089,8 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        -- runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
-        runAllTests({23,32}) -- Testa todas as mensagens por padrão
+        runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
+        -- runAllTests({23,32}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
