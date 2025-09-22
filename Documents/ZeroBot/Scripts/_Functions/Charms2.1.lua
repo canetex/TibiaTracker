@@ -1621,7 +1621,7 @@ local function detectCreatureDamage(text, lastDamage)
     
     -- Verificar dano causado (próprios e de outros jogadores)
     for i, pattern in ipairs(damageDealtPatterns) do
-        -- checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
+        checkAndPrint("testProgram", "Testando padrão DEALT " .. i .. ": " .. pattern)
         local matches = {text:match(pattern)}
         if #matches > 0 then
             local creatureName, damage, playerName = matches[1], matches[2], matches[3]
@@ -1636,6 +1636,8 @@ local function detectCreatureDamage(text, lastDamage)
                 processCreatureDamage(creatureKey, damageValue, "dealt")
                 return true
             end
+        else
+            checkAndPrint("testProgram", "DEALT Padrão " .. i .. " não capturou: " .. text)
         end
     end
     
