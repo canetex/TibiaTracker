@@ -274,7 +274,7 @@ local ActiveTestHud = true
 -- Mensagens de teste para validação de padrões
 local testMessages = {
     {message =  "You gained 35 mana. (void's call charm)", type = "charm", value = 35 , charm = "Void's Call" },
-    { message = "You deal 150 damage. (low blow charm)", type = {"charm","creature"}, value = 150 , charm = "Low Blow" },
+    {message = "You deal 150 damage. (low blow charm)", type = {"charm","creature"}, value = 150 , charm = "Low Blow" },
     {message =  "You deal 200 damage. [savage blow charm]", type = {"charm","creature"}, value = 200 , charm = "Savage Blow" },
     {message =  "You deal 300 damage. charm 'zap'", type = {"charm","creature"}, value = 300 , charm = "Zap" },
     {message =  "You deal 100 damage. (freeze charm)", type = {"charm","creature"}, value = 100 , charm = "Freeze" },
@@ -1784,6 +1784,11 @@ local function runAllTests()
             end
         end
         
+        -- Debug: mostrar se detectCreatureDamage foi chamada
+        if testMsg.creature then
+            checkAndPrint("testProgram", "DEBUG: detectCreatureDamage chamada para: " .. eventData.text)
+        end
+        
         -- Debug: mostrar qual função processou a mensagem
         if testMsg.creature and processedBy ~= "creatures" then
             checkAndPrint("testProgram", "ERRO: Mensagem de criatura processada por " .. processedBy .. ": " .. eventData.text)
@@ -1903,4 +1908,5 @@ charmIcon, charmVisibilityIcon = createMainIcon(ICON_CHARM_X_POSITION, ICON_CHAR
 tierIcon, tierVisibilityIcon = createMainIcon(ICON_TIER_X_POSITION, ICON_TIER_Y_POSITION, ICON_TIER_ID, "tier")
 healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
 creatureIcon, creatureVisibilityIcon = createMainIcon(ICON_CREATURE_X_POSITION, ICON_CREATURE_Y_POSITION, ICON_CREATURE_ID, "creature")
+ 
  
