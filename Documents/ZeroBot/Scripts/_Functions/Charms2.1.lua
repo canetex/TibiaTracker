@@ -874,8 +874,12 @@ end
 local function getCooldownData(type, name)
     if cooldowns[type] and cooldowns[type][name] then
         return {cooldown = cooldowns[type][name].cooldown, lastTime = cooldowns[type][name].lastTime}
-    elseif type == "heal" and cooldowns.heal.default then
-        return {cooldown = cooldowns.heal.default.cooldown, lastTime = cooldowns.heal.default.lastTime}
+    elseif type == "heal" then
+        -- Para heals, criar cooldown específico por nome se não existir
+        if not cooldowns.heal[name] then
+            cooldowns.heal[name] = {cooldown = 0.5, lastTime = 0}
+        end
+        return {cooldown = cooldowns.heal[name].cooldown, lastTime = cooldowns.heal[name].lastTime}
     end
     return nil
 end
@@ -892,11 +896,11 @@ end
 -- @param cooldownData: tabela com lastTime e cooldown
 -- @return: true se pode ativar, false se ainda em cooldown
 local function checkAndUpdateCooldown(cooldownData)
-    print("DEBUG COOLDOWN: Iniciando checkAndUpdateCooldown")
+    
     checkAndPrint("testProgram", "DEBUG COOLDOWN: Iniciando checkAndUpdateCooldown")
     
     if not cooldownData then 
-        print("DEBUG COOLDOWN: cooldownData é nil, retornando true")
+        
         checkAndPrint("testProgram", "DEBUG COOLDOWN: cooldownData é nil, retornando true")
         return true 
     end
@@ -905,7 +909,7 @@ local function checkAndUpdateCooldown(cooldownData)
     local cooldown = cooldownData.cooldown
     local currentTime = os.time()
     
-    print("DEBUG COOLDOWN: lastTime=" .. tostring(lastTime) .. ", cooldown=" .. tostring(cooldown) .. ", currentTime=" .. currentTime)
+    
     checkAndPrint("testProgram", "DEBUG COOLDOWN: lastTime=" .. tostring(lastTime) .. ", cooldown=" .. tostring(cooldown) .. ", currentTime=" .. currentTime)
     
     -- Verificar se ainda está em cooldown
@@ -1092,8 +1096,12 @@ local function updateGlobalCooldown(type, name, cooldownData)
     
     if cooldowns[type] and cooldowns[type][name] then
         cooldowns[type][name].lastTime = cooldownData.lastTime
-    elseif type == "heal" and cooldowns.heal.default then
-        cooldowns.heal.default.lastTime = cooldownData.lastTime
+    elseif type == "heal" then
+        -- Para heals, garantir que o cooldown específico existe e atualizá-lo
+        if not cooldowns.heal[name] then
+            cooldowns.heal[name] = {cooldown = 0.5, lastTime = 0}
+        end
+        cooldowns.heal[name].lastTime = cooldownData.lastTime
     end
 end
 
