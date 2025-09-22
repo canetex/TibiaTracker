@@ -1774,11 +1774,11 @@ local function runAllTests()
     
     -- Simular o processamento real de mensagens usando o sistema de eventos
     for i, testMsg in ipairs(testMessages) do
-        print("Teste " .. i .. ": " .. testMsg)
-        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg)
+        print("Teste " .. i .. ": " .. testMsg.message)
+        checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
         
         -- Simular o evento TEXT_MESSAGE com a mensagem de teste
-        local eventData = { text = testMsg }
+        local eventData = { text = testMsg.message }
         
         -- Processar charms e heals primeiro
         local result = false
