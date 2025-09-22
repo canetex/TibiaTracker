@@ -306,7 +306,7 @@ local testMessages = {
     {message =  "You heal Test Player2 for 563 hitpoints", type = "heal", value = 563 , heal = "to Test Player2", id=31 },
     {message =  "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 125 , creature = "By Biruleibe Baby", id=32 },
     {message =  "A hyena  loses 225 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 225 , creature = "By Biruleibe Baby", id=33 },
-    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Biruleibe Baby", id=34 },
+    {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Self", id=34 },
     {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}, value = 462 , creature = "Biruleibe Baby", id=35 },
     {message =  "You lose 50 hitpoints due to an attack by a dragon", type = "creature", value = 50 , creature = "By Dragon", id=36 },
     {message =  "A dragon hits you for 75 hitpoints", type = "creature", value = 75 , creature = "By Dragon", id=37 },
@@ -1798,15 +1798,25 @@ local function runAllTests(messageIds)
     if messageIds and #messageIds > 0 then
         -- Filtrar mensagens pelos IDs fornecidos
         for _, id in ipairs(messageIds) do
+            local found = false
             for _, testMsg in ipairs(testMessages) do
                 if testMsg.id == id then
                     table.insert(messagesToTest, testMsg)
+                    found = true
+                    print("DEBUG: Mensagem ID " .. id .. " encontrada: " .. testMsg.message)
+                    checkAndPrint("testProgram", "DEBUG: Mensagem ID " .. id .. " encontrada: " .. testMsg.message)
                     break
                 end
+            end
+            if not found then
+                print("DEBUG: Mensagem ID " .. id .. " NÃO encontrada!")
+                checkAndPrint("testProgram", "DEBUG: Mensagem ID " .. id .. " NÃO encontrada!")
             end
         end
         print("--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
         checkAndPrint("testProgram", "--- TESTE SELETIVO DE MENSAGENS (IDs: " .. table.concat(messageIds, ", ") .. ") ---")
+        print("DEBUG: Total de mensagens para testar: " .. #messagesToTest)
+        checkAndPrint("testProgram", "DEBUG: Total de mensagens para testar: " .. #messagesToTest)
     else
         -- Testar todas as mensagens
         messagesToTest = testMessages
@@ -1819,8 +1829,8 @@ local function runAllTests(messageIds)
     
     -- Simular o processamento real de mensagens usando o sistema de eventos
     for i, testMsg in ipairs(messagesToTest) do
-        -- print("Teste " .. i .. ": " .. testMsg.message)
-        -- checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
+        print("DEBUG: Processando mensagem " .. i .. " (ID " .. testMsg.id .. "): " .. testMsg.message)
+        checkAndPrint("testProgram", "DEBUG: Processando mensagem " .. i .. " (ID " .. testMsg.id .. "): " .. testMsg.message)
         
         -- Simular o evento TEXT_MESSAGE com a mensagem de teste
         local eventData = { text = testMsg.message }
@@ -1967,7 +1977,7 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        runAllTests() -- Testa todas as mensagens por padrão
+        runAllTests({47,50}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
