@@ -1594,13 +1594,13 @@ local function detectCreatureDamage(text, lastDamage)
     -- Padrões para detectar dano causado a criaturas (próprios e de outros jogadores)
     local damageDealtPatterns = {
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
-        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack",
+        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack",
+        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "A [nome da criatura] loses X hitpoints due to [jogador] attack"
-        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack",
+        "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to [jogador] attack"
-        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack"
+        "([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?"
     }
     
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
