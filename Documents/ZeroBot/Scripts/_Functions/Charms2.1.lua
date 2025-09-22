@@ -1519,7 +1519,7 @@ local function detectCreatureDamage(text, lastDamage)
     -- Verificar dano sofrido (apenas danos próprios)
     for i, pattern in ipairs(damageReceivedPatterns) do
         -- checkAndPrint("testProgram", "Testando padrão RECEIVED " .. i .. ": " .. pattern)
-        local creatureName, damage = text:match(pattern)
+        local damage, creatureName = text:match(pattern)
         if creatureName and damage then
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
