@@ -1493,7 +1493,7 @@ local function detectCreatureDamage(text, lastDamage)
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
     local damageReceivedPatterns = {
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
-        "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
+        "You lose (%d+) hitpoints? due to an attack by a ([^%.]+)",
         -- Padrão: "A [criatura] hits you for X hitpoints"
         "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
     }
