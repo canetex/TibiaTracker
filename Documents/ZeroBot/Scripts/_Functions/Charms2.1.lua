@@ -1529,6 +1529,7 @@ local function detectCreatureDamage(text, lastDamage)
         if creatureName and damage then
             local damageValue = tonumber(damage)
             if damageValue and damageValue > 0 then
+                checkAndPrint("testProgram", "Padrão " .. i .. " capturou: " .. creatureName .. " - " .. damageValue)
                 processCreatureDamage(creatureName, damageValue, "received")
                 return true
             end
