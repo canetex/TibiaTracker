@@ -283,7 +283,7 @@ local testMessages = {
     {message =  "You gained 50 mana. (zap charm)", type = "charm", value = 50 , charm = "Zap" },
     {message =  "You deal 1 hitpoint. (freeze charm)", type = {"charm","creature"}, value = 1 , charm = "Freeze" },
     {message =  "You deal 400 hitpoints. (freeze charm)", type = {"charm","creature"}, value = 400 , charm = "Freeze" },
-    {message =  "You have been transcended.", type = "creature", value = 0 , creature = "Transcended" },
+    {message =  "You have been transcended.", type = "tier", value = 0 , creature = "Transcended" },
     {message =  "You heal yourself for 50 hitpoints", type = "heal", value = 50 , heal = "Self"},
     {message =  "You are healed for 120 hitpoints", type = "heal", value = 120 , heal = "Self"},
     {message =  "You gain 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
@@ -314,6 +314,25 @@ local testMessages = {
     {message =  "demon hits you for 30 hitpoints", type = "creature", value = 30 , creature = "By Demon"},
     {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack.", type = "creature", value = 1 , creature = "By Self"},
     {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack", type = "creature", value = 462 , creature = "By Self"},
+    {message =  "You were healed by Biruleibe Baby for 1690 hitpoints", type = "heal", value = 1690 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 200 hitpoints", type = "heal", value = 200 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 100 hitpoints", type = "heal", value = 100 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 50 hitpoints", type = "heal", value = 50 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 10 hitpoints", type = "heal", value = 10 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 1 hitpoint", type = "heal", value = 1 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 1000 hitpoints", type = "heal", value = 1000 , heal = "By Biruleibe Baby"},
+    {message =  "You were healed by Biruleibe Baby for 10000 hitpoints", type = "heal", value = 10000 , heal = "By Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 563 hitpoints.", type = "heal", value = 563 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 10000 hitpoints.", type = "heal", value = 10000 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 1 hitpoint.", type = "heal", value = 1 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 10 hitpoints.", type = "heal", value = 10 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 100 hitpoints.", type = "heal", value = 100 , heal = "to Biruleibe Baby"},
+    {message =  "You heal Biruleibe Baby for 1000 hitpoints.", type = "heal", value = 1000 , heal = "to Biruleibe Baby"},
+    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse"},
+    {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse"},
+    {message =  "You lose 406 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 406 , creature = "By Spellreaper Inferniarch"},
+    {message =  "You lose 17 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 17 , creature = "By Spellreaper Inferniarch"},
 }
 
 -- DO NOT TOUCH BELOW THIS LINE // NÃO TOQUE ABAIXO DESTA LINHA --
@@ -1478,6 +1497,8 @@ local function detectCreatureDamage(text, lastDamage)
     local damageReceivedPatterns = {
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
         "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
+        -- Padrão: "You lose X hitpoints due to an attack by a [criatura]." (com ponto final)
+        "You lose (%d+) hitpoints? due to an attack by a ([^%s]+(?:%s+[^%s]+)*)%.",
         -- Padrão: "You lose X mana due to an attack by a [criatura]"
         "You lose (%d+) mana due to an attack by a ([^%s]+(?:%s+[^%s]+)*)",
         -- Padrão: "You lose X hitpoints due to [criatura]"
@@ -1840,16 +1861,10 @@ local function runAllTests()
 end
 
 if ActiveTestHud then
-    testHUD = HUD.new(200, 200, "Test Creature Damage", true)
+    testHUD = HUD.new(200, 200, "Test Messages", true)
     testHUD:setColor(255, 255, 0)
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
-        -- Simular dados de criatura
-        -- processCreatureDamage("hellhunter inferniarch", 125, "dealt")
-        -- processCreatureDamage("hellhunter inferniarch", 100, "received")
-        -- processCreatureDamage("spellreaper inferniarch", 200, "dealt")
-        -- processCreatureDamage("spellreaper inferniarch", 150, "received")
-        -- updateAllHuds()
         print("Running tests")
         runAllTests()
         print("Tests finished")
