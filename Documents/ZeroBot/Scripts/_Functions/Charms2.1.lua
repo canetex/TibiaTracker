@@ -307,7 +307,7 @@ local testMessages = {
     {message =  "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 125 , creature = "By Biruleibe Baby"},
     {message =  "A hyena  loses 225 hitpoints due to Biruleibe Baby attack.", type = "creature", value = 225 , creature = "By Biruleibe Baby"},
     {message =  "A hellhunter inferniarch loses 1 hitpoints due to your attack. (active prey bonus).", type = {"prey","creature"}, value = 1 , creature = "By Biruleibe Baby"},
-    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}", value = 462 , creature = "Biruleibe Baby"},
+    {message =  "A hellhunter inferniarch loses 462 hitpoints due to your attack. (active prey bonus) (perfect shoot).", type = {"prey","perfect shoot","creature"}, value = 462 , creature = "Biruleibe Baby"},
     {message =  "You lose 50 hitpoints due to an attack by a dragon", type = "creature", value = 50 , creature = "By Dragon"},
     {message =  "A dragon hits you for 75 hitpoints", type = "creature", value = 75 , creature = "By Dragon"},
     {message =  "You lose 25 hitpoints due to demon", type = "creature", value = 25 , creature = "By Demon"},
