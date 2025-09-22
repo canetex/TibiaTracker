@@ -1220,6 +1220,13 @@ end
 -- 3.1 FUNÇÕES DE DETECÇÃO DE CHARMS
 -- ================================================================
 
+-- Função auxiliar para criar padrões flexíveis que capturam nomes com espaços
+local function createFlexibleNamePattern()
+    -- Padrão que captura qualquer texto até encontrar uma palavra específica
+    -- Suporta múltiplos espaços, caracteres especiais, etc.
+    return "([^%d%.]+?)"
+end
+
 
 local function setDebugMode(class, enabled)
     if print_ativo and print_ativo[class] ~= nil then
@@ -1381,16 +1388,16 @@ local healPatterns = {
     {pattern = "You gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%)", type = "Charm"},
     
     -- Player heal - From (você recebe cura de outro player) - deve vir antes de Imbuiments
-    {pattern = "You were healed by ([^%d]+) for (%d+) hitpoints?", type = "PlayerFrom"},
+    {pattern = "You were healed by ([^%d%.]+) for (%d+) hitpoints?", type = "PlayerFrom"},
     
     -- Player heal - To (você cura alguém)
-    {pattern = "You heal ([^%d]+) for (%d+) hitpoints?", type = "PlayerTo"},
+    {pattern = "You heal ([^%d%.]+) for (%d+) hitpoints?", type = "PlayerTo"},
     
     -- Self heal
     {pattern = "You heal?ed? yourself for (%d+) hitpoints?", type = "Self"},
     
     -- Other player heals (outros players sendo curados) - para debug
-    {pattern = "([^%s]+) was healed for (%d+) hitpoints?", type = "OtherPlayer"},
+    {pattern = "([^%d%.]+) was healed for (%d+) hitpoints?", type = "OtherPlayer"},
     
     -- Imbuiments heal (deve vir por último para não conflitar)
     {pattern = "You were healed for (%d+) hitpoints?", type = "Imbuiments"},
@@ -1594,30 +1601,30 @@ local function detectCreatureDamage(text, lastDamage)
     -- Padrões para detectar dano causado a criaturas (próprios e de outros jogadores)
     local damageDealtPatterns = {
         -- Padrão: "A [nome da criatura] loses X hitpoints due to your attack"
-        "A ([^%.]+) loses (%d+) hitpoints? due to your attack%.?",
+        "A ([^%d%.]+) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to your attack"
-        "([^%.]+) loses (%d+) hitpoints? due to your attack%.?",
+        "([^%d%.]+) loses (%d+) hitpoints? due to your attack%.?",
         -- Padrão: "A [nome da criatura] loses X hitpoints due to [jogador] attack"
-        "A ([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?",
+        "A ([^%d%.]+) loses (%d+) hitpoints? due to ([^%d%.]+) attack%.?",
         -- Padrão: "[nome da criatura] loses X hitpoints due to [jogador] attack"
-        "([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?"
+        "([^%d%.]+) loses (%d+) hitpoints? due to ([^%d%.]+) attack%.?"
     }
     
     -- Padrões para detectar dano sofrido de criaturas (apenas danos próprios)
     local damageReceivedPatterns = {
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
-        "You lose (%d+) hitpoints? due to an attack by a ([^%.]+)",
+        "You lose (%d+) hitpoints? due to an attack by a ([^%d%.]+)",
         -- Padrão: "A [criatura] hits you for X hitpoints"
-        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        "A ([^%d%.]+) hits you for (%d+) hitpoints?",
         -- Padrão: "[criatura] hits you for X hitpoints" (sem "A")
-        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        "([^%d%.]+) hits you for (%d+) hitpoints?",
         -- Padrão: "You lose X hitpoints due to [criatura]" (sem "an attack by a")
-        "You lose (%d+) hitpoints? due to ([^%.]+)"
+        "You lose (%d+) hitpoints? due to ([^%d%.]+)"
     }
     
     -- Debug: testar padrão manualmente
     local testText = "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack."
-    local testPattern = "A ([^%.]+) loses (%d+) hitpoints? due to ([^%.]+) attack%.?"
+    local testPattern = "A ([^%d%.]+) loses (%d+) hitpoints? due to ([^%d%.]+) attack%.?"
     local testMatches = {testText:match(testPattern)}
     checkAndPrint("testProgram", "TESTE MANUAL: Texto: " .. testText)
     checkAndPrint("testProgram", "TESTE MANUAL: Padrão: " .. testPattern)
