@@ -273,21 +273,21 @@ local ActiveTestHud = true
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
-    {message =  "You gained 35 mana. (void's call charm)", type = "charm", value = 35 , charm = "Void's Call" },
-    {message = "You deal 150 damage. (low blow charm)", type = {"charm","creature"}, value = 150 , charm = "Low Blow" },
-    {message =  "You deal 200 damage. [savage blow charm]", type = {"charm","creature"}, value = 200 , charm = "Savage Blow" },
-    {message =  "You deal 300 damage. charm 'zap'", type = {"charm","creature"}, value = 300 , charm = "Zap" },
-    {message =  "You deal 100 damage. (freeze charm)", type = {"charm","creature"}, value = 100 , charm = "Freeze" },
-    {message =  "You deal 250 damage. (curse charm)", type = {"charm","creature"}, value = 250 , charm = "Curse" },
-    {message =  "You deal 180 damage. (paralyze charm)", type = {"charm","creature"}, value = 180 , charm = "Paralyze" },
-    {message =  "You gained 50 mana. (zap charm)", type = "charm", value = 50 , charm = "Zap" },
-    {message =  "You deal 1 hitpoint. (freeze charm)", type = {"charm","creature"}, value = 1 , charm = "Freeze" },
-    {message =  "You deal 400 hitpoints. (freeze charm)", type = {"charm","creature"}, value = 400 , charm = "Freeze" },
-    {message =  "You have been transcended.", type = "tier", value = 0 , creature = "Transcended" },
-    {message =  "You heal yourself for 50 hitpoints", type = "heal", value = 50 , heal = "Self"},
-    {message =  "You are healed for 120 hitpoints", type = "heal", value = 120 , heal = "Self"},
-    {message =  "You gain 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
-    {message =  "You gain 200 hitpoints", type = "heal", value = 200 , heal = "Self"},
+    {message =  "You gained 35 mana. (void's call charm)", type = "charm", value = 35 , charm = "Void's Call", id=1 },
+    {message = "You deal 150 damage. (low blow charm)", type = {"charm","creature"}, value = 150 , charm = "Low Blow", id=2 },
+    {message =  "You deal 200 damage. [savage blow charm]", type = {"charm","creature"}, value = 200 , charm = "Savage Blow", id=3 },
+    {message =  "You deal 300 damage. charm 'zap'", type = {"charm","creature"}, value = 300 , charm = "Zap", id=4 },
+    {message =  "You deal 100 damage. (freeze charm)", type = {"charm","creature"}, value = 100 , charm = "Freeze", id=5 },
+    {message =  "You deal 250 damage. (curse charm)", type = {"charm","creature"}, value = 250 , charm = "Curse", id=6 },
+    {message =  "You deal 180 damage. (paralyze charm)", type = {"charm","creature"}, value = 180 , charm = "Paralyze", id=7 },
+    {message =  "You gained 50 mana. (zap charm)", type = "charm", value = 50 , charm = "Zap", id=8 },
+    {message =  "You deal 1 hitpoint. (freeze charm)", type = {"charm","creature"}, value = 1 , charm = "Freeze", id=9 },
+    {message =  "You deal 400 hitpoints. (freeze charm)", type = {"charm","creature"}, value = 400 , charm = "Freeze", id=10 },
+    {message =  "You have been transcended.", type = "tier", value = 0 , creature = "Transcended", id=11 },
+    {message =  "You heal yourself for 50 hitpoints", type = "heal", value = 50 , heal = "Self", id=12 },
+    {message =  "You are healed for 120 hitpoints", type = "heal", value = 120 , heal = "Self", id=13 },
+    {message =  "You gain 1 hitpoint", type = "heal", value = 1 , heal = "Self", id=14 },
+    {message =  "You gain 200 hitpoints", type = "heal", value = 200 , heal = "Self", id=15 },
     {message =  "You gained 6 mana", type = "heal", value = 6 , heal = "Self"},
     {message =  "You gained 8 mana. (void's call charm)", type = "heal", value = 8 , heal = "Void's Call"},
     {message =  "You recover 1 hitpoint", type = "heal", value = 1 , heal = "Self"},
@@ -1323,25 +1323,25 @@ end
 -- Padrões consolidados para detectar mensagens de heal (case insensitive, 's' facultativo, texto antes/depois facultativo)
 local healPatterns = {
     -- Charm heal (deve vir primeiro para não conflitar com outros)
-    {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?%. %(([^)]+) charm%).*", type = "Charm"},
-    {pattern = ".*[Yy]ou gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%).*", type = "Charm"},
+    {pattern = "You were healed for (%d+) hitpoints?%. %(([^)]+) charm%)", type = "Charm"},
+    {pattern = "You gained (%d+) (mana|hitpoints?)%. %(([^)]+) charm%)", type = "Charm"},
     
     -- Player heal - From (você recebe cura de outro player) - deve vir antes de Imbuiments
-    {pattern = ".*[Yy]ou were healed by ([^%d]+) for (%d+) hitpoints?.*", type = "PlayerFrom"},
+    {pattern = "You were healed by ([^%d]+) for (%d+) hitpoints?", type = "PlayerFrom"},
     
     -- Player heal - To (você cura alguém)
-    {pattern = ".*[Yy]ou heal ([^%d]+) for (%d+) hitpoints?.*", type = "PlayerTo"},
+    {pattern = "You heal ([^%d]+) for (%d+) hitpoints?", type = "PlayerTo"},
     
     -- Self heal
-    {pattern = ".*[Yy]ou heal?ed? yourself for (%d+) hitpoints?.*", type = "Self"},
+    {pattern = "You heal?ed? yourself for (%d+) hitpoints?", type = "Self"},
     
     -- Other player heals (outros players sendo curados) - para debug
-    {pattern = ".*([^%s]+) was healed for (%d+) hitpoints?.*", type = "OtherPlayer"},
+    {pattern = "([^%s]+) was healed for (%d+) hitpoints?", type = "OtherPlayer"},
     
     -- Imbuiments heal (deve vir por último para não conflitar)
-    {pattern = ".*[Yy]ou were healed for (%d+) hitpoints?.*", type = "Imbuiments"},
-    {pattern = ".*[Yy]ou gain?ed? (%d+) (hitpoints?|mana).*", type = "Imbuiments"},
-    {pattern = ".*[Yy]ou recover (%d+) hitpoints?.*", type = "Imbuiments"}
+    {pattern = "You were healed for (%d+) hitpoints?", type = "Imbuiments"},
+    {pattern = "You gain?ed? (%d+) (hitpoints?|mana)", type = "Imbuiments"},
+    {pattern = "You recover (%d+) hitpoints?", type = "Imbuiments"}
 }
 
 local function findHealsProc(text)
@@ -1517,7 +1517,11 @@ local function detectCreatureDamage(text, lastDamage)
         -- Padrão: "You lose X hitpoints due to an attack by a [criatura]"
         "You lose (%d+) hitpoints? due to an attack by a ([^%.]+)",
         -- Padrão: "A [criatura] hits you for X hitpoints"
-        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?"
+        "A ([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        -- Padrão: "[criatura] hits you for X hitpoints" (sem "A")
+        "([^%s]+(?:%s+[^%s]+)*) hits you for (%d+) hitpoints?",
+        -- Padrão: "You lose X hitpoints due to [criatura]" (sem "an attack by a")
+        "You lose (%d+) hitpoints? due to ([^%.]+)"
     }
     
     -- Debug: testar padrão manualmente (removido - já confirmado que funciona)
