@@ -1615,9 +1615,18 @@ local function detectCreatureDamage(text, lastDamage)
         "You lose (%d+) hitpoints? due to ([^%.]+)"
     }
     
-    -- Debug: testar padrão manualmente (removido - já confirmado que funciona)
-    
-    -- Debug: testar padrão manualmente (removido - já confirmado que funciona)
+    -- Debug: testar padrão manualmente
+    local testText = "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack."
+    local testPattern = "A ([^%s]+(?:%s+[^%s]+)*) loses (%d+) hitpoints? due to ([^%s]+(?:%s+[^%s]+)*) attack%.?"
+    local testMatches = {testText:match(testPattern)}
+    checkAndPrint("testProgram", "TESTE MANUAL: Texto: " .. testText)
+    checkAndPrint("testProgram", "TESTE MANUAL: Padrão: " .. testPattern)
+    checkAndPrint("testProgram", "TESTE MANUAL: Matches: " .. #testMatches)
+    if #testMatches > 0 then
+        checkAndPrint("testProgram", "TESTE MANUAL: Capturou: " .. testMatches[1] .. " - " .. testMatches[2] .. " - " .. testMatches[3])
+    else
+        checkAndPrint("testProgram", "TESTE MANUAL: FALHOU - Padrão não funcionou")
+    end
     
     -- Verificar dano causado (próprios e de outros jogadores)
     for i, pattern in ipairs(damageDealtPatterns) do
