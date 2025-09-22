@@ -1306,9 +1306,17 @@ local function runAllTests()
         if testMsg:find("charm") then
             result = findCharmsProc(testMsg)
         elseif testMsg:find("heal") or testMsg:find("recover") or testMsg:find("gained") then
-            result = findHealsProc(testMsg)
+            if findHealsProc then
+                result = findHealsProc(testMsg)
+            else
+                print("ERRO: Função findHealsProc não encontrada")
+            end
         elseif testMsg:find("loses") or testMsg:find("hits you") or testMsg:find("due to") then
-            result = detectCreatureDamage(testMsg, 100)
+            if detectCreatureDamage then
+                result = detectCreatureDamage(testMsg, 100)
+            else
+                print("ERRO: Função detectCreatureDamage não encontrada")
+            end
         else
             result = findCharmsProc(testMsg)
         end
@@ -1396,7 +1404,12 @@ local function runAllTests()
     local healSuccessCount = 0
     for i, testMsg in ipairs(healTestMessages) do
         print("Heal Teste " .. i .. ": " .. testMsg)
-        local result = findHealsProc(testMsg)
+        local result = false
+        if findHealsProc then
+            result = findHealsProc(testMsg)
+        else
+            print("ERRO: Função findHealsProc não encontrada")
+        end
         if result then
             healSuccessCount = healSuccessCount + 1
         end
@@ -1415,7 +1428,12 @@ local function runAllTests()
     local creatureSuccessCount = 0
     for i, testMsg in ipairs(creatureTestMessages) do
         print("Creature Teste " .. i .. ": " .. testMsg)
-        local result = detectCreatureDamage(testMsg, 100)
+        local result = false
+        if detectCreatureDamage then
+            result = detectCreatureDamage(testMsg, 100)
+        else
+            print("ERRO: Função detectCreatureDamage não encontrada")
+        end
         if result then
             creatureSuccessCount = creatureSuccessCount + 1
         end
