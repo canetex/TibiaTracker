@@ -1743,22 +1743,6 @@ local function simulateCreatureDamage()
     checkAndPrint("testProgram", "=== FIM DA SIMULAÇÃO ===")
 end
 
-if ActiveTestHud then
-    testHUD = HUD.new(200, 200, "Test Creature Damage", true)
-    testHUD:setColor(255, 255, 0)
-    testHUD:setFontSize(12)
-    testHUD:setCallback(function() 
-        -- Simular dados de criatura
-        -- processCreatureDamage("hellhunter inferniarch", 125, "dealt")
-        -- processCreatureDamage("hellhunter inferniarch", 100, "received")
-        -- processCreatureDamage("spellreaper inferniarch", 200, "dealt")
-        -- processCreatureDamage("spellreaper inferniarch", 150, "received")
-        -- updateAllHuds()
-        print("Running tests")
-        runAllTests()
-        print("Tests finished")
-    end)
-end
 
 -- ================================================================
 -- SEÇÃO 10: INICIALIZAÇÃO E EVENTOS PRINCIPAIS
@@ -1904,14 +1888,79 @@ local function runAllTests()
     end
     print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " sucessos")
     
+    -- Teste de simulação de dados de criatura
+    print("\n--- TESTE DE SIMULAÇÃO DE DADOS DE CRIATURA ---")
+    print("Simulando dados de criatura para testar HUDs...")
+    
+    -- Simular dados de criatura para testar o sistema
+    local creatureSimulationData = {
+        {name = "hellhunter inferniarch", damage = 125, type = "dealt"},
+        {name = "hellhunter inferniarch", damage = 100, type = "received"},
+        {name = "spellreaper inferniarch", damage = 200, type = "dealt"},
+        {name = "spellreaper inferniarch", damage = 150, type = "received"},
+        {name = "dragon", damage = 300, type = "dealt"},
+        {name = "dragon", damage = 80, type = "received"},
+        {name = "demon", damage = 250, type = "dealt"},
+        {name = "demon", damage = 120, type = "received"},
+        {name = "behemoth", damage = 500, type = "dealt"},
+        {name = "behemoth", damage = 200, type = "received"}
+    }
+    
+    local simulationSuccessCount = 0
+    for i, data in ipairs(creatureSimulationData) do
+        print("Simulação " .. i .. ": " .. data.name .. " - " .. data.damage .. " (" .. data.type .. ")")
+        local result = processCreatureDamage(data.name, data.damage, data.type)
+        if result then
+            simulationSuccessCount = simulationSuccessCount + 1
+        end
+        print("Resultado: " .. (result and "SUCESSO" or "FALHOU"))
+    end
+    
+    print("Simulações: " .. simulationSuccessCount .. "/" .. #creatureSimulationData .. " sucessos")
+    
+    -- Forçar atualização dos HUDs para mostrar os dados simulados
+    print("Atualizando HUDs com dados simulados...")
+    updateAllHuds()
+    
+    -- Mostrar estatísticas dos dados simulados
+    print("\n--- ESTATÍSTICAS DOS DADOS SIMULADOS ---")
+    local creatureCount = 0
+    for name, data in pairs(creatures) do
+        creatureCount = creatureCount + 1
+        print("Criatura " .. creatureCount .. ": " .. name)
+        print("  - Ativações: " .. (data.count or 0))
+        print("  - Dano Total: " .. (data.totalSum or 0))
+        print("  - Dano Médio: " .. (data.average or 0))
+        print("  - Dano Máximo: " .. (data.higher or 0))
+        print("  - Dano Mínimo: " .. (data.lowest or 0))
+    end
+    
     print("\n=== RESUMO DOS TESTES ===")
     print("Charms: " .. charmSuccessCount .. "/" .. charmTotalCount .. " (" .. math.floor((charmSuccessCount/charmTotalCount)*100) .. "%)")
     print("Tiers: " .. tierSuccessCount .. "/" .. #tierTestMessages .. " (" .. math.floor((tierSuccessCount/#tierTestMessages)*100) .. "%)")
     print("Heals: " .. healSuccessCount .. "/" .. #healTestMessages .. " (" .. math.floor((healSuccessCount/#healTestMessages)*100) .. "%)")
     print("Creatures: " .. creatureSuccessCount .. "/" .. #creatureTestMessages .. " (" .. math.floor((creatureSuccessCount/#creatureTestMessages)*100) .. "%)")
+    print("Simulações: " .. simulationSuccessCount .. "/" .. #creatureSimulationData .. " (" .. math.floor((simulationSuccessCount/#creatureSimulationData)*100) .. "%)")
     
     print("\n=== FIM DO TESTE COMPLETO ===")
     checkAndPrint("testProgram", "\n=== FIM DO TESTE COMPLETO ===")
+end
+
+if ActiveTestHud then
+    testHUD = HUD.new(200, 200, "Test Creature Damage", true)
+    testHUD:setColor(255, 255, 0)
+    testHUD:setFontSize(12)
+    testHUD:setCallback(function() 
+        -- Simular dados de criatura
+        -- processCreatureDamage("hellhunter inferniarch", 125, "dealt")
+        -- processCreatureDamage("hellhunter inferniarch", 100, "received")
+        -- processCreatureDamage("spellreaper inferniarch", 200, "dealt")
+        -- processCreatureDamage("spellreaper inferniarch", 150, "received")
+        -- updateAllHuds()
+        print("Running tests")
+        runAllTests()
+        print("Tests finished")
+    end)
 end
 
 -- Criar ícones principais após todas as funções serem definidas
