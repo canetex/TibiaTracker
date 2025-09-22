@@ -1520,7 +1520,7 @@ end
 -- Função para processar dano de criatura
 local function processCreatureDamage(creatureName, damage, damageType)
     if not creatureName or not damage or not damageType then 
-        return 
+        return false
     end
     
     -- Criar chave única para a criatura e tipo de dano
@@ -1533,7 +1533,10 @@ local function processCreatureDamage(creatureName, damage, damageType)
         creaturesFound = newFoundCount
         -- Atualizar HUDs após processar
         updateAllHuds()
+        return true
     end
+    
+    return false
 end
 
 Game.registerEvent(Game.Events.TEXT_MESSAGE, function(data)
