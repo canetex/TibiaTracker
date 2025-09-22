@@ -1955,13 +1955,20 @@ local function runAllTests(messageIds)
         local result = false
         local processedBy = "none"
         
+        -- Processar charms
         if findCharmsProc(eventData.text) then 
             result = true
             processedBy = "charms"
-        elseif findHealsProc(eventData.text) then
+        end
+        
+        -- Processar heals (independente de charms)
+        if findHealsProc(eventData.text) then
             result = true
-            processedBy = "heals"
-        else
+            processedBy = processedBy == "charms" and "charms+heals" or "heals"
+        end
+        
+        -- Se não processou charms nem heals, verificar outras opções
+        if not result then
             -- Detectar dano por criatura
             local lastDamage = tonumber(eventData.text:match("(%d+) hitpoints?.*") or 0)
             if detectCreatureDamage(eventData.text, lastDamage) then 
@@ -2089,8 +2096,8 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
-        -- runAllTests({23,32}) -- Testa todas as mensagens por padrão
+        -- runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
+        runAllTests({23,32}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
