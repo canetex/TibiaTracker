@@ -994,25 +994,42 @@ end
 -- @param cooldownData: dados de cooldown (opcional)
 -- @return: true se processado com sucesso, false se em cooldown
 local function processActivation(data, name, damage, cooldownData)
+    print("DEBUG PROCESSACTIVATION: Iniciando processActivation - Name: " .. name .. ", Damage: " .. damage)
+    checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Iniciando processActivation - Name: " .. name .. ", Damage: " .. damage)
+    
     -- Validar parâmetros de entrada
     if not validateInput(data, "table", true) then
+        print("DEBUG PROCESSACTIVATION: ERRO - data deve ser uma tabela")
+        checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - data deve ser uma tabela")
         checkAndPrint("erros", "Erro: data deve ser uma tabela")
         return false
     end
     
     if not validateInput(name, "string", false) then
+        print("DEBUG PROCESSACTIVATION: ERRO - name deve ser uma string não vazia")
+        checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - name deve ser uma string não vazia")
         checkAndPrint("erros", "Erro: name deve ser uma string não vazia")
         return false
     end
     
     if not damage or type(damage) ~= "number" or damage < 0 then
         damage = 0 -- Valor padrão para dano inválido
+        print("DEBUG PROCESSACTIVATION: Damage ajustado para 0")
+        checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Damage ajustado para 0")
     end
     
     -- Verificar cooldown se especificado
+    print("DEBUG PROCESSACTIVATION: Verificando cooldown para " .. name)
+    checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Verificando cooldown para " .. name)
+    
     if not checkAndUpdateCooldown(cooldownData) then
+        print("DEBUG PROCESSACTIVATION: ERRO - Cooldown ativo para " .. name)
+        checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: ERRO - Cooldown ativo para " .. name)
         return false
     end
+    
+    print("DEBUG PROCESSACTIVATION: Cooldown OK para " .. name)
+    checkAndPrint("testProgram", "DEBUG PROCESSACTIVATION: Cooldown OK para " .. name)
     
     -- Inicializar ou atualizar dados
     if not data[name] then
@@ -1133,17 +1150,31 @@ end
 
 -- Função genérica para processar grupos (charms, tiers, heals)
 local function processGroup(groupType, name, damage, patterns, iconConfig, data, foundCount)
+    print("DEBUG PROCESSGROUP: Iniciando processGroup - Type: " .. groupType .. ", Name: " .. name .. ", Damage: " .. damage)
+    checkAndPrint("testProgram", "DEBUG PROCESSGROUP: Iniciando processGroup - Type: " .. groupType .. ", Name: " .. name .. ", Damage: " .. damage)
+    
     -- Validar entrada
     if not name or type(name) ~= "string" or name == "" then
+        print("DEBUG PROCESSGROUP: ERRO - Nome inválido: " .. tostring(name))
+        checkAndPrint("testProgram", "DEBUG PROCESSGROUP: ERRO - Nome inválido: " .. tostring(name))
         return false, foundCount
     end
     
     -- Configurar cooldown
     local cooldownData = getCooldownData(groupType, name)
+    print("DEBUG PROCESSGROUP: CooldownData obtido para " .. name)
+    checkAndPrint("testProgram", "DEBUG PROCESSGROUP: CooldownData obtido para " .. name)
     
     -- Processar ativação
     local success = processActivation(data, name, damage, cooldownData)
-    if not success then return false, foundCount end
+    print("DEBUG PROCESSGROUP: processActivation retornou: " .. tostring(success) .. " para " .. name)
+    checkAndPrint("testProgram", "DEBUG PROCESSGROUP: processActivation retornou: " .. tostring(success) .. " para " .. name)
+    
+    if not success then 
+        print("DEBUG PROCESSGROUP: processActivation falhou para " .. name)
+        checkAndPrint("testProgram", "DEBUG PROCESSGROUP: processActivation falhou para " .. name)
+        return false, foundCount 
+    end
     
     -- Atualizar variáveis de cooldown globais
     updateGlobalCooldown(groupType, name, cooldownData)
@@ -2010,7 +2041,7 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        runAllTests({47,50}) -- Testa todas as mensagens por padrão
+        runAllTests({47,50,12}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
