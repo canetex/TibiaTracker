@@ -113,45 +113,45 @@ end
 -- ================================================================
 
 -- Função para carregar posições salvas dos ícones
-local function loadIconPositions()
-    local path = Engine.getScriptsDirectory() .. "/_Functions/Charms2.0.lua"
-    local file = io.open(path, "r")
-    if not file then return end
+-- local function loadIconPositions()
+--     local path = Engine.getScriptsDirectory() .. "/_Functions/Charms2.0.lua"
+--     local file = io.open(path, "r")
+--     if not file then return end
     
-    local content = file:read("*all")
-    file:close()
-    if not content then return end
+--     local content = file:read("*all")
+--     file:close()
+--     if not content then return end
     
-    -- Carregar posições dos ícones
-    local charmX = content:match("ICON_CHARM_X_POSITION = (%d+)")
-    local charmY = content:match("ICON_CHARM_Y_POSITION = (%d+)")
-    local tierX = content:match("ICON_TIER_X_POSITION = (%d+)")
-    local tierY = content:match("ICON_TIER_Y_POSITION = (%d+)")
-    local healX = content:match("ICON_HEAL_X_POSITION = (%d+)")
-    local healY = content:match("ICON_HEAL_Y_POSITION = (%d+)")
-    local creatureX = content:match("ICON_CREATURE_X_POSITION = (%d+)")
-    local creatureY = content:match("ICON_CREATURE_Y_POSITION = (%d+)")
+--     -- Carregar posições dos ícones
+--     local charmX = content:match("ICON_CHARM_X_POSITION = (%d+)")
+--     local charmY = content:match("ICON_CHARM_Y_POSITION = (%d+)")
+--     local tierX = content:match("ICON_TIER_X_POSITION = (%d+)")
+--     local tierY = content:match("ICON_TIER_Y_POSITION = (%d+)")
+--     local healX = content:match("ICON_HEAL_X_POSITION = (%d+)")
+--     local healY = content:match("ICON_HEAL_Y_POSITION = (%d+)")
+--     local creatureX = content:match("ICON_CREATURE_X_POSITION = (%d+)")
+--     local creatureY = content:match("ICON_CREATURE_Y_POSITION = (%d+)")
     
-    if charmX and charmY then
-        ICON_CHARM_X_POSITION = tonumber(charmX)
-        ICON_CHARM_Y_POSITION = tonumber(charmY)
-    end
-    if tierX and tierY then
-        ICON_TIER_X_POSITION = tonumber(tierX)
-        ICON_TIER_Y_POSITION = tonumber(tierY)
-    end
-    if healX and healY then
-        ICON_HEAL_X_POSITION = tonumber(healX)
-        ICON_HEAL_Y_POSITION = tonumber(healY)
-    end
-    if creatureX and creatureY then
-        ICON_CREATURE_X_POSITION = tonumber(creatureX)
-        ICON_CREATURE_Y_POSITION = tonumber(creatureY)
-    end
-end
+--     if charmX and charmY then
+--         ICON_CHARM_X_POSITION = tonumber(charmX)
+--         ICON_CHARM_Y_POSITION = tonumber(charmY)
+--     end
+--     if tierX and tierY then
+--         ICON_TIER_X_POSITION = tonumber(tierX)
+--         ICON_TIER_Y_POSITION = tonumber(tierY)
+--     end
+--     if healX and healY then
+--         ICON_HEAL_X_POSITION = tonumber(healX)
+--         ICON_HEAL_Y_POSITION = tonumber(healY)
+--     end
+--     if creatureX and creatureY then
+--         ICON_CREATURE_X_POSITION = tonumber(creatureX)
+--         ICON_CREATURE_Y_POSITION = tonumber(creatureY)
+--     end
+-- end
 
--- Carregar posições salvas
-loadIconPositions()
+-- -- Carregar posições salvas
+-- loadIconPositions()
 
 -- Ícones de visibilidade (ao lado dos ícones principais)
 local VISIBILITY_ICON_ID = 19369
@@ -263,13 +263,13 @@ local print_ativo = {
     messageCheck = false,      -- Verificação de mensagens
     messageFound = false,      -- Mensagens com Tier/Charm encontradas
     messageNotFound = false,   -- Mensagens com Tier/Charm não encontradas
-    testProgram = true,        -- Testes do programa
+    testProgram = false,        -- Testes do programa
     cooldown = false,          -- Informações de cooldown
     statistics = false         -- Estatísticas detalhadas
 }
 
 -- Configurações do sistema
-local ActiveTestHud = true
+local ActiveTestHud = false
 
 -- Mensagens de teste para validação de padrões
 local testMessages = {
@@ -333,6 +333,13 @@ local testMessages = {
     {message =  "You dodged an attack. (Ruse charm)", type = "charm", value = 0 , charm = "Ruse", id=58 },
     {message =  "You lose 406 hitpoints due to an attack by a spellreaper Demon.", type = "creature", value = 406 , creature = "By Spellreaper Demon", id=59 },
     {message =  "You lose 17 hitpoints due to an attack by a spellreaper inferniarch.", type = "creature", value = 17 , creature = "By Spellreaper Inferniarch", id=60 },
+    {message =  "A brinebrute inferniarch loses 608 hitpoints due to your attack. (Onslaught).", type = {"creature","tier"}, value = 608 , creature = "brinebrute inferniarch", id=61 },
+    {message =  "A spellreaper inferniarch loses 903 hitpoints due to your attack. (active prey bonus) (Onslaught).", type = {"creature","tier", "prey"}, value = 608 , creature = "brinebrute inferniarch", id=62 },
+    {message =  "Momentum was triggered", type = {"tier"}, value = "" , creature = "", id=63 },
+    {message =  "You have been transcended", type = {"tier"}, value = "" , creature = "", id=64 },
+    {message =  "You dodged an attack. (Ruse)", type = {"tier"}, value = "" , creature = "", id=65 },
+
+
 }
 
 -- DO NOT TOUCH BELOW THIS LINE // NÃO TOQUE ABAIXO DESTA LINHA --
@@ -395,9 +402,9 @@ local healVisibilityIcon = nil
 local creatureVisibilityIcon = nil
 
 -- Estados de visibilidade dos grupos
-local charmGroupVisible = false
-local tierGroupVisible = false
-local healGroupVisible = false
+local charmGroupVisible = true
+local tierGroupVisible = true
+local healGroupVisible = true
 local creatureGroupVisible = true
 local oneHourInSeconds = 3600
 
@@ -1220,12 +1227,6 @@ end
 -- 3.1 FUNÇÕES DE DETECÇÃO DE CHARMS
 -- ================================================================
 
--- Função auxiliar para criar padrões flexíveis que capturam nomes com espaços
-local function createFlexibleNamePattern()
-    -- Padrão que captura qualquer texto até encontrar uma palavra específica
-    -- Suporta múltiplos espaços, caracteres especiais, etc.
-    return "([^%d%.]+?)"
-end
 
 
 local function setDebugMode(class, enabled)
@@ -1431,29 +1432,24 @@ local function findHealsProc(text)
             local isCharm = type == "Charm"
             local isOtherPlayer = type == "OtherPlayer"
             
-            print("DEBUG HEAL: Padrão " .. type .. " capturou: " .. text)
             checkAndPrint("testProgram", "DEBUG HEAL: Padrão " .. type .. " capturou: " .. text)
             
             if isSelfOrImbu then
                 healAmount = tonumber(matches[1])
                 healType = type .. " Heal"
-                print("DEBUG HEAL: Self/Imbu - Amount: " .. healAmount .. ", Type: " .. healType)
                 checkAndPrint("testProgram", "DEBUG HEAL: Self/Imbu - Amount: " .. healAmount .. ", Type: " .. healType)
             elseif isPlayer then
                 healAmount, playerName = tonumber(matches[2]), matches[1]
                 healType = type .. " Heal"
-                print("DEBUG HEAL: Player - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
                 checkAndPrint("testProgram", "DEBUG HEAL: Player - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
             elseif isCharm then
                 healAmount = tonumber(matches[1])
                 charmName = #matches == 2 and matches[2] or matches[3]
                 healType = "Charm Heal"
-                print("DEBUG HEAL: Charm - Amount: " .. healAmount .. ", Charm: " .. charmName .. ", Type: " .. healType)
                 checkAndPrint("testProgram", "DEBUG HEAL: Charm - Amount: " .. healAmount .. ", Charm: " .. charmName .. ", Type: " .. healType)
             elseif isOtherPlayer then
                 playerName, healAmount = matches[1], tonumber(matches[2])
                 healType = "OtherPlayer Heal"
-                print("DEBUG HEAL: OtherPlayer - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
                 checkAndPrint("testProgram", "DEBUG HEAL: OtherPlayer - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
                 -- Não processar heals de outros players, apenas para debug
                 return false
@@ -1623,18 +1619,6 @@ local function detectCreatureDamage(text, lastDamage)
         "You lose (%d+) hitpoints? due to ([^%d%.]+)"
     }
     
-    -- Debug: testar padrão manualmente
-    local testText = "A hellhunter inferniarch loses 125 hitpoints due to Biruleibe Baby attack."
-    local testPattern = "A ([^%d%.]+) loses (%d+) hitpoints? due to ([^%d%.]+) attack%.?"
-    local testMatches = {testText:match(testPattern)}
-    checkAndPrint("testProgram", "TESTE MANUAL: Texto: " .. testText)
-    checkAndPrint("testProgram", "TESTE MANUAL: Padrão: " .. testPattern)
-    checkAndPrint("testProgram", "TESTE MANUAL: Matches: " .. #testMatches)
-    if #testMatches > 0 then
-        checkAndPrint("testProgram", "TESTE MANUAL: Capturou: " .. testMatches[1] .. " - " .. testMatches[2] .. " - " .. testMatches[3])
-    else
-        checkAndPrint("testProgram", "TESTE MANUAL: FALHOU - Padrão não funcionou")
-    end
     
     -- Verificar dano causado (próprios e de outros jogadores)
     for i, pattern in ipairs(damageDealtPatterns) do
@@ -1906,7 +1890,6 @@ end
 -- Função unificada de teste para padrões e configurações
 -- @param messageIds: array opcional com IDs das mensagens a serem testadas (se vazio ou nil, testa todas)
 local function runAllTests(messageIds)
-    print("=== INICIANDO TESTE COMPLETO DO SISTEMA ===")
     checkAndPrint("testProgram", "=== TESTE COMPLETO DO SISTEMA ===")
     
     -- Determinar quais mensagens testar
@@ -1919,13 +1902,11 @@ local function runAllTests(messageIds)
                 if testMsg.id == id then
                     table.insert(messagesToTest, testMsg)
                     found = true
-                    print("DEBUG: Mensagem ID " .. id .. " encontrada: " .. testMsg.message)
                     checkAndPrint("testProgram", "DEBUG: Mensagem ID " .. id .. " encontrada: " .. testMsg.message)
                     break
                 end
             end
             if not found then
-                print("DEBUG: Mensagem ID " .. id .. " NÃO encontrada!")
                 checkAndPrint("testProgram", "DEBUG: Mensagem ID " .. id .. " NÃO encontrada!")
             end
         end
@@ -2011,35 +1992,6 @@ local function runAllTests(messageIds)
     
     checkAndPrint("testProgram", "\n--- TESTE DE CONFIGURAÇÕES VisibleInfo ---")
     
-    local testData = {
-        count = 5, 
-        first = os.time() - 300, 
-        inAHour = 60,
-        damages = {100, 150, 200, 120, 180}, 
-        higher = 200, 
-        lowest = 100, 
-        average = 150,
-        totalSum = 750
-    }
-    local testDamage, testTimeElapsed = 150, "5m 0s"
-    local originalConfig = VisibleInfo.charm
-    
-    -- Teste múltiplas configurações
-    local configs = {
-        {name = "Todas habilitadas", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=true}},
-        {name = "Apenas ativações", config = {charm=true, ativacoes=true, previsao=true, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}},
-        {name = "Apenas dano", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=true, danoMedio=true, danoMaximo=true, danoTotal=true, tempoDecorrido=false}},
-        {name = "Nenhuma info", config = {charm=false, ativacoes=false, previsao=false, danoMinimo=false, danoMedio=false, danoMaximo=false, danoTotal=false, tempoDecorrido=false}}
-    }
-    
-    for _, test in ipairs(configs) do
-        VisibleInfo.charm = test.config
-        local result = createHudText("Low Blow", testData, testDamage, testTimeElapsed, "charm")
-    
-        checkAndPrint("testProgram", test.name .. ": " .. result)
-    end
-    
-    VisibleInfo.charm = originalConfig
     
     
     
@@ -2096,8 +2048,8 @@ if ActiveTestHud then
     testHUD:setFontSize(12)
     testHUD:setCallback(function() 
         print("Running tests")
-        -- runAllTests({23,32,47,50,12}) -- Testa todas as mensagens por padrão
-        runAllTests({23,32}) -- Testa todas as mensagens por padrão
+        runAllTests({11,23,32,47,50,12,61,62,63,64,65}) -- Testa todas as mensagens por padrão
+        -- runAllTests({23,32}) -- Testa todas as mensagens por padrão
         print("Tests finished")
     end)
 end
