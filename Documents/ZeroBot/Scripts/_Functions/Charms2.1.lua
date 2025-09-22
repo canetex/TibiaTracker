@@ -1369,20 +1369,30 @@ local function findHealsProc(text)
             local isCharm = type == "Charm"
             local isOtherPlayer = type == "OtherPlayer"
             
+            print("DEBUG HEAL: Padrão " .. type .. " capturou: " .. text)
+            checkAndPrint("testProgram", "DEBUG HEAL: Padrão " .. type .. " capturou: " .. text)
             
             if isSelfOrImbu then
                 healAmount = tonumber(matches[1])
                 healType = type .. " Heal"
+                print("DEBUG HEAL: Self/Imbu - Amount: " .. healAmount .. ", Type: " .. healType)
+                checkAndPrint("testProgram", "DEBUG HEAL: Self/Imbu - Amount: " .. healAmount .. ", Type: " .. healType)
             elseif isPlayer then
                 healAmount, playerName = tonumber(matches[2]), matches[1]
                 healType = type .. " Heal"
+                print("DEBUG HEAL: Player - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
+                checkAndPrint("testProgram", "DEBUG HEAL: Player - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
             elseif isCharm then
                 healAmount = tonumber(matches[1])
                 charmName = #matches == 2 and matches[2] or matches[3]
                 healType = "Charm Heal"
+                print("DEBUG HEAL: Charm - Amount: " .. healAmount .. ", Charm: " .. charmName .. ", Type: " .. healType)
+                checkAndPrint("testProgram", "DEBUG HEAL: Charm - Amount: " .. healAmount .. ", Charm: " .. charmName .. ", Type: " .. healType)
             elseif isOtherPlayer then
                 playerName, healAmount = matches[1], tonumber(matches[2])
                 healType = "OtherPlayer Heal"
+                print("DEBUG HEAL: OtherPlayer - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
+                checkAndPrint("testProgram", "DEBUG HEAL: OtherPlayer - Amount: " .. healAmount .. ", Player: " .. playerName .. ", Type: " .. healType)
                 -- Não processar heals de outros players, apenas para debug
                 return false
             end
@@ -1399,19 +1409,31 @@ local function findHealsProc(text)
     local healName = nil
     if healType == "Self Heal" then
         healName = "Self"
+        print("DEBUG HEAL: Nome determinado - Self")
+        checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Self")
     elseif healType == "Imbuiments Heal" then
         -- Verificar se é mana ou hitpoints baseado no texto
         if text:find("mana") then
             healName = "Void Leech"
+            print("DEBUG HEAL: Nome determinado - Void Leech (mana)")
+            checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Void Leech (mana)")
         else
             healName = "Vampirism"
+            print("DEBUG HEAL: Nome determinado - Vampirism (hitpoints)")
+            checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Vampirism (hitpoints)")
         end
     elseif healType == "PlayerFrom Heal" then
         healName = "From_" .. playerName
+        print("DEBUG HEAL: Nome determinado - From_" .. playerName)
+        checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - From_" .. playerName)
     elseif healType == "PlayerTo Heal" then
         healName = "To_" .. playerName
+        print("DEBUG HEAL: Nome determinado - To_" .. playerName)
+        checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - To_" .. playerName)
     elseif healType == "Charm Heal" then
         healName = "Charm_" .. charmName
+        print("DEBUG HEAL: Nome determinado - Charm_" .. charmName)
+        checkAndPrint("testProgram", "DEBUG HEAL: Nome determinado - Charm_" .. charmName)
     end
     
 
@@ -1419,9 +1441,20 @@ local function findHealsProc(text)
         healIcon, healVisibilityIcon = createMainIcon(ICON_HEAL_X_POSITION, ICON_HEAL_Y_POSITION, ICON_HEAL_ID, "heal")
     end
 
+    print("DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
+    checkAndPrint("testProgram", "DEBUG HEAL: Chamando processGroup com - Nome: " .. healName .. ", Amount: " .. healAmount)
+    
     local success, newFoundCount = processGroup("heal", healName, healAmount, healPatterns, 
         {x = ICON_HEAL_X_POSITION, y = ICON_HEAL_Y_POSITION}, heals, healsFound)
-    if success then healsFound = newFoundCount end
+    
+    if success then 
+        healsFound = newFoundCount
+        print("DEBUG HEAL: processGroup retornou TRUE para " .. healName .. ", healsFound: " .. healsFound)
+        checkAndPrint("testProgram", "DEBUG HEAL: processGroup retornou TRUE para " .. healName .. ", healsFound: " .. healsFound)
+    else
+        print("DEBUG HEAL: processGroup retornou FALSE para " .. healName)
+        checkAndPrint("testProgram", "DEBUG HEAL: processGroup retornou FALSE para " .. healName)
+    end
 
     -- Se for um charm de cura, também processar no sistema de charms
     if healType == "Charm Heal" then
@@ -1829,8 +1862,8 @@ local function runAllTests(messageIds)
     
     -- Simular o processamento real de mensagens usando o sistema de eventos
     for i, testMsg in ipairs(messagesToTest) do
-        print("DEBUG: Processando mensagem " .. i .. " (ID " .. testMsg.id .. "): " .. testMsg.message)
-        checkAndPrint("testProgram", "DEBUG: Processando mensagem " .. i .. " (ID " .. testMsg.id .. "): " .. testMsg.message)
+        -- print("Teste " .. i .. ": " .. testMsg.message)
+        -- checkAndPrint("testProgram", "Teste " .. i .. ": " .. testMsg.message)
         
         -- Simular o evento TEXT_MESSAGE com a mensagem de teste
         local eventData = { text = testMsg.message }
