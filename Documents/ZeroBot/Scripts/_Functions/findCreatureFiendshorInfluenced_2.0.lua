@@ -71,7 +71,7 @@ local HUD_CONFIG = {
     }
 }
 
-dofile(Engine.getScriptsDirectory() .. "/_Functions/xyzToPixels.lua")
+dofile(Engine.getScriptsDirectory() .. "/_Functions/Y_Support/xyzToPixels.lua")
 
 local soundOn = false
 
