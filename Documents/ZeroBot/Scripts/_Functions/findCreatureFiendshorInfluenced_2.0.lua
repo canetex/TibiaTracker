@@ -365,7 +365,7 @@ function createPositionTimer(creatureId, positionHud)
     
     -- Cria novo timer para atualizar posição a cada 200ms
     local timer = Timer.new(timerName, function()
-        if positionHud and positionHud:isValid() then
+        if positionHud and not positionHud.destroyed then
             local creature = Creature.new(creatureId)
             if creature then
                 local position = creature:getPosition()
