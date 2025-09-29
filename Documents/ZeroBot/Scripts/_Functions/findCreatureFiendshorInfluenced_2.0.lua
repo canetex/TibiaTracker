@@ -1,5 +1,5 @@
 -- ================================================================
--- Fiendish/Influenced Creature Finder v1.0
+-- Fiendish/Influenced Creature Finder v2.0
 -- ================================================================
 -- VERSION v1.0 - Advanced Creature Detection System by The Crusty
     --- Optimized Drag Handler
@@ -76,6 +76,9 @@ local HUD_CONFIG = {
     CONTROL = {
         FONT_SIZE = 10,           -- Tamanho da fonte do HUD de controle
         COLOR = {255, 0, 0}       -- Cor do HUD de controle (R, G, B) - Vermelho
+    },
+    POSITION = {
+        FONT_SIZE = 10            -- Tamanho da fonte da seta de posição
     }
 }
 
@@ -453,8 +456,8 @@ function createPositionHUD(x, y, z)
     end)
     
     if success and result then
-        result:setColor(227, 3, 252)  -- Cor amarela
-        result:setFontSize(20)
+        result:setColor(227, 3, 252)  -- Cor Fucsia
+        result:setFontSize(HUD_CONFIG.POSITION.FONT_SIZE*2)
         
         -- Converte coordenadas XYZ para pixels
         local pixelPos = xyzToPixels(x, y, z)
