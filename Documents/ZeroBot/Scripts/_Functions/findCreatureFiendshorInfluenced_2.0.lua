@@ -29,7 +29,15 @@
 -- - Resolução mínima: 800x600 (com fallback automático)
 
 -- ================================================================
--- CONFIGURAÇÕES E FLAGS DE DEBUG
+-- CONFIGURAÇÕES 
+-- ================================================================
+
+-- Ativa/desativa a seta que indica a posição do monstro
+local Show_Monster_Arrow = true
+
+
+-- ================================================================
+-- CONFIGURAÇÕES E FLAGS DE DEBUG -- Não mexer daqui para baixo
 -- ================================================================
 print("\n\nScript findCreatureFiendshorInfluenced carregado\n\n")
 
@@ -71,7 +79,117 @@ local HUD_CONFIG = {
     }
 }
 
-dofile(Engine.getScriptsDirectory() .. "/_Functions/Y_Support/xyzToPixels.lua")
+-- dofile(Engine.getScriptsDirectory() .. "/_Functions/Y_Support/xyzToPixels.lua")
+
+
+-- ================================================================
+-- SQM to Pixels v1.0
+-- ================================================================
+-- VERSION v1.0 - SQM to Pixels by The Crusty
+
+-- DESCRIÇÃO:
+-- Script para converter coordenadas SQM para pixels da tela
+-- Converte posições do jogo para posições em pixels na tela
+
+-- FUNCIONALIDADES:
+-- ✅ Converter coordenadas SQM para pixels da tela
+
+-- REQUISITOS:
+-- - Resolução mínima: 800x600 (com fallback automático)
+
+-- Exemplo de uso:
+-- local pixelPos = xyzToPixels(32983, 32102, 6)
+-- print(pixelPos.x, pixelPos.y)
+
+-- ================================================================
+-- CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+-- ================================================================
+
+
+
+local qtdX = 15
+local qtdY = 11
+local OffsetX = 7
+local OffsetY = 5
+
+-- Função para obter posição do player
+function getPlayerPosition()
+    local playerId = Player.getId()
+    if not playerId then
+        return nil
+    end
+    
+    local player = Creature.new(playerId)
+    if not player then
+        return nil
+    end
+    
+    local playerPos = player:getPosition()
+    if not playerPos then
+        return nil
+    end
+    
+    return playerPos
+end
+
+-- Função principal para converter coordenadas XYZ para pixels da tela
+function xyzToPixels(x, y, z)
+    -- Obter dimensões da tela
+    local screenInfo = Client.getGameWindowDimensions()
+    local width_total = screenInfo.width
+    local height_total = screenInfo.height
+    
+    -- Obter posição do player como ponto [0,0]
+    local playerPos = getPlayerPosition()
+    if not playerPos then
+        return "erro: não foi possível obter posição do player"
+    end
+    
+    -- Verificar se a coordenada Z é a mesma do player
+    if z ~= playerPos.z then
+        return "fora da tela" -- Diferente Z level
+    end
+    
+    -- Calcular offset relativo ao player
+    local relativeX = x - playerPos.x
+    local relativeY = y - playerPos.y
+    
+    -- Verificar se está dentro dos limites visíveis [-7,+7] x [-5,+5]
+    if relativeX < -OffsetX or relativeX > OffsetX or relativeY < -OffsetY or relativeY > OffsetX then
+        return "fora da tela"
+    end
+    
+    -- Calcular tamanho dos tiles (15 colunas x 11 linhas)
+    local size_tile_x = width_total / qtdX
+    local size_tile_y = height_total / qtdY
+    
+    -- Calcular posição em pixels
+    -- [0,0] do player fica no centro da tela
+    local centerX = width_total / 2
+    local centerY = height_total / 2
+    
+    -- CORREÇÃO: Adicionar 2 tiles de offset para corrigir o deslocamento
+    local pixelX = centerX + ((relativeX + 2) * size_tile_x)
+    local pixelY = centerY + (relativeY * size_tile_y)
+    
+    return {
+        x = math.floor(pixelX),
+        y = math.floor(pixelY),
+        relativeX = relativeX,
+        relativeY = relativeY
+    }
+end
+
+-- Instruções de uso
+-- print("=== CONVERSOR XYZ PARA PIXELS ===")
+-- print("📋 Comando disponível:")
+-- print("  xyzToPixels(x, y, z) - Converte coordenadas XYZ para pixels")
+-- print("==================================")
+-- ================================================================
+-- // SQM to Pixels v1.0
+-- ================================================================
+
+
 
 local soundOn = false
 
@@ -329,12 +447,14 @@ end
 -- Função encapsulada para criar HUD de posição do monstro
 function createPositionHUD(x, y, z)
     local success, result = pcall(function()
-        return HUD.new(0, 0, "↙", true)  -- Character ↙
+        -- return HUD.new(0, 0, "↙", true)  -- Character ↙
+        -- return HUD.new(0, 0, "->>", true)  -- Character →
+        return HUD.new(0, 0, "\u{21A6}", true)  -- Character ↦
     end)
     
     if success and result then
-        result:setColor(255, 255, 0)  -- Cor amarela
-        result:setFontSize(16)
+        result:setColor(227, 3, 252)  -- Cor amarela
+        result:setFontSize(20)
         
         -- Converte coordenadas XYZ para pixels
         local pixelPos = xyzToPixels(x, y, z)
@@ -488,13 +608,16 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         HUD_CONFIG.OUTFIT.SCALE
     )
     
-    -- 3. Cria HUD de posição do monstro
-    local positionHud = createPositionHUD(x, y, z)
-    
-    -- 4. Cria timer para atualizar posição do HUD
+    -- 3. Cria HUD de posição do monstro (apenas se Show_Monster_Arrow estiver true)
+    local positionHud = nil
     local positionTimer = nil
-    if positionHud then
-        positionTimer = createPositionTimer(creatureId, positionHud)
+    if Show_Monster_Arrow then
+        positionHud = createPositionHUD(x, y, z)
+        
+        -- 4. Cria timer para atualizar posição do HUD
+        if positionHud then
+            positionTimer = createPositionTimer(creatureId, positionHud)
+        end
     end
     
     -- Define callback para destruir todos os HUDs quando qualquer um for clicado
@@ -516,7 +639,7 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         end)
     end
     
-    if positionHud then
+    if positionHud and Show_Monster_Arrow then
         positionHud:setCallback(function()
             destroyCreatureHUD(creatureId)
         end)
