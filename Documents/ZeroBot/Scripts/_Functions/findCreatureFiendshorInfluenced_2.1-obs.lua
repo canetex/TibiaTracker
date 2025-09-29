@@ -108,7 +108,7 @@ end
 
 local function _0xijkl(path,mode)
     if not path or type(path)~="string"then 
-        _0xabcd("GENERAL","Erro: caminho do arquivo inválido")
+        _0xabcd("GENERAL","Erro: caminho do arquivo invalido")
         return nil 
     end
     local file=io.open(path,mode)
@@ -124,19 +124,19 @@ local function _0xmnop()
     local path=Engine.getScriptsDirectory().."/"..filename
     local file=_0xijkl(path,"r")
     if not file then 
-        _0xabcd("GENERAL","Erro: não foi possível abrir arquivo para leitura")
+        _0xabcd("GENERAL","Erro: nao foi possivel abrir arquivo para leitura")
         return false 
     end
     local content=file:read("*all")
     file:close()
     if not content then 
-        _0xabcd("GENERAL","Erro: não foi possível ler conteúdo do arquivo")
+        _0xabcd("GENERAL","Erro: nao foi possivel ler conteudo do arquivo")
         return false 
     end
     local currentX=content:match("x = (%d+),")
     local currentY=content:match("y = (%d+),")
     if not currentX or not currentY then 
-        _0xabcd("GENERAL","Não foi possível encontrar padrões de posição no arquivo")
+        _0xabcd("GENERAL","Nao foi possivel encontrar padroes de posicao no arquivo")
         _0xabcd("GENERAL","X encontrado: "..tostring(currentX))
         _0xabcd("GENERAL","Y encontrado: "..tostring(currentY))
         return false 
@@ -145,13 +145,13 @@ local function _0xmnop()
     newContent=newContent:gsub("y = "..currentY..",","y = ".._0x5678.y..",")
     file=_0xijkl(path,"w")
     if not file then 
-        _0xabcd("GENERAL","Erro: não foi possível abrir arquivo para escrita")
+        _0xabcd("GENERAL","Erro: nao foi possivel abrir arquivo para escrita")
         return false 
     end
     local success=file:write(newContent)
     file:close()
     if success then 
-        _0xabcd("GENERAL","Posições do menu salvas: X=".._0x5678.x..", Y=".._0x5678.y")
+        _0xabcd("GENERAL","Posicoes do menu salvas: X=".._0x5678.x..", Y=".._0x5678.y")
     else 
         _0xabcd("GENERAL","Erro: falha ao escrever no arquivo")
     end
@@ -244,7 +244,7 @@ local function _0x8888(x,y,z)
         result:setColor(227,3,252)
         result:setFontSize(20)
         local pixelPos=_0x9999(x,y,z)
-        if pixelPos and pixelPos~="fora da tela"and pixelPos~="erro: não foi possível obter posição do player"then 
+        if pixelPos and pixelPos~="fora da tela"and pixelPos~="erro: nao foi possivel obter posicao do player"then 
             result:setPos(pixelPos.x,pixelPos.y)
         else 
             local windowDimensions=Client.getGameWindowDimensions()
@@ -270,7 +270,7 @@ local function _0xaaaa(creatureId,positionHud)
                 local position=creature:getPosition()
                 if position then 
                     local pixelPos=_0x9999(position.x,position.y,position.z)
-                    if pixelPos and pixelPos~="fora da tela"and pixelPos~="erro: não foi possível obter posição do player"then 
+                    if pixelPos and pixelPos~="fora da tela"and pixelPos~="erro: nao foi possivel obter posicao do player"then 
                         positionHud:setPos(pixelPos.x,pixelPos.y)
                     end 
                 end 
@@ -416,9 +416,9 @@ local function _0x3333(creature,creatureId)
     _0xabcd("CREATURE_INFO","Nome: "..(creature:getName()or"N/A"))
     local position=creature:getPosition()
     if position then 
-        _0xabcd("CREATURE_INFO","Posição: X="..position.x..", Y="..position.y..", Z="..position.z)
+        _0xabcd("CREATURE_INFO","Posicao: X="..position.x..", Y="..position.y..", Z="..position.z)
     else 
-        _0xabcd("CREATURE_INFO","Posição: N/A")
+        _0xabcd("CREATURE_INFO","Posicao: N/A")
     end
     _0xabcd("CREATURE_INFO","Tipo: "..(creature:getType()or"N/A"))
     _0xabcd("CREATURE_INFO","Vida: "..(creature:getHealthPercent()or"N/A").."%")
@@ -568,7 +568,7 @@ function _0x9999(x,y,z)
     local width_total=screenInfo.width
     local height_total=screenInfo.height
     local playerPos=getPlayerPosition()
-    if not playerPos then return"erro: não foi possível obter posição do player"end
+    if not playerPos then return"erro: nao foi possivel obter posicao do player"end
     if z~=playerPos.z then return"fora da tela"end
     local relativeX=x-playerPos.x
     local relativeY=y-playerPos.y
