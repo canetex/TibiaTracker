@@ -457,7 +457,8 @@ function createPositionHUD(x, y, z)
     
     if success and result then
         result:setColor(227, 3, 252)  -- Cor Fucsia
-        result:setFontSize(HUD_CONFIG.POSITION.FONT_SIZE*2)
+        local fontSize = (HUD_CONFIG.POSITION and HUD_CONFIG.POSITION.FONT_SIZE) or 10
+        result:setFontSize(fontSize * 2)
         
         -- Converte coordenadas XYZ para pixels
         local pixelPos = xyzToPixels(x, y, z)
