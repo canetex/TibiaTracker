@@ -34,7 +34,7 @@
 
 -- Ativa/desativa a seta que indica a posição do monstro
 local Show_Monster_Arrow = true
-
+local Show_Monster_Banner = true
 
 -- ================================================================
 -- CONFIGURAÇÕES E FLAGS DE DEBUG -- Não mexer daqui para baixo
@@ -598,15 +598,18 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         return
     end
     
-    -- 2. Cria HUD do ícone + outfit na mesma posição
-    local iconHud, outfitHud = createIconAndOutfitHUD(
-        HUD_CONFIG.ICON.SPACING, 
-        hudY, 
-        HUD_CONFIG.ICON.ICON_ID, 
-        HUD_CONFIG.ICON.SCALE,
-        outfitId, 
-        HUD_CONFIG.OUTFIT.SCALE
-    )
+    -- 2. Cria HUD do ícone + outfit na mesma posição (apenas se Show_Monster_Banner estiver true)
+    local iconHud, outfitHud = nil, nil
+    if Show_Monster_Banner then
+        iconHud, outfitHud = createIconAndOutfitHUD(
+            HUD_CONFIG.ICON.SPACING, 
+            hudY, 
+            HUD_CONFIG.ICON.ICON_ID, 
+            HUD_CONFIG.ICON.SCALE,
+            outfitId, 
+            HUD_CONFIG.OUTFIT.SCALE
+        )
+    end
     
     -- 3. Cria HUD de posição do monstro (apenas se Show_Monster_Arrow estiver true)
     local positionHud = nil
@@ -627,13 +630,13 @@ function createCreatureHUD(creatureId, creatureName, x, y, z, iconCount, outfitI
         end)
     end
     
-    if outfitHud then
+    if outfitHud and Show_Monster_Banner then
         outfitHud:setCallback(function()
             destroyCreatureHUD(creatureId)
         end)
     end
     
-    if iconHud then
+    if iconHud and Show_Monster_Banner then
         iconHud:setCallback(function()
             destroyCreatureHUD(creatureId)
         end)
