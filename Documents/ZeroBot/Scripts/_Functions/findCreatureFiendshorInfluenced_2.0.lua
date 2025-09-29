@@ -361,7 +361,19 @@ function playSound()
     local soundsFolder = Engine.getScriptsDirectory() .. "/Sounds/"
     if soundOn then
         -- print("playSound")
-        Sound.play(soundsFolder .. '/ring-tone-68676.mp3')
+        local success, error = pcall(function()
+            Sound.play(soundsFolder .. '/ring-tone-68676.mp3')
+        end)
+        
+        if not success then
+            printDebug("GENERAL", "Erro ao reproduzir som: " .. tostring(error))
+            -- Desativa o som automaticamente em caso de erro
+            soundOn = false
+            if ring and ring.label then
+                ring.label:setText("[OFF]")
+                ring.label:setColor(255, 0, 0)
+            end
+        end
     end
 end 
 
@@ -451,8 +463,8 @@ end
 function createPositionHUD(x, y, z)
     local success, result = pcall(function()
         -- return HUD.new(0, 0, "↙", true)  -- Character ↙
-        -- return HUD.new(0, 0, "->>", true)  -- Character →
-        return HUD.new(0, 0, "\u{21A6}", true)  -- Character ↦
+        return HUD.new(0, 0, "←", true)  -- Character →
+        -- return HUD.new(0, 0, "\u{21A6}", true)  -- Character ↦
     end)
     
     if success and result then
